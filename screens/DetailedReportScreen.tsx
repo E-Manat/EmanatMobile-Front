@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useState} from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,9 @@ import {
   TouchableOpacity,
   Image,
   FlatList,
+  Modal,
+  TouchableWithoutFeedback,
+  Button,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
 import {useNavigation, useRoute} from '@react-navigation/native';
@@ -25,6 +28,17 @@ const DetailedReportScreen = () => {
     </View>
   );
 
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
+  const openModal = (image: any) => {
+    setSelectedImage(image);
+    setModalVisible(true);
+  };
+
+  const closeModal = () => {
+    setModalVisible(false);
+    setSelectedImage(null);
+  };
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -48,20 +62,43 @@ const DetailedReportScreen = () => {
         <Text style={styles.label}>Terminal</Text>
 
         <View style={styles.staticImagesContainer}>
-          <Image
-            source={require('../assets/img/terminal1.png')}
-            style={styles.image}
-          />
-          <Image
-            source={require('../assets/img/terminal1.png')}
-            style={styles.image}
-          />
-          <Image
-            source={require('../assets/img/terminal1.png')}
-            style={styles.image}
-          />
+          <TouchableOpacity
+            onPress={() => openModal(require('../assets/img/terminal1.png'))}>
+            <Image
+              source={require('../assets/img/terminal1.png')}
+              style={styles.image}
+            />
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => openModal(require('../assets/img/terminal1.png'))}>
+            <Image
+              source={require('../assets/img/terminal1.png')}
+              style={styles.image}
+            />
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => openModal(require('../assets/img/terminal1.png'))}>
+            <Image
+              source={require('../assets/img/terminal1.png')}
+              style={styles.image}
+            />
+          </TouchableOpacity>
         </View>
       </View>
+      <Modal
+        visible={modalVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={closeModal}>
+        <TouchableWithoutFeedback onPress={closeModal}>
+          <View style={styles.modalBackground}>
+            <View style={styles.modalContent}>
+              <Image source={selectedImage} style={styles.modalImage} />
+              {/* <Button>Bağla</Button> */}
+            </View>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
     </View>
   );
 };
@@ -80,14 +117,30 @@ const styles = StyleSheet.create({
   card: {backgroundColor: '#F9F9F9', borderRadius: 10, padding: 16},
   label: {fontSize: 14, fontWeight: 'bold', color: '#063A66', marginTop: 10},
   value: {fontSize: 14, color: '#616161', marginTop: 4},
-  image: {},
+  image: {width: 100, height: 100, borderRadius: 5},
   detailRow: {flexDirection: 'row', alignItems: 'center', marginTop: 10},
   icon: {marginRight: 8},
   staticImagesContainer: {
     width: '100%',
     display: 'flex',
-    flexDirection:'row',
+    flexDirection: 'row',
     gap: 10,
     marginTop: 10,
+  },
+  modalBackground: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    padding: 20,
+  },
+  modalImage: {
+    width: 200,
+    height: 200,
+    borderRadius: 10,
   },
 });

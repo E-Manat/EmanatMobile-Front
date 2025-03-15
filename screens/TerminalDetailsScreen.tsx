@@ -4,7 +4,7 @@ import Icon from 'react-native-vector-icons/FontAwesome6';
 import Icon1 from 'react-native-vector-icons/MaterialIcons';
 
 const TerminalDetailsScreen = ({route, navigation}: any) => {
-  const {taskData} = route.params;
+  // const {taskData} = route.params;
 
   const getStatusColor = (status: any) => {
     switch (status) {
@@ -32,10 +32,12 @@ const TerminalDetailsScreen = ({route, navigation}: any) => {
       <View style={styles.terminalInfo}>
         <Text style={styles.terminalName}>
           <Icon name="location-dot" size={20} color="#1976D2" />
-          Terminal 2436
+          <Text>Terminal 2436</Text>
         </Text>
-        <Text style={styles.location}>Araz Azadlıq Minimarket</Text>
-        <Text style={styles.distance}>2.9 km</Text>
+        <View style={styles.statusContainer}>
+          <Text style={styles.location}>Araz Azadlıq Minimarket</Text>
+          <Text style={styles.distance}>2.9 km</Text>
+        </View>
       </View>
 
       <Image source={require('../assets/img/araz.png')} style={styles.image} />
@@ -85,12 +87,20 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#fff',
   },
+  statusContainer: {
+    width: '100%',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    flexDirection: 'row',
+  },
   terminalInfo: {
     padding: 20,
     borderBottomWidth: 1,
     borderBottomColor: '#ddd',
   },
   terminalName: {
+    width: '100%',
     fontSize: 18,
     gap: 6,
     fontWeight: 'bold',

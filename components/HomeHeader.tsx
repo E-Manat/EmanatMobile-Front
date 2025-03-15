@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   View,
   TextInput,
@@ -9,9 +9,27 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
 import {useNavigation} from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const HomeHeader = () => {
   const navigation = useNavigation();
+  const [profileImage, setProfileImage] = useState(null);
+
+  const loadProfileData = async () => {
+    try {
+      const storedData = await AsyncStorage.getItem('profileData');
+      if (storedData) {
+        const parsedData = JSON.parse(storedData);
+        setProfileImage(parsedData.profileImage);
+      }
+    } catch (error) {
+      console.log('Məlumat oxuma xətası:', error);
+    }
+  };
+
+  useEffect(() => {
+    loadProfileData();
+  }, []);
 
   return (
     <View style={styles.container}>
@@ -43,7 +61,11 @@ const HomeHeader = () => {
       <View style={styles.box}>
         <TouchableOpacity onPress={() => navigation.navigate('Profil')}>
           <Image
-            source={require('../assets/img/user.png')}
+            source={
+              profileImage
+                ? {uri: profileImage}
+                : require('../assets/img/user.png')
+            }
             style={styles.avatar}
           />
         </TouchableOpacity>
@@ -78,6 +100,7 @@ const styles = StyleSheet.create({
   input: {
     fontSize: 14,
     color: '#2D64AF',
+    flex: 1,
   },
   notificationContainer: {
     position: 'relative',

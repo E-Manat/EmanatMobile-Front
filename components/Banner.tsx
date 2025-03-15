@@ -1,27 +1,41 @@
-import {StyleSheet, Text, View, Image} from 'react-native';
 import React from 'react';
+import {View, Image, Dimensions, StyleSheet} from 'react-native';
+import Swiper from 'react-native-swiper';
 
-const Banner = () => {
+const {width} = Dimensions.get('window');
+
+const images = [
+  require('../assets/img/slider1.png'),
+  require('../assets/img/slider2.png'),
+  require('../assets/img/slider3.png'),
+];
+
+const ImageSlider = () => {
   return (
-    <View style={styles.container}>
-      <Image
-        source={require('../assets/img/slider1.png')}
-        style={styles.image}
-      />
-    </View>
+    <Swiper autoplay height={200} showsPagination={false}>
+      {images.map((image, index) => (
+        <View key={index} style={styles.imageContainer}>
+          <Image source={image} style={styles.image} />
+        </View>
+      ))}
+    </Swiper>
   );
 };
 
-export default Banner;
-
 const styles = StyleSheet.create({
-  container: {
-    alignItems: 'center',
-    marginTop: 10,
+  imageContainer: {
+    width: '100%',
+    height: 200,
+    borderRadius: 20,
+    alignSelf: 'center',
+    overflow: 'hidden',
   },
   image: {
     width: '100%',
-    height: 200,
     resizeMode: 'contain',
+    height: '100%',
+    borderRadius: 20,
   },
 });
+
+export default ImageSlider;

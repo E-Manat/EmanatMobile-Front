@@ -8,17 +8,17 @@ const SplashScreen = ({navigation}: any) => {
       try {
         const userPin = await AsyncStorage.getItem('userPin');
         if (userPin) {
-          navigation.replace('PinSetup'); 
+          navigation.replace('PinSetup');
         } else {
-          navigation.replace('Login'); 
+          navigation.replace('Login');
         }
       } catch (error) {
         console.log('AsyncStorage xətası:', error);
-        navigation.replace('Login'); 
+        navigation.replace('Login');
       }
     };
 
-    checkUser(); 
+    checkUser();
   }, [navigation]);
 
   return (

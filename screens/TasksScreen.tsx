@@ -237,7 +237,11 @@ const styles = StyleSheet.create({
     elevation: 1, // Android için yeterli
     borderRadius: 10,
   },
-  statusItem: {alignItems: 'center'},
+  statusItem: {
+    alignItems: 'center',
+    width: '31%',
+    justifyContent: 'space-between',
+  },
   statusText: {fontSize: 20, fontWeight: 'bold', color: '#001D45'},
   statusLabel: {fontSize: 12, color: '#A8A8A8'},
   filterContainer: {

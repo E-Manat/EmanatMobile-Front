@@ -23,7 +23,7 @@ const ProfileScreen = () => {
   const [email, setEmail] = useState('');
   const [address, setAddress] = useState('');
   const [profileImage, setProfileImage] = useState(null);
-  const [modalVisible, setModalVisible] = useState(false); // Modal üçün state
+  const [modalVisible, setModalVisible] = useState(false); 
   const [isEdited, setIsEdited] = useState(false);
 
   const navigation = useNavigation();
