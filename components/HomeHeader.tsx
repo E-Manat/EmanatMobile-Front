@@ -34,7 +34,7 @@ const HomeHeader = () => {
   return (
     <View style={styles.container}>
       <View style={styles.searchContainer}>
-        <Icon
+        {/* <Icon
           name="search"
           size={18}
           color="#2D64AF"
@@ -44,6 +44,10 @@ const HomeHeader = () => {
           placeholder="Axtar..."
           placeholderTextColor="#2D64AF"
           style={styles.input}
+        /> */}
+        <Image
+          source={require('../assets/img/emanatFull.png')}
+          style={styles.image}
         />
       </View>
 
@@ -85,14 +89,16 @@ const styles = StyleSheet.create({
     gap: 15,
   },
   searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F2F2F2',
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    justifyContent: 'flex-start',
+    // backgroundColor: '#F2F2F2',
     borderRadius: 25,
     paddingHorizontal: 12,
     flex: 1,
     height: 40,
     color: '#2D64AF',
+    // backgroundColor: 'red',
   },
   searchIcon: {
     marginRight: 8,
@@ -135,5 +141,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderRadius: 20,
     textAlign: 'center',
+  },
+  image: {
+    width: 110,
+    height: '100%',
+    objectFit: 'cover',
   },
 });

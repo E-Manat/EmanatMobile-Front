@@ -60,7 +60,9 @@ const TerminalDetailsScreen = ({route, navigation}: any) => {
         </View>
       </View>
 
-      <TouchableOpacity style={styles.startButton}>
+      <TouchableOpacity
+        style={styles.startButton}
+        onPress={() => navigation.navigate('Route')}>
         <Text style={styles.startButtonText}>Tapşırığa başla</Text>
       </TouchableOpacity>
     </View>

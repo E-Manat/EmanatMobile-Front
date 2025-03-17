@@ -60,6 +60,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     position: 'relative',
     paddingHorizontal: 12,
+    height: 90,
   },
   iconContainer: {
     marginRight: 10,

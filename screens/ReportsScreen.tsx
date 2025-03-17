@@ -174,6 +174,20 @@ const ReportsScreen = () => {
             </TouchableOpacity>
           ) : null}
         </View>
+        <View style={{alignItems: 'center', marginVertical: 20}}>
+          <TouchableOpacity
+            style={{
+              backgroundColor: '#2D64AF',
+              paddingVertical: 10,
+              paddingHorizontal: 30,
+              borderRadius: 10,
+            }}
+            onPress={() => navigation.navigate('YeniHesabat')}>
+            <Text style={{color: '#fff', fontSize: 16, fontWeight: 'bold'}}>
+              Yeni Hesabat
+            </Text>
+          </TouchableOpacity>
+        </View>
 
         {/* <Icon name="filter" /> */}
         {filteredData.length > 0 ? (

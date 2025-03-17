@@ -14,6 +14,8 @@ import DetailedReportScreen from './screens/DetailedReportScreen';
 import NewPasswordScreen from './screens/NewPasswordScreen';
 import PinSetupScreen from './screens/PinSetupScreen';
 import TerminalDetailsScreen from './screens/TerminalDetailsScreen';
+import NewReportScreen from './screens/NewReportScreen';
+import RouteScreen from './screens/RouteScreen';
 
 enableScreens();
 
@@ -35,6 +37,8 @@ const App = () => {
           <Stack.Screen name="Profil" component={ProfileScreen} />
           <Stack.Screen name="Bildirişlər" component={NotificationsScreen} />
           <Stack.Screen name="Hesabatlar" component={ReportsScreen} />
+          <Stack.Screen name="YeniHesabat" component={NewReportScreen} />
+          <Stack.Screen name="Route" component={RouteScreen} />
           <Stack.Screen
             name="HesabatEtrafli"
             component={DetailedReportScreen}

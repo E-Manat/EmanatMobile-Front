@@ -13,10 +13,15 @@ const HomeScreen = () => {
   return (
     <ScrollView style={globalStyles.container}>
       <HomeHeader />
-      <Location />
       <Banner />
       <MenuCard
-        title="İnkassasiya"
+        title="Tapşırıqlar"
+        description="Cari tapşırıqların siyahısı"
+        screenName="Tapşırıqlar"
+        iconName={<Icon3 name="clipboard" size={23} color="#2D64AF" />}
+      />
+      <MenuCard
+        title="Terminallar"
         description="İnkassasiya tapşırıqlarının idarə edilməsi"
         screenName="Profil"
         iconName={<Icon1 name="idcard" size={23} color="#2D64AF" />}
@@ -26,12 +31,6 @@ const HomeScreen = () => {
         description="Yerinə yetirilmiş tapşırıqlar üzrə hesabat"
         screenName="Hesabatlar"
         iconName={<Icon2 name="dollar" size={23} color="#2D64AF" />}
-      />
-      <MenuCard
-        title="Tapşırıqlar"
-        description="Cari tapşırıqların siyahısı"
-        screenName="Tapşırıqlar"
-        iconName={<Icon3 name="clipboard" size={23} color="#2D64AF" />}
       />
     </ScrollView>
   );
