@@ -10,9 +10,12 @@ import {
 import Icon from 'react-native-vector-icons/Feather';
 import {useNavigation} from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {RootStackParamList} from '../App';
+import {StackNavigationProp} from '@react-navigation/stack';
 
+type NavigationProp = StackNavigationProp<RootStackParamList, 'Ana səhifə'>;
 const HomeHeader = () => {
-  const navigation = useNavigation();
+  const navigation = useNavigation<NavigationProp>();
   const [profileImage, setProfileImage] = useState(null);
 
   const loadProfileData = async () => {
@@ -68,7 +71,7 @@ const HomeHeader = () => {
             source={
               profileImage
                 ? {uri: profileImage}
-                : require('../assets/img/user.png')
+                : require('../assets/img/default.jpg')
             }
             style={styles.avatar}
           />
