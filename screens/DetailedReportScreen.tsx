@@ -9,16 +9,21 @@ import {
   Modal,
   TouchableWithoutFeedback,
   Button,
+  TextStyle,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
 import {useNavigation, useRoute} from '@react-navigation/native';
 
 const DetailedReportScreen = () => {
   const navigation = useNavigation();
-  const route = useRoute();
+  const route: any = useRoute();
   const {report} = route.params;
-
-  const renderDetail = (icon, label, value, valueStyle = {}) => (
+  const renderDetail = (
+    icon: string,
+    label: string,
+    value: string,
+    valueStyle: TextStyle = {},
+  ) => (
     <View style={styles.detailRow}>
       <Icon name={icon} size={20} color="#2D64AF" style={styles.icon} />
       <View>
@@ -93,8 +98,14 @@ const DetailedReportScreen = () => {
         <TouchableWithoutFeedback onPress={closeModal}>
           <View style={styles.modalBackground}>
             <View style={styles.modalContent}>
-              <Image source={selectedImage} style={styles.modalImage} />
-              {/* <Button>Bağla</Button> */}
+              <Image
+                source={selectedImage || require('../assets/img/araz.png')}
+                style={styles.modalImage}
+              />
+
+              <TouchableOpacity style={styles.closeButton} onPress={closeModal}>
+                <Text style={styles.closeButtonText}>Bağla</Text>
+              </TouchableOpacity>
             </View>
           </View>
         </TouchableWithoutFeedback>
@@ -132,6 +143,19 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.7)',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  closeButton: {
+    backgroundColor: '#1269B5',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  closeButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   modalContent: {
     backgroundColor: '#fff',

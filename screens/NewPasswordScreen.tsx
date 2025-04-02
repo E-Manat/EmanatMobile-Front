@@ -10,8 +10,12 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useNavigation} from '@react-navigation/native';
 
+import {RootStackParamList} from '../App';
+import {StackNavigationProp} from '@react-navigation/stack';
+
+type NavigationProp = StackNavigationProp<RootStackParamList, 'NewPassword'>;
 const NewPasswordScreen: React.FC = () => {
-  const navigation = useNavigation();
+  const navigation = useNavigation<NavigationProp>();
 
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');

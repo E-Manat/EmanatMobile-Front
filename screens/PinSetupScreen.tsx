@@ -9,11 +9,15 @@ import {
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useNavigation} from '@react-navigation/native';
+import {RootStackParamList} from '../App';
+import {StackNavigationProp} from '@react-navigation/stack';
+
+type NavigationProp = StackNavigationProp<RootStackParamList, 'PinSetup'>;
 
 const PinSetupScreen = () => {
   const [pin, setPin] = useState<string>('');
   const [storedPin, setStoredPin] = useState<string | null>(null);
-  const navigation = useNavigation();
+  const navigation = useNavigation<NavigationProp>();
 
   useEffect(() => {
     const fetchStoredPin = async () => {
@@ -32,6 +36,7 @@ const PinSetupScreen = () => {
         if (storedPin) {
           if (newPin === storedPin) {
             Alert.alert('PIN təsdiqləndi', 'Siz uğurla daxil oldunuz!');
+            await AsyncStorage.setItem('isLoggedIn', 'true'); // Giriş saxlanır
             navigation.replace('Ana səhifə');
           } else {
             Alert.alert('Xəta', 'Daxil etdiyiniz PIN yanlışdır!');
@@ -39,6 +44,7 @@ const PinSetupScreen = () => {
           }
         } else {
           await AsyncStorage.setItem('userPin', newPin);
+          await AsyncStorage.setItem('isLoggedIn', 'true'); // İlk giriş saxlanır
           Alert.alert('PIN yaradıldı', 'Siz uğurla PIN kodu təyin etdiniz!');
           navigation.replace('Ana səhifə');
         }

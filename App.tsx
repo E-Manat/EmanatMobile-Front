@@ -17,9 +17,24 @@ import TerminalDetailsScreen from './screens/TerminalDetailsScreen';
 import NewReportScreen from './screens/NewReportScreen';
 import RouteScreen from './screens/RouteScreen';
 
+const Stack = createNativeStackNavigator();
 enableScreens();
 
-const Stack = createNativeStackNavigator();
+export type RootStackParamList = {
+  Splash: undefined;
+  Login: undefined;
+  NewPassword: undefined;
+  'Ana səhifə': undefined;
+  Tapşırıqlar: undefined;
+  Profil: undefined;
+  Bildirişlər: undefined;
+  Hesabatlar: undefined;
+  YeniHesabat: undefined;
+  TerminalEtrafli: {taskData: any};
+  HesabatEtrafli: {report: any};
+  Route: undefined;
+  PinSetup: undefined;
+};
 
 const App = () => {
   return (

@@ -12,21 +12,26 @@ import {
   TouchableWithoutFeedback,
   ScrollView,
   Keyboard,
+  Alert,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
 import {launchCamera} from 'react-native-image-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Toast from 'react-native-toast-message';
+import {RootStackParamList} from '../App';
+import {StackNavigationProp} from '@react-navigation/stack';
+
+type NavigationProp = StackNavigationProp<RootStackParamList, 'Profil'>;
 
 const ProfileScreen = () => {
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [address, setAddress] = useState('');
   const [profileImage, setProfileImage] = useState(null);
-  const [modalVisible, setModalVisible] = useState(false); 
+  const [modalVisible, setModalVisible] = useState(false);
   const [isEdited, setIsEdited] = useState(false);
 
-  const navigation = useNavigation();
+  const navigation = useNavigation<NavigationProp>();
 
   useEffect(() => {
     loadProfileData();
@@ -51,23 +56,59 @@ const ProfileScreen = () => {
     }
   };
 
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+
   const loadProfileData = async () => {
     try {
-      const storedData = await AsyncStorage.getItem('profileData');
-      if (storedData) {
-        const parsedData = JSON.parse(storedData);
-        setPhone(parsedData.phone);
-        setEmail(parsedData.email);
-        setAddress(parsedData.address);
-        setProfileImage(parsedData.profileImage);
+      const token = await AsyncStorage.getItem('userToken'); // Token varsa əlavə et
+      if (!token) {
+        console.log('Token tapılmadı!');
+        return;
+      }
+
+      const response = await fetch(
+        'http://192.168.10.119:5206/auth/Auth/GetProfile',
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`, // Əgər API token tələb edirsə
+          },
+        },
+      );
+
+      const result = await response.json();
+      console.log('İstifadəçi məlumatları:', result);
+
+      if (response.ok) {
+        setFirstName(result.firstName || 'Ad yoxdur');
+        setLastName(result.lastName || 'Soyad yoxdur');
+        setPhone(result.phone || 'N/A');
+        setEmail(result.email || 'example@example.com');
+        setAddress(result.address || 'Ünvan daxil edilməyib');
+        setProfileImage(result.profileImage || null);
+
+        const profileData = {
+          firstName: result.firstName || 'Ad yoxdur',
+          lastName: result.lastName || 'Soyad yoxdur',
+          phone: result.phone || 'N/A',
+          email: result.email || 'example@example.com',
+          address: result.address || 'Ünvan daxil edilməyib',
+          profileImage: result.profileImage || null,
+        };
+
+        await AsyncStorage.setItem('profileData', JSON.stringify(profileData));
+      } else {
+        console.log('API-dən uğursuz cavab:', result);
       }
     } catch (error) {
-      console.log('Məlumat oxuma xətası:', error);
+      console.log('Məlumat yükləmə xətası:', error);
     }
   };
 
   const openCamera = () => {
-    const options = {
+    const options: any = {
       mediaType: 'photo',
       cameraType: 'back',
       saveToPhotos: true,
@@ -78,13 +119,42 @@ const ProfileScreen = () => {
       } else if (response.errorCode) {
         console.log('Kamera xətası:', response.errorMessage);
       } else {
-        const imageUri = response.assets?.[0]?.uri;
+        const imageUri: any = response.assets?.[0]?.uri;
         if (imageUri) {
           setProfileImage(imageUri);
           setIsEdited(true); // Şəkil dəyişəndə yadda saxla düyməsi görünsün
         }
       }
     });
+  };
+
+  const handleLogout = async () => {
+    console.log('Çıxış prosesi başladı...');
+
+    Alert.alert(
+      'Çıxış',
+      'Sistemdən çıxmaq istədiyinizə əminsiniz?',
+      [
+        {text: 'Xeyr', style: 'cancel'},
+        {
+          text: 'Bəli',
+          onPress: async () => {
+            console.log('İstifadəçi çıxışı təsdiqlədi');
+
+            try {
+              await AsyncStorage.removeItem('userToken');
+              await AsyncStorage.removeItem('isLoggedIn');
+
+              console.log('AsyncStorage təmizləndi');
+              navigation.replace('Login'); // **Login səhifəsinə yönləndir**
+            } catch (error) {
+              console.log('Çıxış zamanı xəta:', error);
+            }
+          },
+        },
+      ],
+      {cancelable: false},
+    );
   };
 
   return (
@@ -97,7 +167,9 @@ const ProfileScreen = () => {
                 <Icon name="chevron-left" size={24} color="#fff" />
               </TouchableOpacity>
               <Text style={styles.headerText}>Profil</Text>
-              <View style={{width: 24}} />
+              <TouchableOpacity onPress={handleLogout}>
+                <Icon name="log-out" size={24} color="#fff" />
+              </TouchableOpacity>
             </View>
 
             <View style={styles.profileContainer}>
@@ -119,7 +191,10 @@ const ProfileScreen = () => {
                 </TouchableOpacity>
               </TouchableOpacity>
 
-              <Text style={styles.profileName}>Ali Aliyev</Text>
+              <Text style={styles.profileName}>
+                {' '}
+                {firstName} {lastName}
+              </Text>
             </View>
 
             <Modal

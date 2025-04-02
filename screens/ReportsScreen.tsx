@@ -51,8 +51,13 @@ const DATA = [
   },
 ];
 
+import {RootStackParamList} from '../App';
+import {StackNavigationProp} from '@react-navigation/stack';
+
+type NavigationProp = StackNavigationProp<RootStackParamList, 'Hesabatlar'>;
+
 const ReportsScreen = () => {
-  const navigation = useNavigation();
+  const navigation = useNavigation<NavigationProp>();
   const [searchText, setSearchText] = useState('');
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState('Cari ay');

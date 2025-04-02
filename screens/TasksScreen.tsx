@@ -1,5 +1,7 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useNavigation} from '@react-navigation/native';
-import React, {useState} from 'react';
+import axios from 'axios';
+import React, {useEffect, useState} from 'react';
 import {
   View,
   Text,
@@ -10,6 +12,11 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
 import Dot from 'react-native-vector-icons/Octicons';
+
+import {RootStackParamList} from '../App';
+import {StackNavigationProp} from '@react-navigation/stack';
+
+type NavigationProp = StackNavigationProp<RootStackParamList, 'PinSetup'>;
 
 interface Task {
   id: string;
@@ -22,97 +29,82 @@ interface Task {
   hours?: string;
   phone?: string;
 }
-
-const tasksData: Task[] = [
-  {
-    id: '1',
-    date: 'Bu gün',
-    status: 'İcra olunmamış',
-    route: 'Narimanov',
-    terminal: 150,
-    distance: '2 km',
-  },
-  {
-    id: '2',
-    date: 'Dünən',
-    status: 'İcra olunub',
-    route: 'Narimanov',
-    terminal: 150,
-    distance: '1 km',
-  },
-  {
-    id: '3',
-    date: '01.02.2024',
-    status: 'İcra olunur',
-    route: 'Narimanov',
-    terminal: 150,
-    distance: '1 km',
-  },
-  {
-    id: '4',
-    date: '10.02.2024',
-    status: 'İcra olunub',
-    route: 'Narimanov',
-    terminal: 150,
-    distance: '1 km',
-  },
-  {
-    id: '5',
-    date: 'Bu gün',
-    status: 'İcra olunmamış',
-    route: 'Narimanov',
-    terminal: 150,
-    distance: '2 km',
-  },
-  {
-    id: '6',
-    date: 'Dünən',
-    status: 'İcra olunub',
-    route: 'Narimanov',
-    terminal: 150,
-    distance: '1 km',
-    address: 'fdsfs',
-    phone: 'fggf',
-  },
-  {
-    id: '7',
-    date: '01.02.2024',
-    status: 'İcra olunur',
-    route: 'Narimanov',
-    terminal: 150,
-    distance: '1 km',
-  },
-];
-
-const filterOptions = [
-  'Hamısı',
-  'İcra olunub',
-  'İcra olunur',
-  'İcra olunmamış',
-];
-
 const TasksScreen: React.FC = () => {
   const [selectedFilter, setSelectedFilter] = useState<string>('Hamısı');
 
-  const filteredTasks =
-    selectedFilter === 'Hamısı'
-      ? tasksData
-      : tasksData.filter(task => task.status === selectedFilter);
-
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: number) => {
     switch (status) {
-      case 'İcra olunub':
-        return '#00C0EF';
-      case 'İcra olunur':
-        return '#FFC107';
-      case 'İcra olunmamış':
-        return '#F44336';
+      case 0:
+        return '#F44336'; // Canceled
+      case 1:
+        return '#FFC107'; // Pending
+      case 2:
+        return '#00C0EF'; // InProgress
+      case 3:
+        return '#4CAF50'; // Completed
       default:
         return '#CCC';
     }
   };
+  const API_URL = 'http://192.168.10.119:5206/mobile/CollectorTask/GetAll';
 
-  const renderTask = ({item}: {item: Task}) => (
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+  const [tasksData, setTasksData] = useState<any>([]);
+
+  const navigation = useNavigation<NavigationProp>();
+  const [filteredTasks, setFilteredTasks] = useState<any>([]);
+
+  useEffect(() => {
+    const fetchTasks = async () => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const token = await AsyncStorage.getItem('userToken');
+        if (!token) {
+          setError('User token tapılmadı');
+          setLoading(false);
+          return;
+        }
+
+        console.log('📌 Token:', token);
+
+        const response = await axios.get(API_URL, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        console.log('✅ Task Data:', response.data);
+        setTasksData(response.data);
+        setFilteredTasks(response.data.tasks);
+      } catch (err: any) {
+        console.log('🚨 API Xətası:', err);
+        setError('Məlumatlar yüklənmədi');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTasks();
+  }, []);
+
+  const filterTasks = (filter: any) => {
+    let filtered = [...tasksData.tasks];
+    if (filter === 'İcra olunan') {
+      filtered = filtered.filter((task: any) => task.status === 2); // InProgress
+    } else if (filter === 'İcra olunmuş') {
+      filtered = filtered.filter((task: any) => task.status === 3); // Completed
+    } else if (filter === 'İcra olunmamış') {
+      filtered = filtered.filter((task: any) => task.status === 1); // Pending
+    }
+    setSelectedFilter(filter);
+    setFilteredTasks(filtered); // Update filtered tasks
+  };
+
+  const renderTask = ({item}: any) => (
     <TouchableOpacity
       onPress={() => navigation.navigate('TerminalEtrafli', {taskData: item})}>
       <View
@@ -121,26 +113,14 @@ const TasksScreen: React.FC = () => {
           {borderLeftWidth: 3, borderLeftColor: getStatusColor(item.status)},
         ]}>
         <View style={styles.taskContent}>
-          <Text style={styles.taskTitle}>Terminal ID</Text>
-          <Text style={styles.taskText}>Rota: {item.route}</Text>
-          <Text style={styles.taskText}>Terminal: {item.terminal}</Text>
+          <Text style={styles.taskTitle}>Terminal ID : {item.code}</Text>
+          <Text style={styles.taskText}>Rota: {item.routeName}</Text>
         </View>
-        <Text style={styles.taskDistance}>{item.distance}</Text>
+        <Text style={styles.taskDistance}>Adress: {item.address}</Text>
       </View>
     </TouchableOpacity>
   );
 
-  const passedCount = tasksData.filter(
-    task => task.status === 'İcra olunmamış',
-  ).length;
-  const completedCount = tasksData.filter(
-    task => task.status === 'İcra olunub',
-  ).length;
-  const remainingCount = tasksData.filter(
-    task => task.status === 'İcra olunur',
-  ).length;
-
-  const navigation = useNavigation();
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -153,15 +133,15 @@ const TasksScreen: React.FC = () => {
 
       <View style={styles.statusContainer}>
         <View style={styles.statusItem}>
-          <Text style={styles.statusText}>{passedCount}</Text>
-          <Text style={styles.statusLabel}>Vaxtı keçmiş</Text>
+          <Text style={styles.statusText}>{tasksData?.remainingTaskCount}</Text>
+          <Text style={styles.statusLabel}>Icra olunan</Text>
         </View>
         <View style={styles.statusItem}>
-          <Text style={styles.statusText}>{completedCount}</Text>
+          <Text style={styles.statusText}>{tasksData?.completedTaskCount}</Text>
           <Text style={styles.statusLabel}>İcra olunmuş</Text>
         </View>
         <View style={styles.statusItem}>
-          <Text style={styles.statusText}>{remainingCount}</Text>
+          <Text style={styles.statusText}>{tasksData?.pendingTaskCount}</Text>
           <Text style={styles.statusLabel}>Qalan</Text>
         </View>
       </View>
@@ -171,23 +151,33 @@ const TasksScreen: React.FC = () => {
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.filterContentContainer}>
-          {filterOptions.map(filter => (
-            <TouchableOpacity
-              key={filter}
-              style={[
-                styles.filterButton,
-                selectedFilter === filter && styles.activeFilter,
-              ]}
-              onPress={() => setSelectedFilter(filter)}>
-              <Dot
-                name="dot-fill"
-                size={16}
-                color={getStatusColor(filter)}
-                style={{marginRight: 6}}
-              />
-              <Text style={styles.filterText}>{filter}</Text>
-            </TouchableOpacity>
-          ))}
+          {['Hamısı', 'İcra olunmamış', 'İcra olunan', 'İcra olunmuş'].map(
+            filter => (
+              <TouchableOpacity
+                key={filter}
+                style={[
+                  styles.filterButton,
+                  selectedFilter === filter && styles.activeFilter,
+                ]}
+                onPress={() => filterTasks(filter)}>
+                <Dot
+                  name="dot-fill"
+                  size={16}
+                  color={getStatusColor(
+                    filter === 'Hamısı'
+                      ? -1
+                      : filter === 'İcra olunan'
+                      ? 2
+                      : filter === 'İcra olunmuş'
+                      ? 3
+                      : 1,
+                  )}
+                  style={{marginRight: 6}}
+                />
+                <Text style={styles.filterText}>{filter}</Text>
+              </TouchableOpacity>
+            ),
+          )}
         </ScrollView>
       </View>
 

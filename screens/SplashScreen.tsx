@@ -6,15 +6,19 @@ const SplashScreen = ({navigation}: any) => {
   useEffect(() => {
     const checkUser = async () => {
       try {
+        const userToken = await AsyncStorage.getItem('userToken');
         const userPin = await AsyncStorage.getItem('userPin');
-        if (userPin) {
+        const isLoggedIn = await AsyncStorage.getItem('isLoggedIn');
+
+        if (userToken && userPin && isLoggedIn) {
+          navigation.replace('Ana səhifə');
+        } else if (userToken) {
           navigation.replace('PinSetup');
         } else {
           navigation.replace('Login');
         }
       } catch (error) {
         console.log('AsyncStorage xətası:', error);
-        navigation.replace('Login');
       }
     };
 
