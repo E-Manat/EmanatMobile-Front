@@ -1,21 +1,69 @@
-import React from 'react';
-import {View, Text, Image, TouchableOpacity, StyleSheet} from 'react-native';
+import React, {useState} from 'react';
+import {
+  View,
+  Text,
+  Image,
+  TouchableOpacity,
+  StyleSheet,
+  Modal,
+} from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome6';
 import Icon1 from 'react-native-vector-icons/MaterialIcons';
+import {apiService} from '../services/apiService';
 
 const TerminalDetailsScreen = ({route, navigation}: any) => {
-  // const {taskData} = route.params;
+  const {taskData} = route.params;
+  console.log(taskData, 'Task Data');
+  console.log(route);
 
-  const getStatusColor = (status: any) => {
+  const getStatusColor = (status: number) => {
     switch (status) {
-      case 'İcra olunub':
-        return '#00C0EF';
-      case 'İcra olunur':
-        return '#FFC107';
-      case 'İcra olunmamış':
-        return '#F44336';
+      case 1:
+        return '#F44336'; // İcra olunmamış
+      case 2:
+        return '#FFC107'; // İcra olunur
+      case 3:
+        return '#00C0EF'; // İcra olunub
       default:
         return '#CCC';
+    }
+  };
+
+  const [confirmVisible, setConfirmVisible] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const handleStartTask = async () => {
+    try {
+      setLoading(true);
+      setConfirmVisible(false);
+
+      const res = await apiService.post('/mobile/CollectorTask/StartTask', {
+        taskId: taskData.id,
+      });
+      console.log(res, 'res');
+      navigation.navigate('Route');
+    } catch (error) {
+      console.error('Tapşırığa başlama xətası:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+  const getStatusText = (status: number) => {
+    switch (status) {
+      case 0:
+        return 'Tapşırığa başla';
+      case 1:
+        return 'Tapşırıq icra olunur (Yoldadır)';
+      case 2:
+        return 'İnkassator terminala çatıb';
+      case 3:
+        return 'İnkassiya prosesi gedir';
+      case 4:
+        return 'Tapşırıq tamamlanıb';
+      case 5:
+        return 'Tapşırıq ləğv olunub';
+      default:
+        return 'Naməlum status';
     }
   };
 
@@ -31,40 +79,85 @@ const TerminalDetailsScreen = ({route, navigation}: any) => {
 
       <View style={styles.terminalInfo}>
         <Text style={styles.terminalName}>
-          <Icon name="location-dot" size={20} color="#1976D2" />
-          <Text>Terminal 2436</Text>
+          <Icon name="location-dot" size={20} color="#1976D2" /> Terminal :
+          {taskData?.terminal?.code}
         </Text>
         <View style={styles.statusContainer}>
-          <Text style={styles.location}>Araz Azadlıq Minimarket</Text>
-          <Text style={styles.distance}>2.9 km</Text>
+          <Text style={styles.location}>{taskData.terminal?.address}</Text>
         </View>
       </View>
 
       <Image source={require('../assets/img/araz.png')} style={styles.image} />
 
       <View style={styles.details}>
-        <Text style={styles.detailTitle}>Araz Azadlıq Minimarket</Text>
+        <Text style={styles.detailTitle}>{taskData.routeName}</Text>
+
         <View style={styles.detailRow}>
           <Icon name="location-dot" size={20} color="#1976D2" />
-          <Text style={styles.detailText}>
-            Azadlıq avenu 15a/4 Baku AZ, Bakı
-          </Text>
+          <Text style={styles.detailText}>{taskData.terminal?.address}</Text>
         </View>
+
         <View style={styles.detailRow}>
           <Icon1 name="watch-later" size={20} color="#1976D2" />
-          <Text style={styles.detailText}>08:00 - 23:00</Text>
+          <Text style={styles.detailText}>
+            {taskData.terminal.workingHours || 'Qeyd olunmayib'}
+          </Text>
         </View>
+
         <View style={styles.detailRow}>
           <Icon name="phone" size={20} color="#1976D2" />
-          <Text style={styles.detailText}>055-515-85-01</Text>
+          <Text style={styles.detailText}>
+            {taskData.terminal.phone || 'Qeyd olunmayib'}
+          </Text>
         </View>
       </View>
 
-      <TouchableOpacity
-        style={styles.startButton}
-        onPress={() => navigation.navigate('Route')}>
-        <Text style={styles.startButtonText}>Tapşırığa başla</Text>
-      </TouchableOpacity>
+      <Modal
+        visible={confirmVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setConfirmVisible(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <Text style={styles.modalTitle}>
+              Tapşırığa başlamaq istəyirsiniz?
+            </Text>
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, {backgroundColor: '#1976D2'}]}
+                onPress={handleStartTask}
+                disabled={loading}>
+                <Text style={styles.modalButtonText}>Bəli</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, {backgroundColor: '#ccc'}]}
+                onPress={() => setConfirmVisible(false)}>
+                <Text style={[styles.modalButtonText, {color: '#000'}]}>
+                  İmtina
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {taskData.status === 0 ? (
+        <TouchableOpacity
+          style={styles.startButton}
+          onPress={() => setConfirmVisible(true)}>
+          <Text style={styles.startButtonText}>Tapşırığa başla</Text>
+        </TouchableOpacity>
+      ) : (
+        <View
+          style={[
+            styles.startButton,
+            {backgroundColor: '#eee', borderColor: '#ccc', borderWidth: 1},
+          ]}>
+          <Text style={[styles.startButtonText, {color: '#999'}]}>
+            {getStatusText(taskData.status)}
+          </Text>
+        </View>
+      )}
     </View>
   );
 };
@@ -154,6 +247,38 @@ const styles = StyleSheet.create({
   startButtonText: {
     color: '#1976D2',
     fontSize: 16,
+    fontWeight: 'bold',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContainer: {
+    width: '80%',
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    padding: 20,
+    elevation: 5,
+  },
+  modalTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+  },
+  modalButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+  },
+  modalButtonText: {
+    color: '#fff',
     fontWeight: 'bold',
   },
 });

@@ -27,16 +27,24 @@ const PinSetupScreen = () => {
     fetchStoredPin();
   }, []);
 
+  const handleForgotPin = async () => {
+    await AsyncStorage.setItem('forgotPin', 'true');
+    Alert.alert('PIN sıfırlanacaq', 'Zəhmət olmasa yenidən giriş edin');
+    navigation.replace('Login');
+  };
+
   const handlePress = async (num: string) => {
     if (pin.length < 4) {
       const newPin = pin + num;
       setPin(newPin);
 
       if (newPin.length === 4) {
-        if (storedPin) {
+        const forgotPin = await AsyncStorage.getItem('forgotPin');
+
+        if (storedPin && forgotPin !== 'true') {
           if (newPin === storedPin) {
             Alert.alert('PIN təsdiqləndi', 'Siz uğurla daxil oldunuz!');
-            await AsyncStorage.setItem('isLoggedIn', 'true'); // Giriş saxlanır
+            await AsyncStorage.setItem('isLoggedIn', 'true');
             navigation.replace('Ana səhifə');
           } else {
             Alert.alert('Xəta', 'Daxil etdiyiniz PIN yanlışdır!');
@@ -44,7 +52,8 @@ const PinSetupScreen = () => {
           }
         } else {
           await AsyncStorage.setItem('userPin', newPin);
-          await AsyncStorage.setItem('isLoggedIn', 'true'); // İlk giriş saxlanır
+          await AsyncStorage.setItem('isLoggedIn', 'true');
+          await AsyncStorage.removeItem('forgotPin'); // Artıq unudulmadı
           Alert.alert('PIN yaradıldı', 'Siz uğurla PIN kodu təyin etdiniz!');
           navigation.replace('Ana səhifə');
         }
@@ -84,6 +93,16 @@ const PinSetupScreen = () => {
           <Text style={styles.numText}>⌫</Text>
         </TouchableOpacity>
       </View>
+
+      <TouchableOpacity onPress={handleForgotPin}>
+        <Text
+          style={[
+            styles.title,
+            {textDecorationLine: 'underline', color: '#1269B5'},
+          ]}>
+          PIN kodu unutmusunuz?
+        </Text>
+      </TouchableOpacity>
     </View>
   );
 };

@@ -9,12 +9,14 @@ import {
   TouchableOpacity,
   StyleSheet,
   ScrollView,
+  ActivityIndicator,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
 import Dot from 'react-native-vector-icons/Octicons';
 
 import {RootStackParamList} from '../App';
 import {StackNavigationProp} from '@react-navigation/stack';
+import {apiService} from '../services/apiService';
 
 type NavigationProp = StackNavigationProp<RootStackParamList, 'PinSetup'>;
 
@@ -34,19 +36,20 @@ const TasksScreen: React.FC = () => {
 
   const getStatusColor = (status: number) => {
     switch (status) {
-      case 0:
-        return '#F44336'; // Canceled
-      case 1:
-        return '#FFC107'; // Pending
-      case 2:
-        return '#00C0EF'; // InProgress
+      case 5:
+        return '#EF4444'; // Canceled (Ləğv edilib)
       case 3:
-        return '#4CAF50'; // Completed
+      case 2:
+      case 1:
+        return '#FFB600'; // In progress (İcra olunur)
+      case 4:
+        return '#29C0B9'; // Completed (Tamamlanıb)
+      case 0:
+        return '#9E9E9E'; // Not started (Başlanmayıb)
       default:
         return '#CCC';
     }
   };
-  const API_URL = 'http://192.168.10.119:5206/mobile/CollectorTask/GetAll';
 
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -57,32 +60,19 @@ const TasksScreen: React.FC = () => {
 
   useEffect(() => {
     const fetchTasks = async () => {
-      setLoading(true);
-      setError(null);
-
       try {
-        const token = await AsyncStorage.getItem('userToken');
-        if (!token) {
-          setError('User token tapılmadı');
-          setLoading(false);
-          return;
-        }
-
-        console.log('📌 Token:', token);
-
-        const response = await axios.get(API_URL, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        });
-
-        console.log('✅ Task Data:', response.data);
-        setTasksData(response.data);
-        setFilteredTasks(response.data.tasks);
-      } catch (err: any) {
-        console.log('🚨 API Xətası:', err);
-        setError('Məlumatlar yüklənmədi');
+        setLoading(true);
+        const userRole = await AsyncStorage.getItem('roleName');
+        const endpoint =
+          userRole === 'Collector'
+            ? '/mobile/CollectorTask/GetAll'
+            : '/mobile/TechnicianTask/GetAll';
+        const response = await apiService.get(endpoint);
+        console.log(response, 'response');
+        setTasksData(response);
+        setFilteredTasks(response.tasks);
+      } catch (error) {
+        console.error('Reportlar alınarkən xəta:', error);
       } finally {
         setLoading(false);
       }
@@ -93,20 +83,44 @@ const TasksScreen: React.FC = () => {
 
   const filterTasks = (filter: any) => {
     let filtered = [...tasksData.tasks];
-    if (filter === 'İcra olunan') {
-      filtered = filtered.filter((task: any) => task.status === 2); // InProgress
-    } else if (filter === 'İcra olunmuş') {
-      filtered = filtered.filter((task: any) => task.status === 3); // Completed
-    } else if (filter === 'İcra olunmamış') {
-      filtered = filtered.filter((task: any) => task.status === 1); // Pending
+    switch (filter) {
+      case 'İcra olunmamış':
+        filtered = filtered.filter((task: any) => task.status === 0); // NotStarted
+        break;
+      case 'İcra olunan':
+        filtered = filtered.filter((task: any) =>
+          [1, 2, 3].includes(task.status),
+        ); // InTransit, Arrived, CollectionInProgress
+        break;
+      case 'İcra olunmuş':
+        filtered = filtered.filter((task: any) => task.status === 4); // Completed
+        break;
+      case 'Ləğv edilmiş':
+        filtered = filtered.filter((task: any) => task.status === 5); // Canceled
+        break;
+      default:
+        break;
     }
+
     setSelectedFilter(filter);
-    setFilteredTasks(filtered); // Update filtered tasks
+    setFilteredTasks(filtered);
   };
 
   const renderTask = ({item}: any) => (
     <TouchableOpacity
-      onPress={() => navigation.navigate('TerminalEtrafli', {taskData: item})}>
+      onPress={async () => {
+        try {
+          setLoading(true);
+          const taskDetails = await apiService.get(
+            `/mobile/CollectorTask/GetById?id=${item.id}`,
+          );
+          navigation.navigate('TerminalEtrafli', {taskData: taskDetails});
+        } catch (err) {
+          console.error('Detalları alarkən xəta:', err);
+        } finally {
+          setLoading(false);
+        }
+      }}>
       <View
         style={[
           styles.taskCard,
@@ -151,43 +165,58 @@ const TasksScreen: React.FC = () => {
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.filterContentContainer}>
-          {['Hamısı', 'İcra olunmamış', 'İcra olunan', 'İcra olunmuş'].map(
-            filter => (
-              <TouchableOpacity
-                key={filter}
-                style={[
-                  styles.filterButton,
-                  selectedFilter === filter && styles.activeFilter,
-                ]}
-                onPress={() => filterTasks(filter)}>
+          {[
+            'Hamısı',
+            'İcra olunmamış',
+            'İcra olunan',
+            'İcra olunmuş',
+            'Ləğv edilmiş',
+          ].map(filter => (
+            <TouchableOpacity
+              key={filter}
+              style={[
+                styles.filterButton,
+                selectedFilter === filter && styles.activeFilter,
+              ]}
+              onPress={() => filterTasks(filter)}>
+              {filter !== 'Hamısı' && (
                 <Dot
                   name="dot-fill"
                   size={16}
                   color={getStatusColor(
-                    filter === 'Hamısı'
-                      ? -1
-                      : filter === 'İcra olunan'
-                      ? 2
+                    filter === 'İcra olunan'
+                      ? 1
                       : filter === 'İcra olunmuş'
-                      ? 3
-                      : 1,
+                      ? 4
+                      : filter === 'Ləğv edilmiş'
+                      ? 5
+                      : 0,
                   )}
                   style={{marginRight: 6}}
                 />
-                <Text style={styles.filterText}>{filter}</Text>
-              </TouchableOpacity>
-            ),
-          )}
+              )}
+              <Text style={styles.filterText}>{filter}</Text>
+            </TouchableOpacity>
+          ))}
         </ScrollView>
       </View>
 
       <ScrollView contentContainerStyle={styles.mainContainer}>
-        <FlatList
-          data={filteredTasks}
-          keyExtractor={item => item.id}
-          renderItem={renderTask}
-          ListFooterComponent={<View style={{height: 20}} />}
-        />
+        {loading ? (
+          <View
+            style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+            <ActivityIndicator size="large" color="#2D64AF" />
+          </View>
+        ) : filteredTasks?.length > 0 ? (
+          <FlatList
+            data={filteredTasks}
+            keyExtractor={item => item.id}
+            renderItem={renderTask}
+            ListFooterComponent={<View style={{height: 20}} />}
+          />
+        ) : (
+          <Text style={styles.noResult}>Nəticə tapılmadı</Text>
+        )}
       </ScrollView>
     </View>
   );
@@ -287,5 +316,11 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: '600',
     color: '#A8A8A8',
+  },
+  noResult: {
+    textAlign: 'center',
+    color: '#A8A8A8',
+    fontSize: 16,
+    marginTop: 20,
   },
 });

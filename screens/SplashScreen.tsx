@@ -25,6 +25,23 @@ const SplashScreen = ({navigation}: any) => {
     checkUser();
   }, [navigation]);
 
+  useEffect(() => {
+    const logAllAsyncStorage = async () => {
+      try {
+        const keys = await AsyncStorage.getAllKeys();
+        const result = await AsyncStorage.multiGet(keys);
+        console.log('AsyncStorage content:');
+        result.forEach(([key, value]) => {
+          console.log(`${key}: ${value}`);
+        });
+      } catch (error) {
+        console.error('Error reading AsyncStorage:', error);
+      }
+    };
+
+    logAllAsyncStorage();
+  }, []);
+
   return (
     <View style={styles.container}>
       <Image

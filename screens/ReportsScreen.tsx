@@ -1,5 +1,5 @@
 import {useNavigation} from '@react-navigation/native';
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   View,
   Text,
@@ -9,51 +9,17 @@ import {
   StyleSheet,
   TouchableWithoutFeedback,
   Keyboard,
+  ActivityIndicator,
+  Modal,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
 import IconDoc from 'react-native-vector-icons/Ionicons';
 
-const DATA = [
-  {
-    id: '1',
-    title: '32kb',
-    date: '07/08/2024',
-    time: '15:30-17:00',
-    status: 'Tamamlandı',
-  },
-  {
-    id: '2',
-    title: 'Terminal ID 2341',
-    date: '07/08/2024',
-    time: '15:30-17:00',
-    status: 'Tamamlandı',
-  },
-  {
-    id: '3',
-    title: 'Terminal ID 4533',
-    date: '07/08/2024',
-    time: '15:30-17:00',
-    status: 'Tamamlandı',
-  },
-  {
-    id: '4',
-    title: 'Terminal ID 0981',
-    date: '07/08/2024',
-    time: '15:30-17:00',
-    status: 'Tamamlandı',
-  },
-  {
-    id: '5',
-    title: 'Terminal ID 0912',
-    date: '07/08/2024',
-    time: '15:30-17:00',
-    status: 'Tamamlandı',
-  },
-];
-
 import {RootStackParamList} from '../App';
 import {StackNavigationProp} from '@react-navigation/stack';
-
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import moment from 'moment';
+import {apiService} from '../services/apiService';
 type NavigationProp = StackNavigationProp<RootStackParamList, 'Hesabatlar'>;
 
 const ReportsScreen = () => {
@@ -76,37 +42,40 @@ const ReportsScreen = () => {
     );
   };
 
-  const filteredData = DATA.filter(
-    item =>
-      item.title.toLowerCase().includes(searchText.toLowerCase()) ||
-      item.date.includes(searchText),
-  );
+  const [reports, setReports] = useState<any>([]);
 
-  const renderItem = ({item}: any) => (
-    <TouchableOpacity
-      onPress={() => navigation.navigate('HesabatEtrafli', {report: item})}>
-      <View style={styles.card}>
-        <IconDoc
-          name="document-outline"
-          size={24}
-          color="#2D64AF"
-          style={styles.icon}
-        />
-        <View style={styles.textContainer}>
-          <Text style={styles.title}>
-            {highlightText(item.title, searchText)}
-          </Text>
-          <Text style={styles.date}>
-            {highlightText(item.date, searchText)}
-          </Text>
+  const renderItem = ({item}: any) => {
+    const formattedDate = moment(item.createdDate).format('MM/DD/YYYY');
+
+    const reportStatus =
+      item.reportStatus === 0 ? 'Gözləmədədir' : 'Tamamlanıb';
+
+    return (
+      <TouchableOpacity
+        onPress={() => navigation.navigate('HesabatEtrafli', {report: item})}>
+        <View style={styles.card}>
+          <IconDoc
+            name="document-outline"
+            size={24}
+            color="#2D64AF"
+            style={styles.icon}
+          />
+          <View style={styles.textContainer}>
+            <Text style={styles.title}>
+              {highlightText(item.code, searchText)}
+            </Text>
+            <Text style={styles.date}>
+              {highlightText(formattedDate, searchText)}
+            </Text>
+          </View>
+          <View style={styles.statusContainer}>
+            <Text style={styles.time}>{item.id}</Text>
+            <Text style={styles.status}>{reportStatus}</Text>
+          </View>
         </View>
-        <View style={styles.statusContainer}>
-          <Text style={styles.time}>{item.time}</Text>
-          <Text style={styles.status}>{item.status}</Text>
-        </View>
-      </View>
-    </TouchableOpacity>
-  );
+      </TouchableOpacity>
+    );
+  };
 
   const FILTER_OPTIONS = [
     'Cari ay',
@@ -117,26 +86,69 @@ const ReportsScreen = () => {
     'Hamısı',
   ];
 
+  const getDateFilterParam = (filter: string): number => {
+    switch (filter) {
+      case 'Cari ay':
+        return 1; // CurrentMonth
+      case 'Keçən həftə':
+        return 2; // LastWeek
+      case 'Keçən ay':
+        return 3; // LastMonth
+      case 'Cari il':
+        return 4; // CurrentYear
+      case 'Keçən il':
+        return 5; // LastYear
+      default:
+        return 0; // None
+    }
+  };
+
   const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
+
+  const [loading, setLoading] = useState(false);
+
+  const fetchReports = async () => {
+    try {
+      setLoading(true);
+      const selectedFilter = selectedFilters[0] || 'Hamısı';
+      const dateFilterParam = getDateFilterParam(selectedFilter);
+
+      const data = await apiService.get(
+        `/mobile/Report/GetAll?Search=${searchText}&DateFilter=${dateFilterParam}`,
+      );
+
+      setReports(data);
+    } catch (error) {
+      console.error('Reportlar alınarkən xəta:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchReports();
+  }, [selectedFilters]);
 
   const renderFilterOption = (option: string) => (
     <TouchableOpacity
       key={option}
       style={{flexDirection: 'row', alignItems: 'center', marginVertical: 5}}
-      onPress={() => setSelectedFilters([option])}>
+      onPress={() => {
+        setSelectedFilters([option]);
+      }}>
       <View
         style={{
-          width: 20,
-          height: 20,
+          width: 30, // Increase width
+          height: 30, // Increase height
           borderRadius: 5,
-          borderWidth: 1,
+          borderWidth: 2, // Slightly thicker border
           borderColor: '#2D64AF',
           alignItems: 'center',
           justifyContent: 'center',
           marginRight: 10,
         }}>
         {selectedFilters.includes(option) && (
-          <Icon name="check" size={16} color="#2D64AF" />
+          <Icon name="check" size={20} color="#2D64AF" />
         )}
       </View>
       <Text style={{color: '#000', fontSize: 16}}>{option}</Text>
@@ -178,7 +190,58 @@ const ReportsScreen = () => {
               />
             </TouchableOpacity>
           ) : null}
+
+          <TouchableOpacity onPress={() => setModalVisible(!modalVisible)}>
+            <Icon
+              name="filter"
+              size={18}
+              color="#2D64AF"
+              style={styles.filterIcon}
+            />
+          </TouchableOpacity>
         </View>
+
+        <Modal
+          animationType="slide"
+          transparent={true}
+          visible={modalVisible}
+          onRequestClose={() => setModalVisible(false)}>
+          <TouchableWithoutFeedback onPress={() => setModalVisible(false)}>
+            <View style={styles.modalOverlay}>
+              <TouchableWithoutFeedback onPress={() => null}>
+                <View style={styles.modalContent}>
+                  <Text style={styles.modalTitle}>Filtrlə</Text>
+
+                  {FILTER_OPTIONS.map(option => renderFilterOption(option))}
+
+                  <View style={{alignItems: 'center', marginVertical: 20}}>
+                    <TouchableOpacity
+                      style={{
+                        backgroundColor: '#2D64AF',
+                        paddingVertical: 10,
+                        paddingHorizontal: 30,
+                        borderRadius: 10,
+                      }}
+                      onPress={() => {
+                        fetchReports();
+                        setModalVisible(false);
+                      }}>
+                      <Text
+                        style={{
+                          color: '#fff',
+                          fontSize: 16,
+                          fontWeight: 'bold',
+                        }}>
+                        Təsdiq et
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </TouchableWithoutFeedback>
+            </View>
+          </TouchableWithoutFeedback>
+        </Modal>
+
         <View style={{alignItems: 'center', marginVertical: 20}}>
           <TouchableOpacity
             style={{
@@ -194,12 +257,16 @@ const ReportsScreen = () => {
           </TouchableOpacity>
         </View>
 
-        {/* <Icon name="filter" /> */}
-        {filteredData.length > 0 ? (
+        {loading ? (
+          <View
+            style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+            <ActivityIndicator size="large" color="#2D64AF" />
+          </View>
+        ) : reports.length > 0 ? (
           <FlatList
-            data={filteredData}
+            data={reports}
             renderItem={renderItem}
-            keyExtractor={item => item.id}
+            keyExtractor={item => item.id.toString()}
             showsVerticalScrollIndicator={false}
           />
         ) : (
@@ -231,7 +298,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     borderRadius: 10,
     marginVertical: 15,
+    justifyContent: 'space-between', // Ensures icons and input are spaced well
   },
+  filterIcon: {
+    marginLeft: 10, // Space between the search input and filter icon
+  },
+
   input: {fontSize: 14, color: '#2D64AF', flex: 1, height: 40},
   searchIcon: {marginRight: 10},
   clearIcon: {marginLeft: 10},
@@ -263,5 +335,39 @@ const styles = StyleSheet.create({
     color: '#A8A8A8',
     fontSize: 16,
     marginTop: 20,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'flex-end',
+  },
+
+  modalContent: {
+    backgroundColor: '#fff',
+    padding: 20,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingBottom: 30,
+  },
+
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#2D64AF',
+    marginBottom: 15,
+  },
+
+  applyButton: {
+    marginTop: 20,
+    backgroundColor: '#2D64AF',
+    paddingVertical: 10,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+
+  applyButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });

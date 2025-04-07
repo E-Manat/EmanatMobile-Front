@@ -13,11 +13,13 @@ import {
   ScrollView,
   Keyboard,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
 import {launchCamera} from 'react-native-image-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Toast from 'react-native-toast-message';
+import {apiService} from '../services/apiService';
 import {RootStackParamList} from '../App';
 import {StackNavigationProp} from '@react-navigation/stack';
 
@@ -30,6 +32,7 @@ const ProfileScreen = () => {
   const [profileImage, setProfileImage] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [isEdited, setIsEdited] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const navigation = useNavigation<NavigationProp>();
 
@@ -61,27 +64,12 @@ const ProfileScreen = () => {
 
   const loadProfileData = async () => {
     try {
-      const token = await AsyncStorage.getItem('userToken'); // Token varsa əlavə et
-      if (!token) {
-        console.log('Token tapılmadı!');
-        return;
-      }
+      setLoading(true);
 
-      const response = await fetch(
-        'http://192.168.10.119:5206/auth/Auth/GetProfile',
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`, // Əgər API token tələb edirsə
-          },
-        },
-      );
+      const result: any = await apiService.get('/auth/Auth/GetProfile');
+      console.log('Profil məlumatları:', result);
 
-      const result = await response.json();
-      console.log('İstifadəçi məlumatları:', result);
-
-      if (response.ok) {
+      if (result) {
         setFirstName(result.firstName || 'Ad yoxdur');
         setLastName(result.lastName || 'Soyad yoxdur');
         setPhone(result.phone || 'N/A');
@@ -99,6 +87,7 @@ const ProfileScreen = () => {
         };
 
         await AsyncStorage.setItem('profileData', JSON.stringify(profileData));
+        setLoading(false);
       } else {
         console.log('API-dən uğursuz cavab:', result);
       }
@@ -146,7 +135,7 @@ const ProfileScreen = () => {
               await AsyncStorage.removeItem('isLoggedIn');
 
               console.log('AsyncStorage təmizləndi');
-              navigation.replace('Login'); // **Login səhifəsinə yönləndir**
+              navigation.replace('Login'); 
             } catch (error) {
               console.log('Çıxış zamanı xəta:', error);
             }
@@ -192,8 +181,9 @@ const ProfileScreen = () => {
               </TouchableOpacity>
 
               <Text style={styles.profileName}>
-                {' '}
-                {firstName} {lastName}
+                <Text style={styles.profileName}>
+                  {firstName.toUpperCase()} {lastName.toUpperCase()}
+                </Text>
               </Text>
             </View>
 
@@ -215,60 +205,73 @@ const ProfileScreen = () => {
               </TouchableOpacity>
             </Modal>
 
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>Əlaqə nömrəsi</Text>
-              <View style={styles.inputWrapper}>
-                <TextInput
-                  style={styles.input}
-                  value={phone}
-                  onChangeText={text => {
-                    setPhone(text);
-                    setIsEdited(true);
-                  }}
-                  placeholder="Əlaqə nömrəsi"
-                />
-                <Icon name="edit-2" size={20} color="gray" />
+            {loading ? (
+              <View
+                style={{
+                  flex: 1,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                }}>
+                <ActivityIndicator size="large" color="#2D64AF" />
               </View>
-            </View>
+            ) : (
+              <>
+                <View style={styles.inputContainer}>
+                  <Text style={styles.label}>Əlaqə nömrəsi</Text>
+                  <View style={styles.inputWrapper}>
+                    <TextInput
+                      style={styles.input}
+                      value={phone}
+                      onChangeText={text => {
+                        setPhone(text);
+                        setIsEdited(true);
+                      }}
+                      placeholder="Əlaqə nömrəsi"
+                    />
+                    <Icon name="edit-2" size={20} color="gray" />
+                  </View>
+                </View>
 
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>Email</Text>
-              <View style={styles.inputWrapper}>
-                <TextInput
-                  style={styles.input}
-                  value={email}
-                  onChangeText={text => {
-                    setEmail(text);
-                    setIsEdited(true);
-                  }}
-                  placeholder="Email"
-                />
-                <Icon name="edit-2" size={20} color="gray" />
-              </View>
-            </View>
+                <View style={styles.inputContainer}>
+                  <Text style={styles.label}>Email</Text>
+                  <View style={styles.inputWrapper}>
+                    <TextInput
+                      style={styles.input}
+                      value={email}
+                      onChangeText={text => {
+                        setEmail(text);
+                        setIsEdited(true);
+                      }}
+                      placeholder="Email"
+                    />
+                    <Icon name="edit-2" size={20} color="gray" />
+                  </View>
+                </View>
 
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>Ünvan</Text>
-              <View style={styles.inputWrapper}>
-                <TextInput
-                  style={styles.input}
-                  value={address}
-                  onChangeText={text => {
-                    setAddress(text);
-                    setIsEdited(true);
-                  }}
-                  placeholder="Ünvan"
-                />
-                <Icon name="edit-2" size={20} color="gray" />
-              </View>
-            </View>
+                <View style={styles.inputContainer}>
+                  <Text style={styles.label}>Ünvan</Text>
+                  <View style={styles.inputWrapper}>
+                    <TextInput
+                      style={styles.input}
+                      value={address}
+                      onChangeText={text => {
+                        setAddress(text);
+                        setIsEdited(true);
+                      }}
+                      placeholder="Ünvan"
+                    />
+                    <Icon name="edit-2" size={20} color="gray" />
+                  </View>
+                </View>
 
-            {isEdited && (
-              <TouchableOpacity
-                style={styles.saveButton}
-                onPress={saveProfileData}>
-                <Text style={styles.saveButtonText}>Yadda saxla</Text>
-              </TouchableOpacity>
+                {isEdited && (
+                  <TouchableOpacity
+                    style={styles.saveButton}
+                    onPress={saveProfileData}>
+                    <Text style={styles.saveButtonText}>Yadda saxla</Text>
+                  </TouchableOpacity>
+                )}
+              </>
             )}
 
             <Toast />

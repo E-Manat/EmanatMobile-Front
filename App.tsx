@@ -16,6 +16,7 @@ import PinSetupScreen from './screens/PinSetupScreen';
 import TerminalDetailsScreen from './screens/TerminalDetailsScreen';
 import NewReportScreen from './screens/NewReportScreen';
 import RouteScreen from './screens/RouteScreen';
+import TaskProcessScreen from './screens/TaskProcessScreen';
 
 const Stack = createNativeStackNavigator();
 enableScreens();
@@ -54,6 +55,7 @@ const App = () => {
           <Stack.Screen name="Hesabatlar" component={ReportsScreen} />
           <Stack.Screen name="YeniHesabat" component={NewReportScreen} />
           <Stack.Screen name="Route" component={RouteScreen} />
+          <Stack.Screen name="TaskProcess" component={TaskProcessScreen} />
           <Stack.Screen
             name="HesabatEtrafli"
             component={DetailedReportScreen}

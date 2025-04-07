@@ -28,7 +28,7 @@ const LoginScreen = () => {
   const [focusedInput, setFocusedInput] = useState<any>(null);
   const [loading, setLoading] = useState(false);
 
-  const API_URL = 'http://192.168.10.119:5206/auth/Auth/Login';
+  const API_URL = 'https://emanat-api.siesco.studio/auth/Auth/Login';
 
   const handleLogin = async () => {
     setEmailError('');
@@ -47,9 +47,11 @@ const LoginScreen = () => {
         {email, password},
         {headers: {'Content-Type': 'application/json'}},
       );
+      console.log(response);
 
       if (response.status === 200) {
         await AsyncStorage.setItem('userToken', response.data.accessToken);
+        await AsyncStorage.setItem('roleName', response.data.roleName);
         navigation.navigate('PinSetup');
       } else {
         Alert.alert('Xəta', 'Gözlənilməz bir problem baş verdi!');
