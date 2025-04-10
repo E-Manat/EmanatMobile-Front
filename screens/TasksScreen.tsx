@@ -24,7 +24,7 @@ type NavigationProp = StackNavigationProp<RootStackParamList, 'PinSetup'>;
 interface Task {
   id: string;
   date: string;
-  status: 'İcra olunub' | 'İcra olunur' | 'İcra olunmamış';
+  status: 'Tamamlanıb' | 'İcra olunur' | 'İcra olunmamış';
   route: string;
   terminal: number;
   distance: string;
@@ -93,7 +93,7 @@ const TasksScreen: React.FC = () => {
           [1, 2, 3].includes(task.status),
         ); // InTransit, Arrived, CollectionInProgress
         break;
-      case 'İcra olunmuş':
+      case 'Tamamlanıb ':
         filtered = filtered.filter((task: any) => task.status === 4); // Completed
         break;
       case 'Ləğv edilmiş':
@@ -169,7 +169,7 @@ const TasksScreen: React.FC = () => {
             'Hamısı',
             'İcra olunmamış',
             'İcra olunan',
-            'İcra olunmuş',
+            'Tamamlanıb',
             'Ləğv edilmiş',
           ].map(filter => (
             <TouchableOpacity
@@ -186,7 +186,7 @@ const TasksScreen: React.FC = () => {
                   color={getStatusColor(
                     filter === 'İcra olunan'
                       ? 1
-                      : filter === 'İcra olunmuş'
+                      : filter === 'Tamamlanıb'
                       ? 4
                       : filter === 'Ləğv edilmiş'
                       ? 5
@@ -245,15 +245,17 @@ const styles = StyleSheet.create({
   statusContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 20,
+    marginTop: 10,
     paddingHorizontal: 15,
-    paddingVertical: 20,
+    paddingVertical: 30,
     margin: 'auto',
-    transform: [{translateY: -30}],
+    transform: [{translateY: -50}],
     width: '80%',
     zIndex: 3,
     backgroundColor: '#fff',
-    elevation: 1, // Android için yeterli
+    shadowColor: 'rgba(83, 121, 198, 0.95)',
+    shadowRadius: 6,
+    elevation: 3,
     borderRadius: 10,
   },
   statusItem: {
@@ -261,10 +263,28 @@ const styles = StyleSheet.create({
     width: '31%',
     justifyContent: 'space-between',
   },
-  statusText: {fontSize: 20, fontWeight: 'bold', color: '#001D45'},
-  statusLabel: {fontSize: 12, color: '#A8A8A8'},
+  statusText: {
+    color: '#095291', // Primary rəngi
+    textAlign: 'center', // Mətni ortada yerləşdirmək
+    fontFamily: 'DMSans-Medium', // Fontu təyin etmək
+    fontSize: 20, // Font ölçüsü
+    fontStyle: 'normal', // Font üslubu
+    fontWeight: '600', // Semibold (yəni, qalın, amma tam qalın deyil)
+    lineHeight: 26, // Sətir hündürlüyü (130% bərabərdir 26px)},
+  },
+  statusLabel: {
+    color: '#616161', // Neutral rəngi
+    textAlign: 'center', // Mətni ortada yerləşdirmək
+    fontFamily: 'DMSans-Medium', // Fontu təyin etmək
+    fontSize: 12, // Font ölçüsü
+    fontStyle: 'normal', // Font üslubu
+    fontWeight: '500', // Medium (orta qalınlıq)
+    lineHeight: 18, // Sətir hündürlüyü (150% bərabərdir 18px)},
+    marginTop: 5,
+  },
   filterContainer: {
     paddingHorizontal: 15,
+    transform: [{translateY: -20}],
   },
   filterContentContainer: {
     flexDirection: 'row',
@@ -275,7 +295,7 @@ const styles = StyleSheet.create({
     borderStyle: 'solid',
   },
   mainContainer: {
-    marginTop: 25,
+    marginTop: 15,
     paddingHorizontal: 15,
   },
   filterButton: {
@@ -283,14 +303,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 6,
     paddingHorizontal: 14,
-    backgroundColor: '#F5F5F5',
-    borderRadius: 7,
     marginRight: 5,
+    borderRadius: 5, // Künclərin yuvarlaqlaşdırılması
+    backgroundColor: '#F5F9FC', // Arxa fon rəngi
   },
   filterText: {
-    fontWeight: '500',
-    fontSize: 12,
-    color: '#001D45',
+    color: '#063A66', // Primary rəngi
+    textAlign: 'center', // Mətni ortada yerləşdirmək
+    fontFamily: 'DMSans-Regular', // Fontu təyin etmək
+    fontSize: 12, // Font ölçüsü
+    fontStyle: 'normal', // Font üslubu
+    fontWeight: '500', // Medium (orta qalınlıq)
+    lineHeight: 18, // Sətir hündürlüyü (150% bərabərdir 18px)
   },
   taskCard: {
     backgroundColor: '#fff',

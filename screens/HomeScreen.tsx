@@ -9,7 +9,9 @@ import Icon2 from 'react-native-vector-icons/FontAwesome';
 import Icon1 from 'react-native-vector-icons/AntDesign';
 import HomeHeader from '../components/HomeHeader';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
+import Image1 from '../assets/icons/img1.svg';
+import Image2 from '../assets/icons/img2.svg';
+import Image3 from '../assets/icons/img3.svg';
 const HomeScreen = () => {
   useEffect(() => {
     const logAllAsyncStorage = async () => {
@@ -36,19 +38,19 @@ const HomeScreen = () => {
         title="Tapşırıqlar"
         description="Cari tapşırıqların siyahısı"
         screenName="Tapşırıqlar"
-        iconName={<Icon3 name="clipboard" size={23} color="#2D64AF" />}
+        iconName={<Image1 />}
       />
       <MenuCard
         title="Terminallar"
         description="Ərazi üzrə terminalların siyahısı"
         screenName="Terminallar"
-        iconName={<Icon1 name="idcard" size={23} color="#2D64AF" />}
+        iconName={<Image2 />}
       />
       <MenuCard
         title="Hesabatlar"
         description="Yerinə yetirilmiş tapşırıqlar üzrə hesabat"
         screenName="Hesabatlar"
-        iconName={<Icon2 name="dollar" size={23} color="#2D64AF" />}
+        iconName={<Image3 />}
       />
     </ScrollView>
   );

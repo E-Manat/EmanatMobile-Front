@@ -17,6 +17,8 @@ import TerminalDetailsScreen from './screens/TerminalDetailsScreen';
 import NewReportScreen from './screens/NewReportScreen';
 import TaskProcessScreen from './screens/TaskProcessScreen';
 import TerminalsScreen from './screens/TerminalsScreen';
+import ForgotPasswordScreen from './screens/ForgotPasswordScreen';
+import OtpScreen from './screens/OtpScreen';
 
 const Stack = createNativeStackNavigator();
 enableScreens();
@@ -44,11 +46,14 @@ const App = () => {
       <StatusBar />
       <Stack.Navigator
         initialRouteName="Splash"
-        screenOptions={{headerShown: false, animation: 'fade'}}>
+        screenOptions={{
+          headerShown: false,
+          gestureEnabled: true,
+          animation: 'slide_from_right',
+        }}>
         <Stack.Group>
           <Stack.Screen name="Splash" component={SplashScreen} />
           <Stack.Screen name="Login" component={LoginScreen} />
-          <Stack.Screen name="NewPassword" component={NewPasswordScreen} />
           <Stack.Screen name="Ana səhifə" component={BottomTabNavigator} />
           <Stack.Screen name="Tapşırıqlar" component={TasksScreen} />
           <Stack.Screen name="Profil" component={ProfileScreen} />
@@ -57,6 +62,12 @@ const App = () => {
           <Stack.Screen name="YeniHesabat" component={NewReportScreen} />
           <Stack.Screen name="Terminallar" component={TerminalsScreen} />
           <Stack.Screen name="TaskProcess" component={TaskProcessScreen} />
+          <Stack.Screen
+            name="ForgotPassword"
+            component={ForgotPasswordScreen}
+          />
+          <Stack.Screen name="NewPassword" component={NewPasswordScreen} />
+          <Stack.Screen name="Otp" component={OtpScreen} />
           <Stack.Screen
             name="HesabatEtrafli"
             component={DetailedReportScreen}

@@ -7,85 +7,51 @@ import {
   StyleSheet,
   Alert,
 } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import {useNavigation} from '@react-navigation/native';
 
-import {RootStackParamList} from '../App';
-import {StackNavigationProp} from '@react-navigation/stack';
-
-type NavigationProp = StackNavigationProp<RootStackParamList, 'NewPassword'>;
-const NewPasswordScreen: React.FC = () => {
-  const navigation = useNavigation<NavigationProp>();
-
+const NewPasswordScreen = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [secureTextEntry, setSecureTextEntry] = useState(true);
-  const [secureConfirmTextEntry, setSecureConfirmTextEntry] = useState(true);
 
-  const handleSavePassword = async () => {
-    if (password.length < 6) {
-      Alert.alert('Xəta', 'Şifrə ən azı 6 simvol olmalıdır!');
-      return;
-    }
-
+  const handleSubmit = () => {
     if (password !== confirmPassword) {
-      Alert.alert('Xəta', 'Şifrələr eyni olmalıdır!');
+      Alert.alert('Xəta', 'Şifrələr uyğun gəlmir');
       return;
     }
 
-    try {
-      await AsyncStorage.setItem('userPassword', password);
-      Alert.alert('Uğur', 'Şifrə uğurla yaradıldı!', [
-        {text: 'OK', onPress: () => navigation.navigate('PinSetup')},
-      ]);
-    } catch (error) {
-      Alert.alert('Xəta', 'Şifrə saxlanarkən problem yarandı.');
-    }
+    // Yeni şifrəni göndərmək və ya yadda saxlamaq üçün backend request
+    console.log('Yeni şifrə:', password);
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Şifrəni daxil edin</Text>
-      <Text style={styles.subtitle}>Yeni şifrənizi daxil edin</Text>
+      <Text style={styles.title}>Yeni şifrənin təyini</Text>
+      <Text style={styles.subtitle}>
+        Zəhmət olmasa, təhlükəsizliyiniz üçün yeni bir şifrə yaradın və yadda
+        saxladığınıza əmin olun
+      </Text>
 
-      <View style={styles.inputContainer}>
-        <TextInput
-          style={styles.input}
-          placeholder="Şifrə"
-          secureTextEntry={secureTextEntry}
-          value={password}
-          onChangeText={setPassword}
-        />
-        <TouchableOpacity onPress={() => setSecureTextEntry(!secureTextEntry)}>
-          <Text style={styles.toggleText}>{secureTextEntry ? '👁️' : '🙈'}</Text>
-        </TouchableOpacity>
-      </View>
+      <Text style={styles.label}>Yeni şifrə</Text>
+      <TextInput
+        style={styles.input}
+        secureTextEntry
+        placeholder="yeni şifrə"
+        placeholderTextColor="#bbb"
+        value={password}
+        onChangeText={setPassword}
+      />
 
-      <View style={styles.inputContainer}>
-        <TextInput
-          style={styles.input}
-          placeholder="Şifrəni təsdiqlə"
-          secureTextEntry={secureConfirmTextEntry}
-          value={confirmPassword}
-          onChangeText={setConfirmPassword}
-        />
-        <TouchableOpacity
-          onPress={() => setSecureConfirmTextEntry(!secureConfirmTextEntry)}>
-          <Text style={styles.toggleText}>
-            {secureConfirmTextEntry ? '👁️' : '🙈'}
-          </Text>
-        </TouchableOpacity>
-      </View>
+      <Text style={styles.label}>Yeni şifrə təkrar</Text>
+      <TextInput
+        style={styles.input}
+        secureTextEntry
+        placeholder="Yeni şifrə təkrar"
+        placeholderTextColor="#bbb"
+        value={confirmPassword}
+        onChangeText={setConfirmPassword}
+      />
 
-      <TouchableOpacity
-        style={styles.primaryButton}
-        onPress={handleSavePassword}>
-        <Text style={styles.primaryButtonText}>Davam et</Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={styles.secondaryButton}
-        onPress={() => navigation.goBack()}>
-        <Text style={styles.secondaryButtonText}>Leğv et</Text>
+      <TouchableOpacity style={styles.button} onPress={handleSubmit}>
+        <Text style={styles.buttonText}>Daxil ol</Text>
       </TouchableOpacity>
     </View>
   );
@@ -94,59 +60,44 @@ const NewPasswordScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
-    backgroundColor: 'white',
+    padding: 24,
+    backgroundColor: '#fff',
+    justifyContent: 'center',
   },
   title: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: 'bold',
-    color: '#001F3F',
-    marginBottom: 5,
+    color: '#003366',
+    marginBottom: 12,
   },
   subtitle: {
-    fontSize: 14,
-    color: 'gray',
-    marginBottom: 20,
+    fontSize: 16,
+    color: '#333',
+    marginBottom: 32,
   },
-  inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#007AFF',
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    marginBottom: 15,
+  label: {
+    fontSize: 14,
+    color: '#333',
+    marginBottom: 8,
   },
   input: {
-    flex: 1,
-    height: 50,
-  },
-  toggleText: {
-    fontSize: 18,
-    padding: 10,
-  },
-  primaryButton: {
-    backgroundColor: '#007AFF',
-    padding: 15,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  primaryButtonText: {
-    color: 'white',
+    height: 52,
+    backgroundColor: '#f4f4f4',
+    borderRadius: 10,
+    paddingHorizontal: 16,
     fontSize: 16,
-    fontWeight: 'bold',
+    marginBottom: 24,
   },
-  secondaryButton: {
-    backgroundColor: '#E0ECFF',
-    padding: 15,
-    borderRadius: 8,
+  button: {
+    backgroundColor: '#0066cc',
+    borderRadius: 10,
+    paddingVertical: 14,
     alignItems: 'center',
   },
-  secondaryButtonText: {
-    color: '#007AFF',
+  buttonText: {
+    color: '#fff',
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '600',
   },
 });
 

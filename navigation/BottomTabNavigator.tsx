@@ -5,9 +5,9 @@ import TasksScreen from '../screens/TasksScreen';
 import ReportsScreen from '../screens/ReportsScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import ReportsIcon from 'react-native-vector-icons/SimpleLineIcons';
-import HomeIcon from 'react-native-vector-icons/Octicons';
 import Icon from 'react-native-vector-icons/Feather';
 import {TouchableOpacity} from 'react-native';
+import {HomeIcon, ReportIcon, TaskIcon, UserIcon} from '../assets/icons';
 
 const Tab = createBottomTabNavigator();
 
@@ -19,13 +19,13 @@ const BottomTabNavigator = () => {
         tabBarIcon: ({color, size}) => {
           switch (route.name) {
             case 'Ana səhifə':
-              return <HomeIcon name="home" size={size} color={color} />;
+              return <HomeIcon color={color} />;
             case 'Tapşırıqlar':
-              return <Icon name="clipboard" size={size} color={color} />;
+              return <TaskIcon color={color} />;
             case 'Hesabatlar':
-              return <ReportsIcon name="chart" size={size} color={color} />;
+              return <ReportIcon color={color} />;
             case 'Profil':
-              return <Icon name="user" size={size} color={color} />;
+              return <UserIcon color={color} />;
           }
           return null;
         },

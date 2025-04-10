@@ -21,6 +21,7 @@ import {apiService} from '../services/apiService';
 import {RootStackParamList} from '../App';
 import {StackNavigationProp} from '@react-navigation/stack';
 import TopHeader from '../components/TopHeader';
+import {DownloadIcon} from '../assets/icons';
 type NavigationProp = StackNavigationProp<RootStackParamList, 'Hesabatlar'>;
 
 const ReportsScreen = () => {
@@ -55,12 +56,7 @@ const ReportsScreen = () => {
       <TouchableOpacity
         onPress={() => navigation.navigate('HesabatEtrafli', {report: item})}>
         <View style={styles.card}>
-          <IconDoc
-            name="document-outline"
-            size={24}
-            color="#2D64AF"
-            style={styles.icon}
-          />
+          <DownloadIcon color="#1269B5" />
           <View style={styles.textContainer}>
             <Text style={styles.title}>
               {highlightText(item.code, searchText)}
@@ -70,7 +66,7 @@ const ReportsScreen = () => {
             </Text>
           </View>
           <View style={styles.statusContainer}>
-            <Text style={styles.time}>{item.id}</Text>
+            <Text style={styles.time}>{item.workingHours}</Text>
             <Text style={styles.status}>{reportStatus}</Text>
           </View>
         </View>
@@ -298,14 +294,29 @@ const styles = StyleSheet.create({
     padding: 15,
     borderRadius: 10,
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     justifyContent: 'flex-start',
     height: 90,
+    gap: 10,
   },
   icon: {marginRight: 10, marginTop: 5},
   textContainer: {flex: 1},
-  title: {fontWeight: '600', fontSize: 16, color: '#2D64AF'},
-  date: {fontSize: 12, color: '#A8A8A8'},
+  title: {
+    color: '#1269B5',
+    fontFamily: 'DMSans-Bold',
+    fontSize: 14,
+    fontStyle: 'normal',
+    fontWeight: '600',
+    lineHeight: 18, // 150% of 12px},
+  },
+  date: {
+    color: '#616161',
+    fontFamily: 'DMSans-Regular',
+    fontSize: 12,
+    fontStyle: 'normal',
+    fontWeight: '400',
+    lineHeight: 18, // 150% of 12px},
+  },
   time: {fontSize: 12, color: '#A8A8A8', fontWeight: '400', textAlign: 'right'},
   status: {fontSize: 12, fontWeight: 'bold', color: '#29C0B9'},
   statusContainer: {

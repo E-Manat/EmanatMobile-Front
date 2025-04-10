@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   View,
   Text,
@@ -13,6 +13,16 @@ import {
 } from 'react-native';
 import TopHeader from '../components/TopHeader';
 import Icon from 'react-native-vector-icons/Ionicons';
+import {
+  AvatarIcon,
+  LocationIcon,
+  MapIcon,
+  RoadIcon,
+  TabletIcon,
+  UserIcon,
+} from '../assets/icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {apiService} from '../services/apiService';
 const terminals = Array(8).fill({
   id: '67',
   fullness: '10% dolu',
@@ -23,7 +33,7 @@ const terminals = Array(8).fill({
 const TerminallarScreen = () => {
   const [selectedTerminal, setSelectedTerminal] = useState<any>(null);
   const [modalVisible, setModalVisible] = useState(false);
-
+  const [terminals, setTerminals] = useState<any[]>([]);
   const openModal = (terminal: any) => {
     setSelectedTerminal(terminal);
     setModalVisible(true);
@@ -34,6 +44,25 @@ const TerminallarScreen = () => {
     setSelectedTerminal(null);
   };
 
+  const [loading, setLoading] = useState<boolean>(false);
+
+  useEffect(() => {
+    const fetchTasks = async () => {
+      setLoading(true);
+      try {
+        const response = await apiService.get('/Terminal/GetAll');
+        console.log(response, 'response');
+        setTerminals(response);
+      } catch (error) {
+        console.error('Reportlar alınarkən xəta:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTasks();
+  }, []);
+
   const TerminalCard = ({terminal}: any) => (
     <TouchableOpacity onPress={() => openModal(terminal)}>
       <View style={styles.card}>
@@ -43,7 +72,11 @@ const TerminallarScreen = () => {
             <View style={styles.dot} />
           </View>
           <View>
-            <Text style={styles.terminalId}>Terminal ID – {terminal.id}</Text>
+            <Text
+              // style={styles.terminalId}
+              style={{fontFamily: 'DMSans-Regular'}}>
+              Terminal ID – {terminal.id}
+            </Text>
             <Text style={styles.infoText}>
               Əsginas sayı: {terminal.passengerCount}
             </Text>
@@ -91,22 +124,29 @@ const TerminallarScreen = () => {
                 <Text style={styles.imageText}>photoname.jpg</Text>
                 <Text style={styles.imageSize}>22.5 KB</Text>
               </View>
-
               <InfoItem
-                icon="phone-iphone"
+                icon={<TabletIcon color="#1269B5" />}
                 label="Terminal ID"
                 value={selectedTerminal?.id}
               />
-              <InfoItem icon="business" label="Şirkət" value="E-manat" />
-              <InfoItem icon="map" label="Bölgə" value="Bakı" />
+              <InfoItem icon={<AvatarIcon />} label="Şirkət" value="E-manat" />
               <InfoItem
-                icon="location-city"
+                icon={<MapIcon color="#1269B5" />}
+                label="Bölgə"
+                value="Bakı"
+              />
+              <InfoItem
+                icon={<RoadIcon color="#1269B5" />}
                 label="Ərazi"
                 value="Nərimanov rayonu"
               />
-              <InfoItem icon="place" label="Ünvan" value="Əhməd Rəcəbli 183" />
               <InfoItem
-                icon="person"
+                icon={<LocationIcon color="#1269B5" />}
+                label="Ünvan"
+                value="Əhməd Rəcəbli 183"
+              />
+              <InfoItem
+                icon={<UserIcon color="#1269B5" />}
                 label="Məsul şəxs"
                 value="055 563 23 20"
               />
@@ -120,12 +160,7 @@ const TerminallarScreen = () => {
 
 const InfoItem = ({icon, label, value}: any) => (
   <View style={styles.infoItem}>
-    {/* <MaterialIcons
-      name={icon}
-      size={22}
-      color="#1976D2"
-      style={styles.infoIcon}
-    /> */}
+    {icon && <View style={styles.infoIcon}>{icon}</View>}
     <View>
       <Text style={styles.infoLabel}>{label}</Text>
       <Text style={styles.infoValue}>{value}</Text>
@@ -217,7 +252,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 16,
+    borderBottomWidth: 1, // Adds the bottom border
+    borderBottomColor: '#ddd', // Sets the color of the border
+    paddingVertical: 10,
   },
   title: {
     color: '#063A66', // Default color if --Primary-primary-800 is not defined

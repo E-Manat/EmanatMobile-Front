@@ -54,8 +54,11 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 16,
   },
   headerText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#fff',
+    color: '#FFF', // Ağ rəng
+    fontFamily: 'DMSans-SemiBold', // Fontu təyin etmək
+    fontSize: 20, // Font ölçüsü
+    fontStyle: 'normal', // Font üslubu
+    fontWeight: '600', // Semibold (qalın)
+    lineHeight: 26, // Sətir hündürlüyü (130% bərabərdir 26px)
   },
 });

@@ -62,6 +62,9 @@ const styles = StyleSheet.create({
     position: 'relative',
     paddingHorizontal: 12,
     height: 90,
+    shadowColor: '#fff',
+    shadowRadius: 5,
+    elevation: 12,
   },
   iconContainer: {
     marginRight: 10,
@@ -71,18 +74,24 @@ const styles = StyleSheet.create({
     width: 27,
   },
   textContainer: {
+    marginLeft: 10,
     flex: 1,
   },
   title: {
-    fontWeight: '600',
-    fontSize: 16,
-    color: '#1269B5',
+    color: '#1269B5', // Primary color
+    fontFamily: 'DMSans-SemiBold', // Font family
+    fontSize: 16, // Font size
+    fontStyle: 'normal', // Font style
+    fontWeight: '600', // Semibold weight
+    lineHeight: 24, // Line height equivalent to 150% of 16px
   },
   description: {
-    fontSize: 12,
-    marginTop: 4,
-    color: '#767676',
-    fontWeight: 500,
+    color: '#767676', // Grey color
+    fontFamily: 'DMSans-Regular', // Font family
+    fontSize: 12, // Font size
+    fontStyle: 'normal', // Font style
+    fontWeight: '500', // Medium weight
+    lineHeight: 18, // Line height equivalent to 150% of 12px
   },
   fixedIcon: {
     position: 'absolute',

@@ -127,7 +127,7 @@ const NewReportScreen = () => {
       const formData = new FormData();
       const terminalId = selectedTerminal; // Use selected terminal ID
 
-      formData.append('TerminalId', terminalId);
+      formData.append('TerminalId', '7ef64a54-fd81-40f4-b041-08dd773781da');
       formData.append('ProblemId', selectedProblem);
       formData.append('Description', comment);
 
