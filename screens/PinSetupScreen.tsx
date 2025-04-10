@@ -95,13 +95,7 @@ const PinSetupScreen = () => {
       </View>
 
       <TouchableOpacity onPress={handleForgotPin}>
-        <Text
-          style={[
-            styles.title,
-            {textDecorationLine: 'underline', color: '#1269B5'},
-          ]}>
-          PIN kodu unutmusunuz?
-        </Text>
+        <Text style={styles.titlePin}>PIN kodu unutmusunuz?</Text>
       </TouchableOpacity>
     </View>
   );
@@ -116,6 +110,13 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   title: {fontSize: 20, fontWeight: 'bold', marginBottom: 20, color: '#5D5D5D'},
+  titlePin: {
+    fontSize: 15,
+    fontWeight: '500',
+    marginBottom: 20,
+    color: '#5D5D5D',
+    marginTop: 20,
+  },
   pinDisplay: {flexDirection: 'row', marginBottom: 20},
   circle: {
     width: 20,

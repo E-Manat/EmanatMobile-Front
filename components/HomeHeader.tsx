@@ -37,17 +37,6 @@ const HomeHeader = () => {
   return (
     <View style={styles.container}>
       <View style={styles.searchContainer}>
-        {/* <Icon
-          name="search"
-          size={18}
-          color="#2D64AF"
-          style={styles.searchIcon}
-        />
-        <TextInput
-          placeholder="Axtar..."
-          placeholderTextColor="#2D64AF"
-          style={styles.input}
-        /> */}
         <Image
           source={require('../assets/img/emanatFull.png')}
           style={styles.image}

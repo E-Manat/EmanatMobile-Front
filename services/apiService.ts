@@ -37,6 +37,7 @@ const request = async (
 
   try {
     const res = await fetch(`${BASE_URL}${endpoint}`, options);
+    console.log(res, 'geden sorgu')
     const contentType = res.headers.get('Content-Type');
     const result = contentType?.includes('application/json')
       ? await res.json()

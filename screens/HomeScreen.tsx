@@ -38,12 +38,12 @@ const HomeScreen = () => {
         screenName="Tapşırıqlar"
         iconName={<Icon3 name="clipboard" size={23} color="#2D64AF" />}
       />
-      {/* <MenuCard
+      <MenuCard
         title="Terminallar"
-        description="İnkassasiya tapşırıqlarının idarə edilməsi"
-        screenName="Profil"
+        description="Ərazi üzrə terminalların siyahısı"
+        screenName="Terminallar"
         iconName={<Icon1 name="idcard" size={23} color="#2D64AF" />}
-      /> */}
+      />
       <MenuCard
         title="Hesabatlar"
         description="Yerinə yetirilmiş tapşırıqlar üzrə hesabat"

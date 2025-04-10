@@ -15,11 +15,12 @@ import {
 import Icon from 'react-native-vector-icons/Feather';
 import IconDoc from 'react-native-vector-icons/Ionicons';
 
-import {RootStackParamList} from '../App';
-import {StackNavigationProp} from '@react-navigation/stack';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import moment from 'moment';
 import {apiService} from '../services/apiService';
+import {RootStackParamList} from '../App';
+import {StackNavigationProp} from '@react-navigation/stack';
+import TopHeader from '../components/TopHeader';
 type NavigationProp = StackNavigationProp<RootStackParamList, 'Hesabatlar'>;
 
 const ReportsScreen = () => {
@@ -158,13 +159,11 @@ const ReportsScreen = () => {
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <View style={styles.container}>
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Icon name="chevron-left" size={24} color="#fff" />
-          </TouchableOpacity>
-          <Text style={styles.headerText}>Hesabatlar</Text>
-          <View style={{width: 24}} />
-        </View>
+        <TopHeader
+          title="Hesabatlar"
+          rightIconName="plus"
+          onRightPress={() => navigation.navigate('YeniHesabat')}
+        />
 
         <View style={styles.searchContainer}>
           <Icon
@@ -241,21 +240,6 @@ const ReportsScreen = () => {
             </View>
           </TouchableWithoutFeedback>
         </Modal>
-
-        <View style={{alignItems: 'center', marginVertical: 20}}>
-          <TouchableOpacity
-            style={{
-              backgroundColor: '#2D64AF',
-              paddingVertical: 10,
-              paddingHorizontal: 30,
-              borderRadius: 10,
-            }}
-            onPress={() => navigation.navigate('YeniHesabat')}>
-            <Text style={{color: '#fff', fontSize: 16, fontWeight: 'bold'}}>
-              Yeni Hesabat
-            </Text>
-          </TouchableOpacity>
-        </View>
 
         {loading ? (
           <View

@@ -17,6 +17,7 @@ import Dot from 'react-native-vector-icons/Octicons';
 import {RootStackParamList} from '../App';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {apiService} from '../services/apiService';
+import TopHeader from '../components/TopHeader';
 
 type NavigationProp = StackNavigationProp<RootStackParamList, 'PinSetup'>;
 
@@ -137,25 +138,24 @@ const TasksScreen: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Icon name="chevron-left" size={24} color="#fff" />
-        </TouchableOpacity>
-        <Text style={styles.headerText}>Tapşırıqlar</Text>
-        <View style={{width: 24}} />
-      </View>
-
+      <TopHeader title="Tapşırıqlar" />
       <View style={styles.statusContainer}>
         <View style={styles.statusItem}>
-          <Text style={styles.statusText}>{tasksData?.remainingTaskCount}</Text>
+          <Text style={styles.statusText}>
+            {tasksData?.remainingTaskCount || 0}
+          </Text>
           <Text style={styles.statusLabel}>Icra olunan</Text>
         </View>
         <View style={styles.statusItem}>
-          <Text style={styles.statusText}>{tasksData?.completedTaskCount}</Text>
+          <Text style={styles.statusText}>
+            {tasksData?.completedTaskCount || 0}
+          </Text>
           <Text style={styles.statusLabel}>İcra olunmuş</Text>
         </View>
         <View style={styles.statusItem}>
-          <Text style={styles.statusText}>{tasksData?.pendingTaskCount}</Text>
+          <Text style={styles.statusText}>
+            {tasksData?.pendingTaskCount || 0}
+          </Text>
           <Text style={styles.statusLabel}>Qalan</Text>
         </View>
       </View>

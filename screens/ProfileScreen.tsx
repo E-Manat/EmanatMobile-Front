@@ -22,6 +22,7 @@ import Toast from 'react-native-toast-message';
 import {apiService} from '../services/apiService';
 import {RootStackParamList} from '../App';
 import {StackNavigationProp} from '@react-navigation/stack';
+import TopHeader from '../components/TopHeader';
 
 type NavigationProp = StackNavigationProp<RootStackParamList, 'Profil'>;
 
@@ -135,7 +136,7 @@ const ProfileScreen = () => {
               await AsyncStorage.removeItem('isLoggedIn');
 
               console.log('AsyncStorage təmizləndi');
-              navigation.replace('Login'); 
+              navigation.replace('Login');
             } catch (error) {
               console.log('Çıxış zamanı xəta:', error);
             }
@@ -151,15 +152,11 @@ const ProfileScreen = () => {
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <ScrollView contentContainerStyle={{flexGrow: 1}}>
           <View style={styles.container}>
-            <View style={styles.header}>
-              <TouchableOpacity onPress={() => navigation.goBack()}>
-                <Icon name="chevron-left" size={24} color="#fff" />
-              </TouchableOpacity>
-              <Text style={styles.headerText}>Profil</Text>
-              <TouchableOpacity onPress={handleLogout}>
-                <Icon name="log-out" size={24} color="#fff" />
-              </TouchableOpacity>
-            </View>
+            <TopHeader
+              title="Profil"
+              rightIconName="log-out"
+              onRightPress={handleLogout}
+            />
 
             <View style={styles.profileContainer}>
               <TouchableOpacity onPress={() => setModalVisible(true)}>
@@ -175,7 +172,8 @@ const ProfileScreen = () => {
                 </View>{' '}
                 <TouchableOpacity
                   style={styles.cameraIcon}
-                  onPress={openCamera}>
+                  // onPress={openCamera}
+                >
                   <Icon name="camera" size={16} color="#fff" />
                 </TouchableOpacity>
               </TouchableOpacity>
@@ -198,7 +196,7 @@ const ProfileScreen = () => {
                   source={
                     profileImage
                       ? {uri: profileImage}
-                      : require('../assets/img/user.png')
+                      : require('../assets/img/default.jpg')
                   }
                   style={styles.modalImage}
                 />
@@ -228,7 +226,7 @@ const ProfileScreen = () => {
                       }}
                       placeholder="Əlaqə nömrəsi"
                     />
-                    <Icon name="edit-2" size={20} color="gray" />
+                    {/* <Icon name="edit-2" size={20} color="gray" /> */}
                   </View>
                 </View>
 
@@ -244,7 +242,7 @@ const ProfileScreen = () => {
                       }}
                       placeholder="Email"
                     />
-                    <Icon name="edit-2" size={20} color="gray" />
+                    {/* <Icon name="edit-2" size={20} color="gray" /> */}
                   </View>
                 </View>
 
@@ -260,7 +258,7 @@ const ProfileScreen = () => {
                       }}
                       placeholder="Ünvan"
                     />
-                    <Icon name="edit-2" size={20} color="gray" />
+                    {/* <Icon name="edit-2" size={20} color="gray" /> */}
                   </View>
                 </View>
 
@@ -371,6 +369,6 @@ const styles = StyleSheet.create({
   modalImage: {
     width: 300,
     height: 300,
-    borderRadius: 10,
+    borderRadius: 30,
   },
 });

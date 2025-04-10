@@ -1,7 +1,19 @@
-import React from 'react';
-import {View, Image, Dimensions, StyleSheet} from 'react-native';
+import React, {useRef, useEffect} from 'react';
+import {
+  View,
+  Image,
+  Dimensions,
+  StyleSheet,
+  Animated,
+  TouchableOpacity,
+} from 'react-native';
 import Swiper from 'react-native-swiper';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import {RootStackParamList} from '../App';
+import {StackNavigationProp} from '@react-navigation/stack';
+import {useNavigation} from '@react-navigation/native';
 
+type NavigationProp = StackNavigationProp<RootStackParamList, 'Ana səhifə'>;
 const {width} = Dimensions.get('window');
 
 const images = [
@@ -11,11 +23,43 @@ const images = [
 ];
 
 const ImageSlider = () => {
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+  const navigation = useNavigation<NavigationProp>();
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(scaleAnim, {
+          toValue: 1.2,
+          duration: 500,
+          useNativeDriver: true,
+        }),
+        Animated.timing(scaleAnim, {
+          toValue: 1,
+          duration: 500,
+          useNativeDriver: true,
+        }),
+      ]),
+    ).start();
+  }, []);
+
+  const handleButtonPress = () => {
+    navigation.navigate('TaskProcess');
+  };
+
   return (
     <Swiper autoplay height={200} showsPagination={false}>
       {images.map((image, index) => (
         <View key={index} style={styles.imageContainer}>
           <Image source={image} style={styles.image} />
+          <Animated.View
+            style={[
+              styles.animatedButtonWrapper,
+              {transform: [{scale: scaleAnim}]},
+            ]}>
+            <TouchableOpacity style={styles.button} onPress={handleButtonPress}>
+              <Icon name="map-marker-down" color="#fff" size={20} />
+            </TouchableOpacity>
+          </Animated.View>
         </View>
       ))}
     </Swiper>
@@ -35,6 +79,24 @@ const styles = StyleSheet.create({
     resizeMode: 'contain',
     height: '100%',
     borderRadius: 20,
+  },
+  animatedButtonWrapper: {
+    position: 'absolute',
+    top: 20,
+    right: 10,
+  },
+  button: {
+    width: 35,
+    height: 35,
+    backgroundColor: '#38C172',
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 5,
+  },
+  icon: {
+    width: 24,
+    height: 24,
   },
 });
 

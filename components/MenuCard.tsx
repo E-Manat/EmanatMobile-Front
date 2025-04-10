@@ -12,6 +12,7 @@ export type RootStackParamList = {
   splash: undefined;
   notifications: undefined;
   Tapşırıqlar: undefined;
+  Terminallar: undefined;
 };
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -75,12 +76,13 @@ const styles = StyleSheet.create({
   title: {
     fontWeight: '600',
     fontSize: 16,
-    color: '#2D64AF',
+    color: '#1269B5',
   },
   description: {
     fontSize: 12,
     marginTop: 4,
-    color: '#A8A8A8',
+    color: '#767676',
+    fontWeight: 500,
   },
   fixedIcon: {
     position: 'absolute',

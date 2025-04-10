@@ -49,7 +49,8 @@ const LoginScreen = () => {
       );
       console.log(response);
 
-      if (response.status === 200) {
+      if (response) {
+        console.log(response, 'response login');
         await AsyncStorage.setItem('userToken', response.data.accessToken);
         await AsyncStorage.setItem('roleName', response.data.roleName);
         navigation.navigate('PinSetup');
@@ -57,7 +58,8 @@ const LoginScreen = () => {
         Alert.alert('Xəta', 'Gözlənilməz bir problem baş verdi!');
       }
     } catch (error: any) {
-      if (error.response && error.response.status === 401) {
+      if (error.response || error.response.status === 401) {
+        console.log(error, 'error');
         setEmailError('Email və ya şifrə yanlışdır!');
         setPasswordError('Email və ya şifrə yanlışdır!');
         Alert.alert('Xəta', 'Daxil edilən məlumatlarda səhv var!');

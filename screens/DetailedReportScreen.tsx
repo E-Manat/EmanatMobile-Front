@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   View,
   Text,
@@ -13,11 +13,34 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
 import {useNavigation, useRoute} from '@react-navigation/native';
+import {apiService} from '../services/apiService';
 
 const DetailedReportScreen = () => {
   const navigation = useNavigation();
   const route: any = useRoute();
   const {report} = route.params;
+
+  const [detailedReport, setDetailedReport] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchReportById = async () => {
+      try {
+        const data = await apiService.get(
+          `/mobile/Report/GetById?id=${report.id}`,
+        );
+        setDetailedReport(data);
+        console.log(data, 'detailedReport');
+      } catch (error) {
+        console.error('Hesabat detalları alınarkən xəta:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchReportById();
+  }, [report.id]);
+
   const renderDetail = (
     icon: string,
     label: string,
@@ -44,6 +67,28 @@ const DetailedReportScreen = () => {
     setModalVisible(false);
     setSelectedImage(null);
   };
+
+  const getStatusText = (status: number) => {
+    switch (status) {
+      case 0:
+        return 'Gözləmədə';
+      case 1:
+        return 'Tamamlandı';
+      default:
+        return 'Naməlum';
+    }
+  };
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0'); // aylar 0-dan başlayır
+    const year = date.getFullYear();
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+
+    return `${day}.${month}.${year} ${hours}:${minutes}`;
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -55,39 +100,34 @@ const DetailedReportScreen = () => {
       </View>
 
       <View style={styles.card}>
-        {renderDetail('smartphone', 'Terminal ID', report.id)}
-        {renderDetail('alert-circle', 'Problemin növü', 'Sınıq ekran')}
-        {renderDetail('calendar', 'Tarix', `${report.date} - ${report.time}`)}
-        {renderDetail('user', 'Texniki işçi', 'Ali Əliyev')}
-        {renderDetail('info', 'Status', report.status, {
-          color: '#29C0B9',
+        {renderDetail(
+          'smartphone',
+          'Terminal ID',
+          detailedReport?.terminal?.code,
+        )}
+        {renderDetail(
+          'alert-circle',
+          'Problemin növü',
+          detailedReport?.problem?.description,
+        )}
+        {renderDetail('calendar', 'Tarix', formatDate(report.createdDate))}
+        {/* {renderDetail('user', 'Texniki işçi', 'Ali Əliyev')} */}
+        {renderDetail('info', 'Status', getStatusText(detailedReport?.reportStatus), {
+          color: detailedReport?.status === 0 ? 'red' : '#29C0B9',
+          fontWeight: 'bold',
         })}
-        {renderDetail('clipboard', 'Qeyd', 'Terminal pis vəziyyətdədir')}
+        {renderDetail('clipboard', 'Qeyd', detailedReport?.description)}
 
         <Text style={styles.label}>Terminal</Text>
 
         <View style={styles.staticImagesContainer}>
-          <TouchableOpacity
-            onPress={() => openModal(require('../assets/img/terminal1.png'))}>
-            <Image
-              source={require('../assets/img/terminal1.png')}
-              style={styles.image}
-            />
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => openModal(require('../assets/img/terminal1.png'))}>
-            <Image
-              source={require('../assets/img/terminal1.png')}
-              style={styles.image}
-            />
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => openModal(require('../assets/img/terminal1.png'))}>
-            <Image
-              source={require('../assets/img/terminal1.png')}
-              style={styles.image}
-            />
-          </TouchableOpacity>
+          {detailedReport?.images?.map((img: any, index: number) => (
+            <TouchableOpacity
+              key={index}
+              onPress={() => openModal({uri: img.imageUrl})}>
+              <Image source={{uri: img.imageUrl}} style={styles.image} />
+            </TouchableOpacity>
+          ))}
         </View>
       </View>
       <Modal

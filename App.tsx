@@ -15,8 +15,8 @@ import NewPasswordScreen from './screens/NewPasswordScreen';
 import PinSetupScreen from './screens/PinSetupScreen';
 import TerminalDetailsScreen from './screens/TerminalDetailsScreen';
 import NewReportScreen from './screens/NewReportScreen';
-import RouteScreen from './screens/RouteScreen';
 import TaskProcessScreen from './screens/TaskProcessScreen';
+import TerminalsScreen from './screens/TerminalsScreen';
 
 const Stack = createNativeStackNavigator();
 enableScreens();
@@ -31,9 +31,10 @@ export type RootStackParamList = {
   Bildirişlər: undefined;
   Hesabatlar: undefined;
   YeniHesabat: undefined;
+  Terminallar: undefined;
   TerminalEtrafli: {taskData: any};
   HesabatEtrafli: {report: any};
-  Route: undefined;
+  TaskProcess: {taskData?: any; startTime: any};
   PinSetup: undefined;
 };
 
@@ -54,7 +55,7 @@ const App = () => {
           <Stack.Screen name="Bildirişlər" component={NotificationsScreen} />
           <Stack.Screen name="Hesabatlar" component={ReportsScreen} />
           <Stack.Screen name="YeniHesabat" component={NewReportScreen} />
-          <Stack.Screen name="Route" component={RouteScreen} />
+          <Stack.Screen name="Terminallar" component={TerminalsScreen} />
           <Stack.Screen name="TaskProcess" component={TaskProcessScreen} />
           <Stack.Screen
             name="HesabatEtrafli"

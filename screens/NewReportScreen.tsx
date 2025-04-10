@@ -18,6 +18,7 @@ import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
 import {RootStackParamList} from '../App';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {apiService} from '../services/apiService';
+import TopHeader from '../components/TopHeader';
 
 type NavigationProp = StackNavigationProp<RootStackParamList, 'Login'>;
 
@@ -27,9 +28,9 @@ const NewReportScreen = () => {
   const [selectedImages, setSelectedImages] = useState<any>([]);
   const [selectedVideo, setSelectedVideo] = useState<any>(null);
   const [comment, setComment] = useState('');
-  const [loading, setLoading] = useState(false); 
+  const [loading, setLoading] = useState(false);
   const [problemList, setProblemList] = useState<any[]>([]);
-
+  const [terminalList, setTerminalList] = useState<any[]>([]);
   const takePhoto = () => {
     const options: any = {
       mediaType: 'photo',
@@ -93,6 +94,20 @@ const NewReportScreen = () => {
   };
 
   useEffect(() => {
+    const fetchTerminals = async () => {
+      try {
+        const data = await apiService.get('/mobile/Terminal/GetAll');
+        console.log(data, 'data');
+        setTerminalList(data); // Store fetched terminals in state
+      } catch (error) {
+        console.error('Terminals could not be fetched:', error);
+      }
+    };
+
+    fetchTerminals();
+  }, []);
+
+  useEffect(() => {
     const fetchProblems = async () => {
       try {
         const data = await apiService.get('/mobile/Problem/GetAll');
@@ -110,7 +125,7 @@ const NewReportScreen = () => {
       setLoading(true);
 
       const formData = new FormData();
-      const terminalId = '96539AED-C97E-4C08-13A8-08DD6D2BFC38';
+      const terminalId = selectedTerminal; // Use selected terminal ID
 
       formData.append('TerminalId', terminalId);
       formData.append('ProblemId', selectedProblem);
@@ -147,22 +162,18 @@ const NewReportScreen = () => {
 
   return (
     <>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Icon name="chevron-left" size={24} color="#fff" />
-        </TouchableOpacity>
-        <Text style={styles.headerText}>Yeni hesabat</Text>
-        <View style={{width: 24}} />
-      </View>
+      <TopHeader title="Yeni hesabat" />
 
       <View style={{padding: 20}}>
-        <Text style={{fontSize: 18, marginBottom: 5}}>Terminalı seçin</Text>
+        <Text style={{fontSize: 18, marginBottom: 5}}>
+          Problem növünü seçin
+        </Text>
         <Picker
           selectedValue={selectedProblem}
           onValueChange={itemValue => setSelectedProblem(itemValue)}
           style={{borderWidth: 1, borderColor: '#ddd', marginBottom: 10}}>
           <Picker.Item label="Texniki problem seçin" value="" />
-          {problemList.map((problem: any) => (
+          {problemList?.map((problem: any) => (
             <Picker.Item
               key={problem.id}
               label={problem.description}
@@ -170,6 +181,21 @@ const NewReportScreen = () => {
             />
           ))}
         </Picker>
+
+        <Text style={{fontSize: 18, marginBottom: 5}}> Terminal seçin</Text>
+        {/* <Picker
+          selectedValue={selectedTerminal}
+          onValueChange={itemValue => setSelectedTerminal(itemValue)}
+          style={{borderWidth: 1, borderColor: '#ddd', marginBottom: 10}}>
+          <Picker.Item label="Select Terminal" value="" />
+          {terminalList?.map((terminal: any) => (
+            <Picker.Item
+              key={terminal.id}
+              label={terminal.name} // Adjust based on your terminal object
+              value={terminal.id}
+            />
+          ))}
+        </Picker> */}
 
         <Text style={{fontSize: 18, marginBottom: 10}}>
           Terminalın şəklini yükləyin *
@@ -251,7 +277,9 @@ const NewReportScreen = () => {
         {loading ? (
           <ActivityIndicator size="large" color="#007BFF" /> // Loading göstəricisi
         ) : (
-          <Button title="Göndər" onPress={handleSubmit} color="#007BFF" />
+          <TouchableOpacity onPress={handleSubmit} style={styles.primaryButton}>
+            <Text style={styles.primaryButtonText}>Göndər</Text>
+          </TouchableOpacity>
         )}
       </View>
     </>
@@ -270,4 +298,12 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   headerText: {fontSize: 18, fontWeight: 'bold', color: '#fff'},
+  primaryButton: {
+    backgroundColor: '#1269B5',
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  primaryButtonText: {color: '#fff', fontWeight: 'bold', fontSize: 16},
 });

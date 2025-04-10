@@ -9,41 +9,47 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome6';
 import Icon1 from 'react-native-vector-icons/MaterialIcons';
-import {apiService} from '../services/apiService';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {StackNavigationProp} from '@react-navigation/stack';
+import {RootStackParamList} from '../App';
+import {useNavigation} from '@react-navigation/native';
 
-const TerminalDetailsScreen = ({route, navigation}: any) => {
+const TerminalDetailsScreen = ({route}: any) => {
   const {taskData} = route.params;
   console.log(taskData, 'Task Data');
   console.log(route);
 
-  const getStatusColor = (status: number) => {
-    switch (status) {
-      case 1:
-        return '#F44336'; // İcra olunmamış
-      case 2:
-        return '#FFC107'; // İcra olunur
-      case 3:
-        return '#00C0EF'; // İcra olunub
-      default:
-        return '#CCC';
-    }
-  };
-
+  type NavigationProp = StackNavigationProp<RootStackParamList, 'Login'>;
   const [confirmVisible, setConfirmVisible] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const handleStartTask = async () => {
     try {
       setLoading(true);
-      setConfirmVisible(false);
+      const token = await AsyncStorage.getItem('userToken');
+      const url = `https://emanat-api.siesco.studio/mobile/CollectorTask/StartTask?taskId=${taskData.id}`;
 
-      const res = await apiService.post('/mobile/CollectorTask/StartTask', {
-        taskId: taskData.id,
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
-      console.log(res, 'res');
-      navigation.navigate('Route');
+
+      const resText: any = await response.text();
+      console.log('Response:', resText);
+
+      if (!response.ok) {
+        throw new Error('Server error: ' + response.status);
+      }
+
+      setConfirmVisible(false);
+      navigation.navigate('TaskProcess', {
+        taskData,
+        startTime: new Date().getTime(), // Pass start time when task starts
+      });
     } catch (error) {
-      console.error('Tapşırığa başlama xətası:', error);
+      console.error('Task start error:', error);
     } finally {
       setLoading(false);
     }
@@ -66,6 +72,8 @@ const TerminalDetailsScreen = ({route, navigation}: any) => {
         return 'Naməlum status';
     }
   };
+
+  const navigation = useNavigation<NavigationProp>();
 
   return (
     <View style={styles.container}>
