@@ -21,22 +21,26 @@ import {
   TabletIcon,
   UserIcon,
 } from '../assets/icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import {apiService} from '../services/apiService';
-const terminals = Array(8).fill({
-  id: '67',
-  fullness: '10% dolu',
-  passengerCount: 1500,
-  amount: '1500 AZN',
-});
 
 const TerminallarScreen = () => {
   const [selectedTerminal, setSelectedTerminal] = useState<any>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [terminals, setTerminals] = useState<any[]>([]);
-  const openModal = (terminal: any) => {
+
+  const openModal = async (terminal: any) => {
     setSelectedTerminal(terminal);
     setModalVisible(true);
+
+    try {
+      const response = await apiService.get(
+        `/mobile/Terminal/GetById?id=${terminal.id}`,
+      );
+      console.log(response, 'Terminal details');
+      setSelectedTerminal(response);
+    } catch (error) {
+      console.error('Terminal details alınarkən xəta:', error);
+    }
   };
 
   const closeModal = () => {
@@ -50,7 +54,7 @@ const TerminallarScreen = () => {
     const fetchTasks = async () => {
       setLoading(true);
       try {
-        const response = await apiService.get('/Terminal/GetAll');
+        const response = await apiService.get('/mobile/Terminal/GetAll');
         console.log(response, 'response');
         setTerminals(response);
       } catch (error) {
@@ -72,21 +76,17 @@ const TerminallarScreen = () => {
             <View style={styles.dot} />
           </View>
           <View>
-            <Text
-              // style={styles.terminalId}
-              style={{fontFamily: 'DMSans-Regular'}}>
-              Terminal ID – {terminal.id}
-            </Text>
+            <Text style={styles.terminalId}>Terminal ID – {terminal.code}</Text>
             <Text style={styles.infoText}>
-              Əsginas sayı: {terminal.passengerCount}
+              {/* Əsginas sayı: {terminal.passengerCount} */}
             </Text>
           </View>
         </View>
         <View style={styles.right}>
-          <View style={styles.fullnessBox}>
+          {/* <View style={styles.fullnessBox}>
             <Text style={styles.fullnessText}>{terminal.fullness}</Text>
-          </View>
-          <Text style={styles.infoText}>Məbləğ: {terminal.amount}</Text>
+          </View> */}
+          {/* <Text style={styles.infoText}>Məbləğ: {terminal.amount}</Text> */}
         </View>
       </View>
     </TouchableOpacity>
@@ -127,7 +127,7 @@ const TerminallarScreen = () => {
               <InfoItem
                 icon={<TabletIcon color="#1269B5" />}
                 label="Terminal ID"
-                value={selectedTerminal?.id}
+                value={selectedTerminal?.code}
               />
               <InfoItem icon={<AvatarIcon />} label="Şirkət" value="E-manat" />
               <InfoItem
@@ -143,12 +143,12 @@ const TerminallarScreen = () => {
               <InfoItem
                 icon={<LocationIcon color="#1269B5" />}
                 label="Ünvan"
-                value="Əhməd Rəcəbli 183"
+                value={selectedTerminal?.address}
               />
               <InfoItem
                 icon={<UserIcon color="#1269B5" />}
                 label="Məsul şəxs"
-                value="055 563 23 20"
+                value={selectedTerminal?.responsiblePersonPhone}
               />
             </ScrollView>
           </View>
@@ -212,8 +212,12 @@ const styles = StyleSheet.create({
   },
   terminalId: {
     color: '#1269B5',
+    textAlign: 'right',
+    fontFamily: 'DMSans-SemiBold', // və ya əlavə etdiyin font adı
+    fontSize: 14,
+    fontStyle: 'normal',
     fontWeight: '600',
-    marginBottom: 4,
+    lineHeight: 21, 
   },
   infoText: {
     color: '#616161',
@@ -253,13 +257,13 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 16,
-    borderBottomWidth: 1, // Adds the bottom border
-    borderBottomColor: '#ddd', // Sets the color of the border
+    borderBottomWidth: 1,
+    borderBottomColor: '#ddd',
     paddingVertical: 10,
   },
   title: {
-    color: '#063A66', // Default color if --Primary-primary-800 is not defined
-    fontFamily: 'DM Sans',
+    color: '#063A66',
+    fontFamily: 'DMSans-SemiBold',
     fontSize: 16,
     fontStyle: 'normal',
     fontWeight: '500',
@@ -276,10 +280,11 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   imageText: {
-    fontWeight: '500',
+    fontFamily: 'DMSans-SemiBold',
   },
   imageSize: {
     fontSize: 12,
+    fontFamily: 'DMSans-Regular',
     color: '#777',
   },
   infoItem: {
@@ -293,7 +298,7 @@ const styles = StyleSheet.create({
   },
   infoLabel: {
     color: '#063A66', // Default color if --Primary-primary-800 is not defined
-    fontFamily: 'DM Sans',
+    fontFamily: 'DMSans-SemiBold',
     fontSize: 16,
     fontStyle: 'normal',
     fontWeight: '500',
@@ -301,7 +306,7 @@ const styles = StyleSheet.create({
   },
   infoValue: {
     color: '#616161', // Default color if --Neutral-700 is not defined
-    fontFamily: 'DM Sans',
+    fontFamily: 'DMSans-Regular',
     fontSize: 14,
     fontStyle: 'normal',
     fontWeight: '400',

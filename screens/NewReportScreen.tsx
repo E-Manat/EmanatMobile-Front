@@ -9,6 +9,7 @@ import {
   Alert,
   StyleSheet,
   ActivityIndicator,
+  ScrollView,
 } from 'react-native';
 import {Picker} from '@react-native-picker/picker';
 import Icon from 'react-native-vector-icons/Feather';
@@ -19,6 +20,10 @@ import {RootStackParamList} from '../App';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {apiService} from '../services/apiService';
 import TopHeader from '../components/TopHeader';
+import {ImageIcon, VideoIcon} from '../assets/icons';
+import VideoPickerModal from '../components/VideoPickerModal';
+import FilePickerModal from '../components/FilePickerModal';
+import CustomModal from '../components/Modal';
 
 type NavigationProp = StackNavigationProp<RootStackParamList, 'Login'>;
 
@@ -26,11 +31,22 @@ const NewReportScreen = () => {
   const [selectedTerminal, setSelectedTerminal] = useState('');
   const [selectedProblem, setSelectedProblem] = useState('');
   const [selectedImages, setSelectedImages] = useState<any>([]);
+  const [selectedVideos, setSelectedVideos] = useState<string[]>([]);
+
   const [selectedVideo, setSelectedVideo] = useState<any>(null);
   const [comment, setComment] = useState('');
   const [loading, setLoading] = useState(false);
   const [problemList, setProblemList] = useState<any[]>([]);
   const [terminalList, setTerminalList] = useState<any[]>([]);
+
+  const [isImageModalVisible, setImageModalVisible] = useState(false);
+  const [isVideoModalVisible, setVideoModalVisible] = useState(false);
+
+  const [problemError, setProblemError] = useState(false);
+  const [isSuccessModalVisible, setSuccessModalVisible] = useState(false);
+
+  const navigation = useNavigation<NavigationProp>();
+
   const takePhoto = () => {
     const options: any = {
       mediaType: 'photo',
@@ -69,21 +85,27 @@ const NewReportScreen = () => {
   };
 
   const pickVideo = () => {
-    const options: any = {
-      mediaType: 'video',
-      quality: 1,
-    };
-
-    launchImageLibrary(options, response => {
-      if (response.didCancel) return;
-      if (response.errorCode) {
-        Alert.alert('Xəta', 'Video seçilə bilmədi');
-        return;
-      }
-
-      const uri = response.assets?.[0]?.uri;
-      if (uri) setSelectedVideo(uri);
-    });
+    Alert.alert('Video əlavə et', 'Videonu haradan əlavə etmək istəyirsiniz?', [
+      {
+        text: 'Kamera',
+        onPress: () => {
+          launchCamera({mediaType: 'video', quality: 1}, response => {
+            const uri = response.assets?.[0]?.uri;
+            if (uri) setSelectedVideos(prev => [...prev, uri]);
+          });
+        },
+      },
+      {
+        text: 'Qalereya',
+        onPress: () => {
+          launchImageLibrary({mediaType: 'video', quality: 1}, response => {
+            const uri = response.assets?.[0]?.uri;
+            if (uri) setSelectedVideos(prev => [...prev, uri]);
+          });
+        },
+      },
+      {text: 'Ləğv et', style: 'cancel'},
+    ]);
   };
 
   const removeImage = (index: any) => {
@@ -125,9 +147,9 @@ const NewReportScreen = () => {
       setLoading(true);
 
       const formData = new FormData();
-      const terminalId = selectedTerminal; // Use selected terminal ID
+      const terminalId = selectedTerminal;
 
-      formData.append('TerminalId', '7ef64a54-fd81-40f4-b041-08dd773781da');
+      formData.append('TerminalId', terminalId);
       formData.append('ProblemId', selectedProblem);
       formData.append('Description', comment);
 
@@ -148,8 +170,7 @@ const NewReportScreen = () => {
       }
 
       await apiService.postMultipart('/mobile/Report/CreateReport', formData);
-      Alert.alert('Uğurla göndərildi!', 'Hesabatınız qəbul edildi.');
-      navigation.replace('Hesabatlar');
+      setSuccessModalVisible(true);
     } catch (error) {
       Alert.alert('Xəta', 'Hesabat göndərilə bilmədi');
       console.error(error);
@@ -158,130 +179,190 @@ const NewReportScreen = () => {
     }
   };
 
-  const navigation = useNavigation<NavigationProp>();
-
   return (
     <>
       <TopHeader title="Yeni hesabat" />
-
-      <View style={{padding: 20}}>
-        <Text style={{fontSize: 18, marginBottom: 5}}>
-          Problem növünü seçin
-        </Text>
-        <Picker
-          selectedValue={selectedProblem}
-          onValueChange={itemValue => setSelectedProblem(itemValue)}
-          style={{borderWidth: 1, borderColor: '#ddd', marginBottom: 10}}>
-          <Picker.Item label="Texniki problem seçin" value="" />
-          {problemList?.map((problem: any) => (
+      <ScrollView style={{backgroundColor: '#fff'}}>
+        <View style={styles.container}>
+          <Text style={styles.selectLabel}>Problem növünü seçin</Text>
+          <Picker
+            selectedValue={selectedProblem}
+            onValueChange={itemValue => setSelectedProblem(itemValue)}
+            style={[styles.customPicker, problemError && {borderColor: 'red'}]}>
             <Picker.Item
-              key={problem.id}
-              label={problem.description}
-              value={problem.id}
+              label="Texniki problem"
+              value=""
+              style={styles.customPickerLabel}
             />
-          ))}
-        </Picker>
-
-        <Text style={{fontSize: 18, marginBottom: 5}}> Terminal seçin</Text>
-        {/* <Picker
-          selectedValue={selectedTerminal}
-          onValueChange={itemValue => setSelectedTerminal(itemValue)}
-          style={{borderWidth: 1, borderColor: '#ddd', marginBottom: 10}}>
-          <Picker.Item label="Select Terminal" value="" />
-          {terminalList?.map((terminal: any) => (
-            <Picker.Item
-              key={terminal.id}
-              label={terminal.name} // Adjust based on your terminal object
-              value={terminal.id}
-            />
-          ))}
-        </Picker> */}
-
-        <Text style={{fontSize: 18, marginBottom: 10}}>
-          Terminalın şəklini yükləyin *
-        </Text>
-        <View
-          style={{flexDirection: 'row', flexWrap: 'wrap', marginBottom: 10}}>
-          {selectedImages.map((image: any, index: any) => (
-            <View key={index} style={{position: 'relative', marginRight: 5}}>
-              <Image
-                source={{uri: image}}
-                style={{width: 70, height: 70, borderRadius: 5}}
+            {problemList?.map((problem: any) => (
+              <Picker.Item
+                key={problem.id}
+                label={problem.description}
+                value={problem.id}
+                style={styles.customPickerLabel}
               />
-              <TouchableOpacity
-                style={{
-                  position: 'absolute',
-                  top: -5,
-                  right: -5,
-                  backgroundColor: 'red',
-                  borderRadius: 12,
-                  padding: 3,
-                }}
-                onPress={() => removeImage(index)}>
-                <Text style={{color: 'white', fontSize: 12}}>X</Text>
-              </TouchableOpacity>
-            </View>
-          ))}
+            ))}
+          </Picker>
+
+          <Text style={styles.selectLabel}> Terminal seçin</Text>
+          <Picker
+            selectedValue={selectedTerminal}
+            onValueChange={itemValue => setSelectedTerminal(itemValue)}
+            style={styles.customPicker}>
+            <Picker.Item
+              label="Terminal "
+              value=""
+              style={styles.customPickerLabel}
+            />
+            {terminalList?.map((terminal: any) => (
+              <Picker.Item
+                key={terminal.id}
+                label={terminal.code}
+                value={terminal.id}
+                style={styles.customPickerLabel}
+              />
+            ))}
+          </Picker>
+
+          <Text style={styles.imageContentLabel}>
+            Terminalın şəklini yükləyin *
+          </Text>
+          <View
+            style={{flexDirection: 'row', flexWrap: 'wrap', marginBottom: 10}}>
+            {selectedImages.map((image: any, index: any) => (
+              <View key={index} style={{position: 'relative', marginRight: 5}}>
+                <Image
+                  source={{uri: image}}
+                  style={{width: 70, height: 70, borderRadius: 15}}
+                />
+                <TouchableOpacity
+                  style={styles.removeImageBtn}
+                  onPress={() => removeImage(index)}>
+                  <Text style={{color: 'white', fontSize: 12}}>
+                    <Icon name="x" />
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            ))}
+            <TouchableOpacity
+              onPress={() => setImageModalVisible(true)}
+              style={styles.imageContent}>
+              <Text>
+                <ImageIcon color="#1269B5" />
+              </Text>
+            </TouchableOpacity>{' '}
+          </View>
+
           <TouchableOpacity
-            onPress={() =>
-              Alert.alert(
-                'Şəkil əlavə et',
-                'Şəkli haradan əlavə etmək istəyirsiniz?',
-                [
-                  {text: 'Kamera', onPress: takePhoto},
-                  {text: 'Qalereya', onPress: pickImageFromGallery},
-                  {text: 'Ləğv et', style: 'cancel'},
-                ],
-              )
-            }
-            style={{
-              width: 70,
-              height: 70,
-              backgroundColor: '#ddd',
-              justifyContent: 'center',
-              alignItems: 'center',
-              borderRadius: 5,
-            }}>
-            <Text style={{fontSize: 20}}>📷</Text>
+            onPress={() => setVideoModalVisible(true)}
+            style={styles.videoContent}>
+            <VideoIcon />
+            <View>
+              <Text style={styles.videoContentText}>Video əlavə et *</Text>
+              <Text style={styles.videoContentTextSize}>Max 20 MB</Text>
+            </View>
           </TouchableOpacity>
+
+          <View style={{flexDirection: 'row', flexWrap: 'wrap'}}>
+            {selectedVideos.map((videoUri, index) => (
+              <View
+                key={index}
+                style={{
+                  position: 'relative',
+                  marginRight: 5,
+                  marginBottom: 10,
+                }}>
+                <Image
+                  source={{uri: videoUri}}
+                  style={{width: 70, height: 70, borderRadius: 15}}
+                />
+                <TouchableOpacity
+                  style={styles.removeImageBtn}
+                  onPress={() => {
+                    const updatedVideos = selectedVideos.filter(
+                      (_, i) => i !== index,
+                    );
+                    setSelectedVideos(updatedVideos);
+                  }}>
+                  <Text style={{color: 'white', fontSize: 12}}>
+                    {' '}
+                    <Icon name="x" />
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            ))}
+          </View>
+
+          <Text style={styles.noteLabel}>Şərh əlavə edin *</Text>
+          <TextInput
+            placeholder="Şərhinizi bura yazın..."
+            style={styles.noteInput}
+            value={comment}
+            onChangeText={setComment}
+          />
+
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity
+              style={styles.secondaryButton}
+              onPress={() => navigation.replace('Ana səhifə')}>
+              <Text style={styles.secondaryButtonLabel}>Çıxış et</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={handleSubmit}
+              style={styles.primaryButton}
+              disabled={loading}>
+              {loading ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <Text style={styles.primaryButtonText}>Göndər</Text>
+              )}
+            </TouchableOpacity>
+          </View>
         </View>
 
-        <Text style={{fontSize: 18, marginBottom: 10}}>Video əlavə edin</Text>
-        <TouchableOpacity
-          onPress={pickVideo}
-          style={{
-            width: 70,
-            height: 70,
-            backgroundColor: '#ddd',
-            justifyContent: 'center',
-            alignItems: 'center',
-            borderRadius: 5,
-          }}>
-          <Text style={{fontSize: 20}}>🎥</Text>
-        </TouchableOpacity>
-
-        <Text style={{fontSize: 18, marginBottom: 10}}>Şərh əlavə edin *</Text>
-        <TextInput
-          placeholder="Şərhinizi bura yazın..."
-          style={{
-            borderColor: '#ddd',
-            borderWidth: 1,
-            borderRadius: 5,
-            padding: 10,
-            marginBottom: 20,
+        <CustomModal
+          visible={isSuccessModalVisible}
+          title="Bildiriş"
+          description="Hesabatınız uğurla göndərildi."
+          confirmText="Bağla"
+          onConfirm={() => {
+            setSuccessModalVisible(false);
+            navigation.replace('Hesabatlar');
           }}
-          value={comment}
-          onChangeText={setComment}
         />
 
-        {loading ? (
-          <ActivityIndicator size="large" color="#007BFF" /> // Loading göstəricisi
-        ) : (
-          <TouchableOpacity onPress={handleSubmit} style={styles.primaryButton}>
-            <Text style={styles.primaryButtonText}>Göndər</Text>
-          </TouchableOpacity>
-        )}
-      </View>
+        <FilePickerModal
+          visible={isImageModalVisible}
+          onClose={() => setImageModalVisible(false)}
+          onPickGallery={() => {
+            setImageModalVisible(false);
+            pickImageFromGallery();
+          }}
+          onPickFile={() => {
+            setImageModalVisible(false);
+            Alert.alert('Qeyd', 'Bu funksiya hələlik aktiv deyil.');
+          }}
+          onTakePhoto={() => {
+            setImageModalVisible(false);
+            takePhoto();
+          }}
+        />
+        <VideoPickerModal
+          visible={isVideoModalVisible}
+          onClose={() => setVideoModalVisible(false)}
+          onPickGallery={() => {
+            setVideoModalVisible(false);
+            pickVideo();
+          }}
+          onPickFile={() => {
+            setVideoModalVisible(false);
+            Alert.alert('Qeyd', 'Bu funksiya hələlik aktiv deyil.');
+          }}
+          onRecordVideo={() => {
+            setVideoModalVisible(false);
+          }}
+        />
+      </ScrollView>
     </>
   );
 };
@@ -289,6 +370,13 @@ const NewReportScreen = () => {
 export default NewReportScreen;
 
 const styles = StyleSheet.create({
+  container: {
+    backgroundColor: '#fff',
+    paddingHorizontal: 20,
+    height: '100%',
+    gap: 10,
+    paddingTop: 25,
+  },
   header: {
     backgroundColor: '#2D64AF',
     height: 80,
@@ -298,12 +386,137 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   headerText: {fontSize: 18, fontWeight: 'bold', color: '#fff'},
+
+  noteLabel: {
+    color: '#063A66',
+    fontFamily: 'DMSans-SemiBold',
+    fontSize: 14,
+    fontWeight: '500',
+    lineHeight: 21, // 150% of 14px
+    fontStyle: 'normal',
+  },
+  noteInput: {
+    borderRadius: 15,
+    borderWidth: 1,
+    borderColor: '#F5F5F5',
+    fontFamily: 'DMSans-Regular',
+    height: 68,
+  },
+  videoContent: {
+    display: 'flex',
+    padding: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    alignSelf: 'stretch',
+
+    borderRadius: 8,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    backgroundColor: '#F6F6F6',
+    borderColor: '#E5E5E5',
+  },
+  videoContentText: {
+    color: '#333',
+    fontFamily: 'DMSans-Regular',
+    fontSize: 16,
+    fontStyle: 'normal',
+    fontWeight: '600',
+    lineHeight: 20, // 125% of 16px
+  },
+  videoContentTextSize: {
+    color: '#666',
+    fontFamily: 'DMSans-Regular',
+    fontSize: 10,
+    fontStyle: 'normal',
+    fontWeight: '500',
+    lineHeight: 15,
+  },
+  imageContentLabel: {
+    color: '#063A66', // var(--Primary-primary-800, #063A66)
+    fontFamily: 'DMSans-SemiBold',
+    fontSize: 14,
+    fontStyle: 'normal',
+    fontWeight: '500',
+    lineHeight: 21, // 150% of 14px
+  },
+  imageContent: {
+    borderRadius: 15,
+    backgroundColor: '#F5F5F5',
+    height: 70,
+    width: 70,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 5,
+  },
+  removeImageBtn: {
+    position: 'absolute',
+    top: -5,
+    right: -5,
+    backgroundColor: '#2D64AF',
+    borderRadius: 12,
+    width: 20,
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    height: 20,
+  },
+  customPicker: {
+    height: 50,
+    borderWidth: 1,
+    borderColor: '#1269B5',
+    borderRadius: 18,
+    backgroundColor: '#F5F5F5',
+    paddingLeft: 10,
+    paddingRight: 10,
+    fontSize: 16,
+    color: '#333',
+    fontFamily: 'DMSans-Medium',
+    overflow: 'hidden', // Bu vacibdir!
+  },
+  customPickerLabel: {
+    fontFamily: 'DMSans-Medium',
+    borderRadius: 8,
+  },
+  selectLabel: {
+    color: '#424242',
+    fontFamily: 'DMSans-SemiBold',
+    fontSize: 12,
+    lineHeight: 18,
+  },
+  buttonContainer: {
+    width: '100%',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    flexDirection: 'row',
+    gap: 10,
+  },
   primaryButton: {
     backgroundColor: '#1269B5',
+    borderRadius: 12,
+    paddingVertical: 15,
+    alignItems: 'center',
+    marginBottom: 12,
+    width: '49%',
+  },
+  primaryButtonText: {
+    color: '#fff',
+  },
+  secondaryButton: {
+    backgroundColor: '#fff',
     borderRadius: 12,
     paddingVertical: 14,
     alignItems: 'center',
     marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#1269B5',
+    width: '49%',
   },
-  primaryButtonText: {color: '#fff', fontWeight: 'bold', fontSize: 16},
+  secondaryButtonLabel: {
+    color: '#1269B5',
+    fontFamily: 'DM Sans',
+    paddingHorizontal: 16,
+    fontSize: 14,
+  },
 });

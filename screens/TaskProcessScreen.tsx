@@ -7,53 +7,184 @@ import {
   SafeAreaView,
   Alert,
   Image,
+  Linking,
 } from 'react-native';
-import Icon from 'react-native-vector-icons/Feather';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {RootStackParamList} from '../App';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {useNavigation} from '@react-navigation/native';
 import TopHeader from '../components/TopHeader';
-
+import CustomModal from '../components/Modal';
+import Geolocation from 'react-native-geolocation-service';
+import {PermissionsAndroid, Platform} from 'react-native';
 type NavigationProp = StackNavigationProp<RootStackParamList, 'Hesabatlar'>;
 
 const TaskProcessScreen = ({route}: any) => {
   const navigation = useNavigation<NavigationProp>();
-  const {taskData, startTime: initialStartTime} = route?.params || {}; // Receive startTime
+  const {taskData} = route?.params || {};
 
-  const [step, setStep] = useState(1); // Track current step: 1 - "Start Task", 2 - "Start Collection", 3 - "Complete Task"
-  const [taskTimer, setTaskTimer] = useState(0); // Track the time for task in seconds
-  const [collectionTimer, setCollectionTimer] = useState(0); // Track the collection time in seconds
-  const [timerActive, setTimerActive] = useState(false); // Flag to control the timer
-  const [loading, setLoading] = useState(false); // For loading state during API requests
-
-  const startTime = initialStartTime || new Date().getTime(); // Initialize startTime (if not passed, use current time)
+  const [step, setStep] = useState(0);
+  const [taskTimer, setTaskTimer] = useState(0);
+  const [collectionTimer, setCollectionTimer] = useState(0);
+  const [timerActive, setTimerActive] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [successModalVisible, setSuccessModalVisible] = useState(false);
 
   useEffect(() => {
-    let taskInterval: any;
-    let collectionInterval: any;
+    const restoreTimers = async () => {
+      const routeStart = await AsyncStorage.getItem('routeStartTime');
+      const collectionStart = await AsyncStorage.getItem('collectionStartTime');
 
-    // If task timer is active, update the task timer every second
-    if (timerActive) {
-      taskInterval = setInterval(() => {
-        setTaskTimer(prevTimer => prevTimer + 1); // Increment the task timer every second
-      }, 1000);
-    }
+      if (collectionStart) {
+        setStep(1);
+        setTimerActive(true);
+        const diff = Math.floor(
+          (new Date().getTime() - parseInt(collectionStart, 10)) / 1000,
+        );
+        setCollectionTimer(diff);
+      } else if (routeStart) {
+        setStep(0);
+        setTimerActive(true);
+        const diff = Math.floor(
+          (new Date().getTime() - parseInt(routeStart, 10)) / 1000,
+        );
+        setTaskTimer(diff);
+      }
+    };
 
-    // If collection is active, update the collection timer every second
-    if (step === 2) {
-      collectionInterval = setInterval(() => {
-        setCollectionTimer(prevTimer => prevTimer + 1); // Increment the collection timer every second
-      }, 1000);
-    }
+    restoreTimers();
+  }, []);
+
+  useEffect(() => {
+    let routeInterval: any;
+
+    const loadRouteStartTime = async () => {
+      if (step === 0 && timerActive) {
+        const storedTime = await AsyncStorage.getItem('routeStartTime');
+        const start = storedTime
+          ? parseInt(storedTime, 10)
+          : new Date().getTime();
+
+        if (!storedTime) {
+          await AsyncStorage.setItem('routeStartTime', start.toString());
+        }
+
+        routeInterval = setInterval(() => {
+          const now = new Date().getTime();
+          setTaskTimer(Math.floor((now - start) / 1000));
+        }, 1000);
+      }
+    };
+
+    loadRouteStartTime();
 
     return () => {
-      clearInterval(taskInterval);
+      clearInterval(routeInterval);
+    };
+  }, [step, timerActive]);
+
+  useEffect(() => {
+    let collectionInterval: any;
+
+    const loadCollectionStartTime = async () => {
+      if (step === 1 && timerActive) {
+        const storedTime = await AsyncStorage.getItem('collectionStartTime');
+        const start = storedTime
+          ? parseInt(storedTime, 10)
+          : new Date().getTime();
+
+        if (!storedTime) {
+          await AsyncStorage.setItem('collectionStartTime', start.toString());
+        }
+
+        collectionInterval = setInterval(() => {
+          const now = new Date().getTime();
+          setCollectionTimer(Math.floor((now - start) / 1000));
+        }, 1000);
+      }
+    };
+
+    loadCollectionStartTime();
+
+    return () => {
       clearInterval(collectionInterval);
     };
-  }, [timerActive, step]);
+  }, [step, timerActive]);
 
-  // Start collection
+  const completeTask = async () => {
+    setLoading(true);
+    const token = await AsyncStorage.getItem('userToken');
+    const url = `https://emanat-api.siesco.studio/mobile/CollectorTask/CompleteTask?taskId=${taskData.id}`;
+
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      console.log(response, 'complete task');
+
+      if (!response.ok) {
+        throw new Error('Server error: ' + response.status);
+      }
+
+      // if (Platform.OS === 'android') {
+      //   const granted = await PermissionsAndroid.request(
+      //     PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+      //   );
+
+      //   if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+      //     Geolocation.getCurrentPosition(
+      //       position => {
+      //         const {latitude, longitude} = position.coords;
+      //         console.log('Cari koordinatlar:', latitude, longitude);
+      //       },
+      //       error => {
+      //         console.error('Koordinat xətası:', error.message);
+      //       },
+      //       {enableHighAccuracy: true, timeout: 10000, maximumAge: 1000},
+      //     );
+      //   } else {
+      //     console.log('İcazə verilmədi');
+      //   }
+      // } else {
+      //   // iOS üçün
+      //   Geolocation.getCurrentPosition(
+      //     position => {
+      //       const {latitude, longitude} = position.coords;
+      //       console.log('Cari koordinatlar:', latitude, longitude);
+      //     },
+      //     error => {
+      //       console.error('Koordinat xətası:', error.message);
+      //     },
+      //     {enableHighAccuracy: true, timeout: 10000, maximumAge: 1000},
+      //   );
+      // }
+
+      setStep(2);
+      setTimerActive(false);
+      await AsyncStorage.multiRemove([
+        'currentTask',
+        'routeStartTime',
+        'collectionStartTime',
+      ]);
+      setSuccessModalVisible(true);
+    } catch (error) {
+      console.error('Error completing task:', error);
+      Alert.alert('Error', 'Failed to complete the task.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleConfirmComplete = async () => {
+    setModalVisible(false);
+    await completeTask(); // Sənin funksiyan burada çağrılır
+  };
+
   const startCollection = async () => {
     setLoading(true);
     const token = await AsyncStorage.getItem('userToken');
@@ -71,46 +202,21 @@ const TaskProcessScreen = ({route}: any) => {
         throw new Error('Server error: ' + response.status);
       }
 
-      setStep(2); // Move to "İnkassasiyaya başla" step
-      setTimerActive(true); // Start the task timer for "İnkassiya başla" phase
-      setLoading(false);
+      setTimerActive(false); // Stop route timer
+      setStep(1);
+      await AsyncStorage.setItem(
+        'collectionStartTime',
+        new Date().getTime().toString(),
+      );
+      setTimerActive(true);
     } catch (error) {
       console.error('Error starting collection:', error);
-      setLoading(false);
       Alert.alert('Error', 'Failed to start collection.');
-    }
-  };
-
-  const completeTask = async () => {
-    setLoading(true);
-    const token = await AsyncStorage.getItem('userToken');
-    const url = `https://emanat-api.siesco.studio/mobile/CollectorTask/CompleteTask?taskId=${taskData.id}`;
-
-    try {
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Server error: ' + response.status);
-      }
-
-      setStep(3); // Move to "Task Completed" step
-      setTimerActive(false); // Stop the task and collection timers
-      Alert.alert('Success', 'Task completed successfully');
-    } catch (error) {
-      console.error('Error completing task:', error);
-      setLoading(false);
-      Alert.alert('Error', 'Failed to complete the task.');
     } finally {
       setLoading(false);
     }
   };
 
-  // Format time to MM:SS
   const formatTime = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
@@ -119,38 +225,57 @@ const TaskProcessScreen = ({route}: any) => {
     ).padStart(2, '0')}`;
   };
 
+  const openInWaze = async () => {
+    const address = taskData?.terminal?.address;
+
+    if (!address) {
+      Alert.alert('Xəta', 'Ünvan tapılmadı.');
+      return;
+    }
+
+    const encodedAddress = encodeURIComponent(address);
+    const wazeUrl = `waze://?q=${encodedAddress}&navigate=yes`;
+    const fallbackUrl = `https://waze.com/ul?q=${encodedAddress}`;
+
+    const canOpen = await Linking.canOpenURL(wazeUrl);
+    if (canOpen) {
+      Linking.openURL(wazeUrl);
+    } else {
+      Linking.openURL(fallbackUrl);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.container}>
         <TopHeader title="Tapşırıq" />
 
-        <View style={styles.mapSection}>
-          <TouchableOpacity style={styles.mapBtn}>
-            <View style={styles.mapBtnContent}>
-              <Image
-                source={require('../assets/img/waze.png')}
-                style={styles.profileImage}
-              />
-              <Text style={styles.mapBtnText}>Xəritəyə bax</Text>
-            </View>
-          </TouchableOpacity>
-        </View>
-
         <View style={styles.card}>
-          <Text style={styles.terminalTitle}>Terminal 2435</Text>
-          <Text style={styles.terminalSubtitle}>
-            Bravo Koroğlu m/s <Text style={styles.distance}>2.7 km</Text>
-          </Text>
+          <View style={{flexDirection: 'row', gap: 10}}>
+            <Image
+              source={require('../assets/img/img2.png')}
+              style={styles.image}
+            />
+            <View>
+              <Text style={styles.terminalTitle}>
+                {taskData?.terminal.code}
+              </Text>
+              <Text style={styles.terminalSubtitle}>
+                {taskData?.terminal?.address}
+                {/* <Text style={styles.distance}>2.7 km</Text> */}
+              </Text>
+            </View>
+          </View>
 
           <View style={styles.timeline}>
             <View style={styles.step}>
-              <View style={step >= 1 ? styles.circleActive : styles.circle}>
+              <View style={step >= 0 ? styles.circleActive : styles.circle}>
                 <Text style={styles.stepNum}>01</Text>
               </View>
               <View style={styles.stepContent}>
                 <Text
-                  style={step >= 1 ? styles.stepTitleActive : styles.stepTitle}>
-                  Tapşırığa başla
+                  style={step >= 0 ? styles.stepTitleActive : styles.stepTitle}>
+                  Marşrut
                 </Text>
                 <Text style={styles.stepTime}>{formatTime(taskTimer)}</Text>
               </View>
@@ -159,63 +284,71 @@ const TaskProcessScreen = ({route}: any) => {
             <View style={styles.verticalLine} />
 
             <View style={styles.step}>
-              <View style={step >= 2 ? styles.circleActive : styles.circle}>
+              <View style={step >= 1 ? styles.circleActive : styles.circle}>
                 <Text style={styles.stepNum}>02</Text>
               </View>
               <View style={styles.stepContent}>
                 <Text
-                  style={step >= 2 ? styles.stepTitleActive : styles.stepTitle}>
-                  İnkassasiyaya başla
+                  style={step >= 1 ? styles.stepTitleActive : styles.stepTitle}>
+                  İnkassasiya
                 </Text>
                 <Text style={styles.stepTime}>
                   {formatTime(collectionTimer)}
                 </Text>
               </View>
             </View>
-
-            <View style={styles.verticalLine} />
-
-            <View style={styles.step}>
-              <View style={step === 3 ? styles.circleActive : styles.circle}>
-                <Text style={styles.stepNum}>03</Text>
-              </View>
-              <View style={styles.stepContent}>
-                <Text
-                  style={
-                    step === 3 ? styles.stepTitleActive : styles.stepTitle
-                  }>
-                  Tapşırığı sonlandır
-                </Text>
-                <Text style={styles.stepTime}>00:00</Text>
-              </View>
-            </View>
           </View>
         </View>
 
         <View style={styles.bottomButtons}>
-          {step === 1 ? (
+          {' '}
+          <TouchableOpacity style={styles.secondaryButton} onPress={openInWaze}>
+            {' '}
+            <Image
+              source={require('../assets/img/waze.png')}
+              style={styles.profileImage}
+            />
+            <Text style={styles.secondaryButtonText}>Xəritəyə bax</Text>
+          </TouchableOpacity>
+          {step === 0 ? (
             <TouchableOpacity
               style={styles.primaryButton}
               onPress={startCollection}
               disabled={loading}>
               <Text style={styles.primaryButtonText}>İnkassasiyaya başla</Text>
             </TouchableOpacity>
-          ) : step === 2 ? (
+          ) : step === 1 ? (
             <TouchableOpacity
               style={styles.primaryButton}
-              onPress={completeTask}>
-              <Text style={styles.primaryButtonText}>Tapşırığı sonlandir</Text>
+              onPress={() => setModalVisible(true)}
+              disabled={loading}>
+              <Text style={styles.primaryButtonText}>Tapşırığı sonlandır</Text>
             </TouchableOpacity>
           ) : (
             <TouchableOpacity style={styles.primaryButton} disabled>
-              <Text style={styles.primaryButtonText}>Tapşırıq tamamlanıb</Text>
+              <Text style={styles.primaryButtonText}>Tapşırıq tamamlandı</Text>
             </TouchableOpacity>
           )}
-
-          <TouchableOpacity style={styles.secondaryButton}>
-            <Text style={styles.secondaryButtonText}>Hesabat yarat</Text>
-          </TouchableOpacity>
         </View>
+        <CustomModal
+          visible={modalVisible}
+          title="Təsdiqləmə"
+          description="Tapşırığı sonlandırmaq istədiyinizə əminsiniz?"
+          confirmText="Bəli"
+          cancelText="Xeyr"
+          onCancel={() => setModalVisible(false)}
+          onConfirm={handleConfirmComplete}
+        />
+        <CustomModal
+          visible={successModalVisible}
+          title="Tapşırıq tamamlandı"
+          description="Tapşırıq uğurla tamamlandı."
+          confirmText="Bağla"
+          onConfirm={() => {
+            setSuccessModalVisible(false);
+            navigation.navigate('YeniHesabat');
+          }}
+        />
       </View>
     </SafeAreaView>
   );
@@ -226,65 +359,20 @@ export default TaskProcessScreen;
 
 const styles = StyleSheet.create({
   container: {flex: 1, backgroundColor: '#fff'},
-  header: {
-    backgroundColor: '#2D64AF',
-    height: 80,
-    paddingHorizontal: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+  card: {borderRadius: 16, padding: 16, marginHorizontal: 20, paddingTop: 40},
+  terminalTitle: {
+    fontFamily: 'DMSans-SemiBold',
+    fontSize: 16,
+    color: '#063A66',
   },
-  headerText: {fontSize: 18, fontWeight: 'bold', color: '#fff'},
-  card: {borderRadius: 16, padding: 16, marginHorizontal: 20},
-  terminalTitle: {fontWeight: '700', fontSize: 16, color: '#063A66'},
-  terminalSubtitle: {fontSize: 13, color: '#9E9E9E'},
-  distance: {color: '#1269B5', fontWeight: '600'},
+  terminalSubtitle: {
+    fontSize: 13,
+    color: '#9E9E9E',
+    fontFamily: 'DMSans-SemiBold',
+    marginTop: 5,
+  },
+  distance: {color: '#1269B5', fontFamily: 'DMSans-SemiBold', marginLeft: 5},
   timeline: {marginTop: 20},
-
-  mapSection: {
-    width: '100%',
-    display: 'flex',
-    justifyContent: 'flex-end',
-    alignItems: 'flex-end',
-    marginTop: 7,
-    padding: 16,
-  },
-  mapBtn: {
-    borderRadius: 8, // var(--s, 8px)
-    backgroundColor: '#1269B5', // var(--Primary-primary-500, #1269B5)
-    shadowColor: 'rgba(45, 100, 175, 0.10)',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 1,
-    shadowRadius: 25,
-    elevation: 5, // Android üçün kölgə effekti
-    paddingVertical: 10,
-    paddingHorizontal: 10,
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  mapBtnContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-
-  mapBtnText: {
-    color: '#FFF',
-    fontFamily: 'DM Sans',
-    fontSize: 12,
-    fontWeight: '500',
-  },
-
-  profileImage: {
-    width: 16,
-    height: 16,
-    resizeMode: 'contain',
-  },
-
   circle: {
     width: CIRCLE_SIZE,
     height: CIRCLE_SIZE,
@@ -305,7 +393,7 @@ const styles = StyleSheet.create({
   },
   stepNum: {
     fontSize: 10,
-    fontWeight: 'bold',
+    fontFamily: 'DMSans-SemiBold',
     color: '#fff',
   },
   step: {
@@ -322,19 +410,20 @@ const styles = StyleSheet.create({
   },
   stepTitle: {
     fontSize: 14,
+    fontFamily: 'DMSans-SemiBold',
     color: '#465668',
   },
   stepTitleActive: {
     fontSize: 14,
     color: '#1269B5',
-    fontWeight: 'bold',
+    fontFamily: 'DMSans-SemiBold',
   },
   stepTime: {
     fontSize: 13,
-    color: '#999',
+    color: '#767676',
     marginLeft: 8,
+    fontFamily: 'DMSans-SemiBold',
   },
-
   verticalLine: {
     height: 20,
     borderLeftWidth: 1,
@@ -343,7 +432,12 @@ const styles = StyleSheet.create({
     marginLeft: CIRCLE_SIZE / 2,
     alignSelf: 'flex-start',
   },
-  bottomButtons: {paddingHorizontal: 20, marginTop: 'auto', marginBottom: 30},
+  bottomButtons: {
+    paddingHorizontal: 20,
+    marginTop: 'auto',
+    marginBottom: 30,
+    gap: 15,
+  },
   primaryButton: {
     backgroundColor: '#1269B5',
     borderRadius: 12,
@@ -351,13 +445,30 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 12,
   },
-  primaryButtonText: {color: '#fff', fontWeight: 'bold', fontSize: 16},
+  primaryButtonText: {
+    color: '#fff',
+    fontFamily: 'DMSans-SemiBold',
+    fontSize: 16,
+  },
   secondaryButton: {
     borderWidth: 1,
     borderColor: '#1269B5',
     borderRadius: 12,
     paddingVertical: 14,
     alignItems: 'center',
+    display: 'flex',
+    justifyContent: 'center',
+    flexDirection: 'row',
+    gap: 6,
   },
-  secondaryButtonText: {color: '#1269B5', fontWeight: 'bold', fontSize: 16},
+  secondaryButtonText: {
+    color: '#1269B5',
+    fontFamily: 'DMSans-SemiBold',
+    fontSize: 16,
+  },
+  image: {
+    width: 40,
+    height: 40,
+  },
+  profileImage: {width: 25, height: 25, resizeMode: 'contain'},
 });

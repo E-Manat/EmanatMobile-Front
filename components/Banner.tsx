@@ -42,9 +42,9 @@ const ImageSlider = () => {
     ).start();
   }, []);
 
-  const handleButtonPress = () => {
-    navigation.navigate('TaskProcess');
-  };
+  // const handleButtonPress = () => {
+  //   navigation.navigate('TaskProcess');
+  // };
 
   return (
     <Swiper autoplay height={200} showsPagination={false}>
@@ -56,9 +56,9 @@ const ImageSlider = () => {
               styles.animatedButtonWrapper,
               {transform: [{scale: scaleAnim}]},
             ]}>
-            <TouchableOpacity style={styles.button} onPress={handleButtonPress}>
+            {/* <TouchableOpacity style={styles.button} onPress={handleButtonPress}>
               <Icon name="map-marker-down" color="#fff" size={20} />
-            </TouchableOpacity>
+            </TouchableOpacity> */}
           </Animated.View>
         </View>
       ))}

@@ -11,11 +11,10 @@ import {
   Keyboard,
   ActivityIndicator,
   Modal,
+  Image,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
-import IconDoc from 'react-native-vector-icons/Ionicons';
 
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import moment from 'moment';
 import {apiService} from '../services/apiService';
 import {RootStackParamList} from '../App';
@@ -133,22 +132,12 @@ const ReportsScreen = () => {
       onPress={() => {
         setSelectedFilters([option]);
       }}>
-      <View
-        style={{
-          width: 30, // Increase width
-          height: 30, // Increase height
-          borderRadius: 5,
-          borderWidth: 2, // Slightly thicker border
-          borderColor: '#2D64AF',
-          alignItems: 'center',
-          justifyContent: 'center',
-          marginRight: 10,
-        }}>
+      <View style={styles.checkBox}>
         {selectedFilters.includes(option) && (
           <Icon name="check" size={20} color="#2D64AF" />
         )}
       </View>
-      <Text style={{color: '#000', fontSize: 16}}>{option}</Text>
+      <Text style={styles.filterOptionText}>{option}</Text>
     </TouchableOpacity>
   );
 
@@ -205,30 +194,16 @@ const ReportsScreen = () => {
             <View style={styles.modalOverlay}>
               <TouchableWithoutFeedback onPress={() => null}>
                 <View style={styles.modalContent}>
-                  <Text style={styles.modalTitle}>Filtrlə</Text>
-
                   {FILTER_OPTIONS.map(option => renderFilterOption(option))}
 
                   <View style={{alignItems: 'center', marginVertical: 20}}>
                     <TouchableOpacity
-                      style={{
-                        backgroundColor: '#2D64AF',
-                        paddingVertical: 10,
-                        paddingHorizontal: 30,
-                        borderRadius: 10,
-                      }}
+                      style={styles.applyButton}
                       onPress={() => {
-                        fetchReports();
                         setModalVisible(false);
+                        fetchReports();
                       }}>
-                      <Text
-                        style={{
-                          color: '#fff',
-                          fontSize: 16,
-                          fontWeight: 'bold',
-                        }}>
-                        Təsdiq et
-                      </Text>
+                      <Text style={styles.buttonText}>Tətbiq et</Text>
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -250,7 +225,24 @@ const ReportsScreen = () => {
             showsVerticalScrollIndicator={false}
           />
         ) : (
-          <Text style={styles.noResult}>Nəticə tapılmadı</Text>
+          <View style={styles.noResult}>
+            <Image
+              source={require('../assets/img/report_empty.png')}
+              style={styles.noContentImage}
+            />
+            <Text style={styles.noContentLabel}>
+              Sizin heç bir hesabatınız yoxdur
+            </Text>
+            <Text style={styles.noContentText}>
+              Yeni hesabat yaratmaq üçün aşağıdakı düyməyə klikləyin.
+            </Text>
+            <TouchableOpacity
+              style={styles.button}
+              onPress={() => navigation.navigate('YeniHesabat')}>
+              <Icon name="plus" size={24} color="#fff" />
+              <Text style={styles.buttonText}>Yeni hesabat</Text>
+            </TouchableOpacity>
+          </View>
         )}
       </View>
     </TouchableWithoutFeedback>
@@ -276,6 +268,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F2F2F2',
     margin: 10,
     paddingHorizontal: 10,
+    fontFamily: 'DMSans-Regular',
     borderRadius: 10,
     marginVertical: 15,
     justifyContent: 'space-between', // Ensures icons and input are spaced well
@@ -284,7 +277,13 @@ const styles = StyleSheet.create({
     marginLeft: 10, // Space between the search input and filter icon
   },
 
-  input: {fontSize: 14, color: '#2D64AF', flex: 1, height: 40},
+  input: {
+    fontSize: 14,
+    color: '#2D64AF',
+    flex: 1,
+    height: 40,
+    fontFamily: 'DMSans-Regular',
+  },
   searchIcon: {marginRight: 10},
   clearIcon: {marginLeft: 10},
   card: {
@@ -314,11 +313,19 @@ const styles = StyleSheet.create({
     fontFamily: 'DMSans-Regular',
     fontSize: 12,
     fontStyle: 'normal',
-    fontWeight: '400',
     lineHeight: 18, // 150% of 12px},
   },
-  time: {fontSize: 12, color: '#A8A8A8', fontWeight: '400', textAlign: 'right'},
-  status: {fontSize: 12, fontWeight: 'bold', color: '#29C0B9'},
+  time: {
+    fontSize: 12,
+    color: '#A8A8A8',
+    textAlign: 'right',
+    fontFamily: 'DMSans-Regular',
+  },
+  status: {
+    fontSize: 12,
+    color: '#29C0B9',
+    fontFamily: 'DMSans-Regular',
+  },
   statusContainer: {
     flexDirection: 'column',
     justifyContent: 'space-between',
@@ -326,10 +333,39 @@ const styles = StyleSheet.create({
   },
   highlight: {backgroundColor: '#FFC107'},
   noResult: {
-    textAlign: 'center',
     color: '#A8A8A8',
     fontSize: 16,
-    marginTop: 20,
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+    gap: 5,
+    width: '100%',
+    height: '100%',
+    paddingTop: 60,
+    paddingHorizontal: 50,
+  },
+  noContentImage: {
+    width: 150,
+    height: 150,
+  },
+  noContentLabel: {
+    color: '#063A66',
+    textAlign: 'center',
+    fontFamily: 'DMSans-Bold',
+    fontSize: 16,
+    fontStyle: 'normal',
+    fontWeight: '600',
+    lineHeight: 24,
+  },
+  noContentText: {
+    color: '#616161',
+    textAlign: 'center',
+    fontFamily: 'DMSans-SemiBold',
+    fontSize: 14,
+    fontStyle: 'normal',
+    fontWeight: '400',
+    lineHeight: 21,
   },
   modalOverlay: {
     flex: 1,
@@ -342,21 +378,17 @@ const styles = StyleSheet.create({
     padding: 20,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    paddingBottom: 30,
-  },
-
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#2D64AF',
-    marginBottom: 15,
+    width: '100%',
   },
 
   applyButton: {
-    marginTop: 20,
-    backgroundColor: '#2D64AF',
-    paddingVertical: 10,
-    borderRadius: 10,
+    borderRadius: 8,
+    backgroundColor: '#1269B5',
+    flexDirection: 'column',
+    width: '100%',
+    height: 50,
+    textAlign: 'center',
+    justifyContent: 'center',
     alignItems: 'center',
   },
 
@@ -364,5 +396,44 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  button: {
+    borderRadius: 8,
+    backgroundColor: '#1269B5',
+    flexDirection: 'row',
+    width: 160,
+    height: 48,
+    minWidth: 128,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 20,
+    gap: 12,
+  },
+  buttonText: {
+    color: '#fff',
+    textAlign: 'center',
+    fontFamily: 'DMSans-Regular',
+    fontSize: 14,
+  },
+  filterOptionText: {
+    color: '#424242', // Fallback rəngi
+    fontFamily: 'DMSans-Regular',
+    fontSize: 16,
+    fontStyle: 'normal',
+    fontWeight: '400',
+    lineHeight: 24,
+  },
+  checkBox: {
+    width: 30, // Increase width
+    height: 30, // Increase height
+    borderRadius: 5,
+    borderWidth: 2, // Slightly thicker border
+    borderColor: '#75ACDA',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'EFF8FF',
+    marginRight: 10,
   },
 });

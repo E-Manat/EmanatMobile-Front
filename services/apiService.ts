@@ -2,6 +2,12 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const BASE_URL = 'https://emanat-api.siesco.studio';
 
+let navigationRef: any = null;
+
+export const setNavigation = (nav: any) => {
+  navigationRef = nav;
+};
+
 const getToken = async (): Promise<string | null> => {
   try {
     const token = await AsyncStorage.getItem('userToken');
@@ -37,7 +43,19 @@ const request = async (
 
   try {
     const res = await fetch(`${BASE_URL}${endpoint}`, options);
-    console.log(res, 'geden sorgu')
+    console.log(res, 'geden sorgu');
+    
+    if (res.status === 401) {
+      await AsyncStorage.multiRemove(['userToken', 'isLoggedIn']);
+      if (navigationRef) {
+        navigationRef?.current?.reset({
+          index: 0,
+          routes: [{name: 'Login'}],
+        });
+      }
+      throw new Error('Sessiya bitib, yenidən daxil olun.');
+    }
+
     const contentType = res.headers.get('Content-Type');
     const result = contentType?.includes('application/json')
       ? await res.json()

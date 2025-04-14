@@ -12,99 +12,26 @@ import Icon from 'react-native-vector-icons/Feather';
 import IconCheck from 'react-native-vector-icons/Ionicons';
 import {useNavigation} from '@react-navigation/native';
 
-const notificationsData = [
-  {
-    id: '1',
-    title: 'Bildiriş 1',
-    text: 'Lorem ipsum dolor sit amet consectetur. Laoreet ipsum egestas sit laoreet amet porttitor. Quis aliquam molestie arcu leo et quam. Sagittis nibh placerat ultrices lorem nunc curabitur. ',
-    time: '12:03',
-    date: 'Bu gün',
-    unread: true,
-  },
-  {
-    id: '2',
-    title: 'Bildiriş 2',
-    text: 'Lorem ipsum dolor sit amet consectetur. Laoreet ipsum egestas sit laoreet amet porttitor. Quis aliquam molestie arcu leo et quam. Sagittis nibh placerat ultrices lorem nunc curabitur. ',
-    time: '13:00',
-    date: 'Dünən',
-    unread: true,
-  },
-  {
-    id: '3',
-    title: 'Bildiriş 3',
-    text: 'Lorem ipsum dolor sit amet consectetur. Laoreet ipsum egestas sit laoreet amet porttitor. Quis aliquam molestie arcu leo et quam. Sagittis nibh placerat ultrices lorem nunc curabitur. ',
-    time: '14:00',
-    date: '12.09.2024',
-    unread: false,
-  },
-  {
-    id: '4',
-    title: 'Bildiriş 4',
-    text: 'Lorem ipsum dolor sit amet consectetur. Laoreet ipsum egestas sit laoreet amet porttitor. Quis aliquam molestie arcu leo et quam. Sagittis nibh placerat ultrices lorem nunc curabitur. ',
-    time: '12:52',
-    date: '12.09.2024',
-    unread: true,
-  },
-  {
-    id: '5',
-    title: 'Bildiriş 5',
-    text: 'Lorem ipsum dolor sit amet consectetur. Laoreet ipsum egestas sit laoreet amet porttitor. Quis aliquam molestie arcu leo et quam. Sagittis nibh placerat ultrices lorem nunc curabitur. ',
-    time: '17:25',
-    date: '12.09.2024',
-    unread: false,
-  },
-  {
-    id: '6',
-    title: 'Bildiriş 6',
-    text: 'Lorem ipsum dolor sit amet consectetur. Laoreet ipsum egestas sit laoreet amet porttitor. Quis aliquam molestie arcu leo et quam. Sagittis nibh placerat ultrices lorem nunc curabitur. ',
-    time: '16:03',
-    date: '05.09.2024',
-    unread: false,
-  },
-  {
-    id: '14',
-    title: 'Bildiriş 4',
-    text: 'Lorem ipsum dolor sit amet consectetur. Laoreet ipsum egestas sit laoreet amet porttitor. Quis aliquam molestie arcu leo et quam. Sagittis nibh placerat ultrices lorem nunc curabitur. ',
-    time: '12:52',
-    date: '12.09.2024',
-    unread: true,
-  },
-  {
-    id: '15',
-    title: 'Bildiriş 5',
-    text: 'Lorem ipsum dolor sit amet consectetur. Laoreet ipsum egestas sit laoreet amet porttitor. Quis aliquam molestie arcu leo et quam. Sagittis nibh placerat ultrices lorem nunc curabitur. ',
-    time: '17:25',
-    date: '12.09.2024',
-    unread: false,
-  },
-  {
-    id: '16',
-    title: 'Bildiriş 6',
-    text: 'Lorem ipsum dolor sit amet consectetur. Laoreet ipsum egestas sit laoreet amet porttitor. Quis aliquam molestie arcu leo et quam. Sagittis nibh placerat ultrices lorem nunc curabitur. ',
-    time: '16:03',
-    date: '05.09.2024',
-    unread: true,
-  },
-];
-
 const NotificationsScreen = () => {
   const navigation = useNavigation();
   const [filter, setFilter] = useState('all');
-  const [data, setData] = useState(notificationsData);
+  const [data, setData] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedNotification, setSelectedNotification] = useState<any>(null);
 
-  const filteredData = (
-    filter === 'all' ? data : data.filter(item => item.unread)
+  const filteredData: any = (
+    filter === 'all' ? data : data?.filter((item: any) => item.unread)
   ).sort((a: any, b: any) => b.unread - a.unread);
 
   const markAllAsRead = () => {
-    setData(prevData => prevData.map(item => ({...item, unread: false})));
+    setData((prevData: any) =>
+      prevData.map((item: any) => ({...item, unread: false})),
+    );
     setModalVisible(false);
   };
   const handleNotificationPress = (notification: any) => {
-    setData(prevData =>
-      prevData.map(item =>
+    setData((prevData: any) =>
+      prevData.map((item: any) =>
         item.id === notification.id ? {...item, unread: false} : item,
       ),
     );
@@ -139,49 +66,71 @@ const NotificationsScreen = () => {
           <Icon name="chevron-left" size={24} color="#2D64AF" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Bildirişlər</Text>
-        {filter === 'unread' && filteredData.length > 0 && (
+
+        {filter === 'unread' && filteredData?.length > 0 ? (
           <TouchableOpacity onPress={() => setModalVisible(true)}>
             <IconCheck name="checkmark-done-sharp" size={20} color="#2D64AF" />
           </TouchableOpacity>
+        ) : (
+          <View style={{width: 20}} /> 
         )}
       </View>
 
-      <View style={styles.filterContainer}>
-        <TouchableOpacity
-          style={[styles.filterButton, filter === 'all' && styles.activeFilter]}
-          onPress={() => setFilter('all')}>
-          <Text
+      {filteredData.length > 0 && (
+        <View style={styles.filterContainer}>
+          <TouchableOpacity
             style={[
-              styles.filterText,
-              filter === 'all' && styles.activeFilterText,
-            ]}>
-            Hamısı
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[
-            styles.filterButton,
-            filter === 'unread' && styles.activeFilter,
-          ]}
-          onPress={() => setFilter('unread')}>
-          <Text
+              styles.filterButton,
+              filter === 'all' && styles.activeFilter,
+            ]}
+            onPress={() => setFilter('all')}>
+            <Text
+              style={[
+                styles.filterText,
+                filter === 'all' && styles.activeFilterText,
+              ]}>
+              Hamısı
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
             style={[
-              styles.filterText,
-              filter === 'unread' && styles.activeFilterText,
-            ]}>
-            Oxunmamış
-          </Text>
-        </TouchableOpacity>
-      </View>
+              styles.filterButton,
+              filter === 'unread' && styles.activeFilter,
+            ]}
+            onPress={() => setFilter('unread')}>
+            <Text
+              style={[
+                styles.filterText,
+                filter === 'unread' && styles.activeFilterText,
+              ]}>
+              Oxunmamış
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       <FlatList
         data={filteredData}
-        keyExtractor={item => item.id}
+        keyExtractor={(item: any) => item.id}
         renderItem={renderItem}
-        ListHeaderComponent={() => (
-          <Text style={styles.sectionTitle}>
-            {filteredData.length ? filteredData[0].date : ''}
-          </Text>
+        ListHeaderComponent={() =>
+          filteredData.length ? (
+            <Text style={styles.sectionTitle}>{filteredData[0].date}</Text>
+          ) : null
+        }
+        ListEmptyComponent={() => (
+          <View style={styles.noResult}>
+            <Image
+              source={require('../assets/img/notification_empty.png')}
+              style={styles.noContentImage}
+            />
+            <Text style={styles.noContentLabel}>
+              Hazırda heç bir bildirişiniz yoxdur.
+            </Text>
+            <Text style={styles.noContentText}>
+              Yeni bildirişlər burada görünəcək.
+            </Text>
+          </View>
         )}
       />
 
@@ -247,12 +196,11 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontFamily: 'DMSans-SemiBold',
     color: '#2D64AF',
   },
   filterContainer: {
     flexDirection: 'row',
-    backgroundColor: '#F5F5F5',
     borderRadius: 25,
     padding: 4,
     marginBottom: 10,
@@ -264,15 +212,16 @@ const styles = StyleSheet.create({
     borderRadius: 25,
   },
   activeFilter: {
-    backgroundColor: '#2D64AF',
+    backgroundColor: '#1269B5',
   },
   filterText: {
     fontSize: 14,
-    color: '#2D64AF',
+    color: '#1269B5',
+    fontFamily: 'DMSans-Regular',
   },
   activeFilterText: {
     color: '#FFF',
-    fontWeight: 'bold',
+    fontFamily: 'DMSans-Regular',
   },
   sectionTitle: {
     fontSize: 14,
@@ -312,18 +261,20 @@ const styles = StyleSheet.create({
   },
   notificationTitle: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontFamily: 'DMSans-SemiBold',
     color: '#001D45',
     flex: 1,
   },
   notificationTime: {
     fontSize: 12,
     color: '#A8A8A8',
+    fontFamily: 'DMSans-Regular',
   },
   notificationText: {
     fontSize: 14,
     color: '#A8A8A8',
     marginTop: 5,
+    fontFamily: 'DMSans-Regular',
   },
   modalContainer: {
     flex: 1,
@@ -340,7 +291,7 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontFamily: 'DMSans-SemiBold',
     color: '#001D45',
     marginBottom: 10,
   },
@@ -349,7 +300,7 @@ const styles = StyleSheet.create({
     color: '#A8A8A8',
     textAlign: 'center',
     marginBottom: 20,
-    fontWeight: '600',
+    fontFamily: 'DMSans-Regular',
   },
   modalActions: {
     flexDirection: 'row',
@@ -365,7 +316,7 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     marginRight: 5,
   },
-  cancelText: {color: '#1269B5', fontSize: 14, fontWeight: 'bold'},
+  cancelText: {color: '#1269B5', fontSize: 14, fontFamily: 'DMSans-SemiBold'},
   confirmButton: {
     flex: 1,
     paddingVertical: 10,
@@ -373,7 +324,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#1269B5',
     borderRadius: 5,
   },
-  confirmText: {color: '#FFF', fontSize: 14, fontWeight: 'bold'},
+  confirmText: {color: '#FFF', fontSize: 14, fontFamily: 'DMSans-SemiBold'},
   closeButton: {
     paddingVertical: 20,
     paddingHorizontal: 20,
@@ -386,10 +337,49 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  closeButtonText: {color: '#1269B5', fontSize: 14, fontWeight: 'bold'},
+  closeButtonText: {
+    color: '#1269B5',
+    fontSize: 14,
+    fontFamily: 'DMSans-SemiBold',
+  },
   image: {
     width: 85,
     height: 85,
     objectFit: 'cover',
+  },
+  noResult: {
+    color: '#A8A8A8',
+    fontSize: 16,
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 5,
+    width: '100%',
+    height: '100%',
+    paddingTop: 80,
+    paddingHorizontal: 50,
+  },
+  noContentImage: {
+    width: 180,
+    height: 180,
+  },
+  noContentLabel: {
+    color: '#063A66',
+    textAlign: 'center',
+    fontFamily: 'DMSans-Bold',
+    fontSize: 16,
+    fontWeight: '600',
+    lineHeight: 24,
+    marginTop: 10,
+  },
+  noContentText: {
+    color: '#616161',
+    textAlign: 'center',
+    fontFamily: 'DMSans-SemiBold',
+    fontSize: 14,
+    fontStyle: 'normal',
+    fontWeight: '400',
+    lineHeight: 21,
   },
 });

@@ -1,9 +1,12 @@
 import React, {useEffect} from 'react';
 import {View, StyleSheet, Image} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {checkAndForceLocation} from '../utils/locationPermissionHandler';
 
 const SplashScreen = ({navigation}: any) => {
   useEffect(() => {
+    // checkAndForceLocation();
+
     const checkUser = async () => {
       try {
         const userToken = await AsyncStorage.getItem('userToken');

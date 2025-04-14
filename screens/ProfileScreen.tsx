@@ -23,6 +23,8 @@ import {apiService} from '../services/apiService';
 import {RootStackParamList} from '../App';
 import {StackNavigationProp} from '@react-navigation/stack';
 import TopHeader from '../components/TopHeader';
+import {OutIcon, SecurityIcon, UserIcon} from '../assets/icons';
+import CustomModal from '../components/Modal';
 
 type NavigationProp = StackNavigationProp<RootStackParamList, 'Profil'>;
 
@@ -40,25 +42,6 @@ const ProfileScreen = () => {
   useEffect(() => {
     loadProfileData();
   }, []);
-
-  const saveProfileData = async () => {
-    try {
-      const profileData = {phone, email, address, profileImage};
-      await AsyncStorage.setItem('profileData', JSON.stringify(profileData));
-
-      setIsEdited(false);
-
-      Toast.show({
-        type: 'success',
-        text1: 'Şəxsi məlumatlar yenilənib',
-        visibilityTime: 3000,
-        autoHide: true,
-        position: 'top',
-      });
-    } catch (error) {
-      console.log('Yadda saxlama xətası:', error);
-    }
-  };
 
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -97,66 +80,25 @@ const ProfileScreen = () => {
     }
   };
 
-  const openCamera = () => {
-    const options: any = {
-      mediaType: 'photo',
-      cameraType: 'back',
-      saveToPhotos: true,
-    };
-    launchCamera(options, response => {
-      if (response.didCancel) {
-        console.log('İstifadəçi kameranı bağladı');
-      } else if (response.errorCode) {
-        console.log('Kamera xətası:', response.errorMessage);
-      } else {
-        const imageUri: any = response.assets?.[0]?.uri;
-        if (imageUri) {
-          setProfileImage(imageUri);
-          setIsEdited(true); // Şəkil dəyişəndə yadda saxla düyməsi görünsün
-        }
-      }
-    });
+  const confirmLogout = async () => {
+    try {
+      await AsyncStorage.removeItem('userToken');
+      await AsyncStorage.removeItem('isLoggedIn');
+      navigation.replace('Login');
+    } catch (error) {
+      console.log('Çıxış zamanı xəta:', error);
+    }
   };
 
-  const handleLogout = async () => {
-    console.log('Çıxış prosesi başladı...');
-
-    Alert.alert(
-      'Çıxış',
-      'Sistemdən çıxmaq istədiyinizə əminsiniz?',
-      [
-        {text: 'Xeyr', style: 'cancel'},
-        {
-          text: 'Bəli',
-          onPress: async () => {
-            console.log('İstifadəçi çıxışı təsdiqlədi');
-
-            try {
-              await AsyncStorage.removeItem('userToken');
-              await AsyncStorage.removeItem('isLoggedIn');
-
-              console.log('AsyncStorage təmizləndi');
-              navigation.replace('Login');
-            } catch (error) {
-              console.log('Çıxış zamanı xəta:', error);
-            }
-          },
-        },
-      ],
-      {cancelable: false},
-    );
-  };
+  const [logoutConfirmModalVisible, setLogoutConfirmModalVisible] =
+    useState(false);
 
   return (
     <KeyboardAvoidingView behavior="padding" style={{flex: 1}}>
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <ScrollView contentContainerStyle={{flexGrow: 1}}>
           <View style={styles.container}>
-            <TopHeader
-              title="Profil"
-              rightIconName="log-out"
-              onRightPress={handleLogout}
-            />
+            <TopHeader title="Profil" />
 
             <View style={styles.profileContainer}>
               <TouchableOpacity onPress={() => setModalVisible(true)}>
@@ -169,22 +111,60 @@ const ProfileScreen = () => {
                     }
                     style={styles.profileImage}
                   />
-                </View>{' '}
-                <TouchableOpacity
-                  style={styles.cameraIcon}
-                  // onPress={openCamera}
-                >
-                  <Icon name="camera" size={16} color="#fff" />
-                </TouchableOpacity>
+                </View>
               </TouchableOpacity>
-
-              <Text style={styles.profileName}>
+              <View>
                 <Text style={styles.profileName}>
-                  {firstName.toUpperCase()} {lastName.toUpperCase()}
+                  {firstName} {lastName}
                 </Text>
-              </Text>
+                <Text style={styles.profileRoleName}>Inkassator</Text>
+              </View>
             </View>
 
+            <View style={styles.profileInfo}>
+              <TouchableOpacity
+                style={styles.itemContainer}
+                onPress={() => navigation.navigate('ProfileDetail')}>
+                <View style={styles.iconBox}>
+                  <UserIcon color="#1269B5" />
+                </View>
+                <Text style={styles.text}>Profil məlumatları</Text>
+                <Icon
+                  name="chevron-right"
+                  size={20}
+                  color="#98A2B3"
+                  style={styles.arrowIcon}
+                />
+              </TouchableOpacity>
+
+              <TouchableOpacity style={styles.itemContainer}>
+                <View style={styles.iconBox}>
+                  <SecurityIcon color="#1269B5" />
+                </View>
+                <Text style={styles.text}>Təhlükəsizlik</Text>
+                <Icon
+                  name="chevron-right"
+                  size={20}
+                  color="#98A2B3"
+                  style={styles.arrowIcon}
+                />
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.itemContainer}
+                onPress={() => setLogoutConfirmModalVisible(true)}>
+                <View style={styles.iconBox}>
+                  <OutIcon color="#1269B5" />
+                </View>
+                <Text style={styles.text}>Çıxış</Text>
+                <Icon
+                  name="chevron-right"
+                  size={20}
+                  color="#98A2B3"
+                  style={styles.arrowIcon}
+                />
+              </TouchableOpacity>
+            </View>
             <Modal
               visible={modalVisible}
               transparent={true}
@@ -203,74 +183,18 @@ const ProfileScreen = () => {
               </TouchableOpacity>
             </Modal>
 
-            {loading ? (
-              <View
-                style={{
-                  flex: 1,
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                }}>
-                <ActivityIndicator size="large" color="#2D64AF" />
-              </View>
-            ) : (
-              <>
-                <View style={styles.inputContainer}>
-                  <Text style={styles.label}>Əlaqə nömrəsi</Text>
-                  <View style={styles.inputWrapper}>
-                    <TextInput
-                      style={styles.input}
-                      value={phone}
-                      onChangeText={text => {
-                        setPhone(text);
-                        setIsEdited(true);
-                      }}
-                      placeholder="Əlaqə nömrəsi"
-                    />
-                    {/* <Icon name="edit-2" size={20} color="gray" /> */}
-                  </View>
-                </View>
-
-                <View style={styles.inputContainer}>
-                  <Text style={styles.label}>Email</Text>
-                  <View style={styles.inputWrapper}>
-                    <TextInput
-                      style={styles.input}
-                      value={email}
-                      onChangeText={text => {
-                        setEmail(text);
-                        setIsEdited(true);
-                      }}
-                      placeholder="Email"
-                    />
-                    {/* <Icon name="edit-2" size={20} color="gray" /> */}
-                  </View>
-                </View>
-
-                <View style={styles.inputContainer}>
-                  <Text style={styles.label}>Ünvan</Text>
-                  <View style={styles.inputWrapper}>
-                    <TextInput
-                      style={styles.input}
-                      value={address}
-                      onChangeText={text => {
-                        setAddress(text);
-                        setIsEdited(true);
-                      }}
-                      placeholder="Ünvan"
-                    />
-                    {/* <Icon name="edit-2" size={20} color="gray" /> */}
-                  </View>
-                </View>
-
-                {isEdited && (
-                  <TouchableOpacity
-                    style={styles.saveButton}
-                    onPress={saveProfileData}>
-                    <Text style={styles.saveButtonText}>Yadda saxla</Text>
-                  </TouchableOpacity>
-                )}
-              </>
-            )}
+            <CustomModal
+              visible={logoutConfirmModalVisible}
+              title="Təsdiqləmə"
+              description="Sistemdən çıxmaq istədiyinizə əminsiniz?"
+              confirmText="Bəli, çıxış et"
+              cancelText="Xeyr, ləğv et"
+              onConfirm={() => {
+                setLogoutConfirmModalVisible(false);
+                confirmLogout();
+              }}
+              onCancel={() => setLogoutConfirmModalVisible(false)}
+            />
 
             <Toast />
           </View>
@@ -287,6 +211,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
     gap: 15,
+    flexDirection: 'column',
   },
   header: {
     backgroundColor: '#2D64AF',
@@ -302,6 +227,7 @@ const styles = StyleSheet.create({
     color: '#fff',
   },
   profileContainer: {
+    width: '100%',
     alignItems: 'flex-start',
     marginTop: 20,
     paddingHorizontal: 25,
@@ -313,9 +239,17 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   profileImage: {
-    width: 110,
-    height: 110,
+    width: 60,
+    height: 60,
     borderRadius: 50,
+  },
+  profileRoleName: {
+    color: '#9E9E9E',
+    fontFamily: 'DMSans-Regular',
+    fontSize: 14,
+    fontStyle: 'normal',
+    fontWeight: '400',
+    lineHeight: 21,
   },
   cameraIcon: {
     position: 'absolute',
@@ -326,9 +260,12 @@ const styles = StyleSheet.create({
     padding: 8,
   },
   profileName: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginTop: 10,
+    color: '#063A66',
+    fontFamily: 'DMSans-Bold',
+    fontSize: 16,
+    fontStyle: 'normal',
+    fontWeight: '600',
+    lineHeight: 24, // 150% of 16px
   },
   inputContainer: {
     marginHorizontal: 20,
@@ -370,5 +307,41 @@ const styles = StyleSheet.create({
     width: 300,
     height: 300,
     borderRadius: 30,
+  },
+  iconBox: {
+    width: 32,
+    height: 32,
+    backgroundColor: '#EFF8FF',
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  text: {
+    color: '#063A66',
+    fontFamily: 'DMSans-Medium', // əgər custom font əlavə etmisənsə
+    fontSize: 14,
+    fontWeight: '500',
+    lineHeight: 21,
+    fontStyle: 'normal',
+    flex: 1,
+  },
+  arrowIcon: {
+    marginLeft: 8,
+  },
+  profileInfo: {
+    width: '100%',
+    display: 'flex',
+    flexDirection: 'column',
+    paddingHorizontal: 20,
+  },
+  itemContainer: {
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F9FAFB',
+    padding: 12,
+    borderRadius: 12,
+    marginVertical: 8,
   },
 });

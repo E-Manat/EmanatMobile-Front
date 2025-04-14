@@ -11,6 +11,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useNavigation} from '@react-navigation/native';
 import {RootStackParamList} from '../App';
 import {StackNavigationProp} from '@react-navigation/stack';
+import CustomModal from '../components/Modal';
 
 type NavigationProp = StackNavigationProp<RootStackParamList, 'PinSetup'>;
 
@@ -18,6 +19,10 @@ const PinSetupScreen = () => {
   const [pin, setPin] = useState<string>('');
   const [storedPin, setStoredPin] = useState<string | null>(null);
   const navigation = useNavigation<NavigationProp>();
+
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalTitle, setModalTitle] = useState('');
+  const [modalDescription, setModalDescription] = useState('');
 
   useEffect(() => {
     const fetchStoredPin = async () => {
@@ -29,7 +34,9 @@ const PinSetupScreen = () => {
 
   const handleForgotPin = async () => {
     await AsyncStorage.setItem('forgotPin', 'true');
-    Alert.alert('PIN sıfırlanacaq', 'Zəhmət olmasa yenidən giriş edin');
+    setModalTitle('PIN sıfırlanacaq');
+    setModalDescription('Zəhmət olmasa yenidən giriş edin');
+    setModalVisible(true);
     navigation.replace('Login');
   };
 
@@ -43,18 +50,24 @@ const PinSetupScreen = () => {
 
         if (storedPin && forgotPin !== 'true') {
           if (newPin === storedPin) {
-            Alert.alert('PIN təsdiqləndi', 'Siz uğurla daxil oldunuz!');
+            setModalTitle('PIN təsdiqləndi');
+            setModalDescription('Siz uğurla daxil oldunuz!');
+            setModalVisible(true);
             await AsyncStorage.setItem('isLoggedIn', 'true');
             navigation.replace('Ana səhifə');
           } else {
-            Alert.alert('Xəta', 'Daxil etdiyiniz PIN yanlışdır!');
+            setModalTitle('Xəta');
+            setModalDescription('Daxil etdiyiniz PIN yanlışdır!');
+            setModalVisible(true);
             setPin('');
           }
         } else {
           await AsyncStorage.setItem('userPin', newPin);
           await AsyncStorage.setItem('isLoggedIn', 'true');
           await AsyncStorage.removeItem('forgotPin'); // Artıq unudulmadı
-          Alert.alert('PIN yaradıldı', 'Siz uğurla PIN kodu təyin etdiniz!');
+          setModalTitle('PIN yaradıldı');
+          setModalDescription('Siz uğurla PIN kodu təyin etdiniz!');
+          setModalVisible(true);
           navigation.replace('Ana səhifə');
         }
       }
@@ -97,6 +110,14 @@ const PinSetupScreen = () => {
       <TouchableOpacity onPress={handleForgotPin}>
         <Text style={styles.titlePin}>PIN kodu unutmusunuz?</Text>
       </TouchableOpacity>
+
+      <CustomModal
+        visible={modalVisible}
+        title={modalTitle}
+        description={modalDescription}
+        confirmText="Bağla"
+        onConfirm={() => setModalVisible(false)}
+      />
     </View>
   );
 };

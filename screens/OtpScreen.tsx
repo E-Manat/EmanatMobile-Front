@@ -42,7 +42,7 @@ const OtpScreen = () => {
       </TouchableOpacity>
 
       <Text style={styles.resendText}>
-        6-rəqəmli kod əldə etmisiniz?{' '}
+        6-rəqəmli kod əldə etmisiniz?
         <Text style={styles.resendLink}>Yenidən göndər</Text>
       </Text>
     </View>

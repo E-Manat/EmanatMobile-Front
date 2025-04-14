@@ -1,6 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useNavigation} from '@react-navigation/native';
-import axios from 'axios';
 import React, {useEffect, useState} from 'react';
 import {
   View,
@@ -10,8 +9,8 @@ import {
   StyleSheet,
   ScrollView,
   ActivityIndicator,
+  Image,
 } from 'react-native';
-import Icon from 'react-native-vector-icons/Feather';
 import Dot from 'react-native-vector-icons/Octicons';
 
 import {RootStackParamList} from '../App';
@@ -125,13 +124,20 @@ const TasksScreen: React.FC = () => {
       <View
         style={[
           styles.taskCard,
-          {borderLeftWidth: 3, borderLeftColor: getStatusColor(item.status)},
+          {borderLeftWidth: 4, borderLeftColor: getStatusColor(item.status)},
         ]}>
         <View style={styles.taskContent}>
           <Text style={styles.taskTitle}>Terminal ID : {item.code}</Text>
-          <Text style={styles.taskText}>Rota: {item.routeName}</Text>
+          <Text style={styles.taskDistance}>Adress: {item.address}</Text>
         </View>
-        <Text style={styles.taskDistance}>Adress: {item.address}</Text>
+        <View>
+          <Dot
+            name="dot-fill"
+            size={16}
+            color={getStatusColor(item.status)} 
+            style={{marginRight: 6}}
+          />
+        </View>
       </View>
     </TouchableOpacity>
   );
@@ -160,46 +166,50 @@ const TasksScreen: React.FC = () => {
         </View>
       </View>
 
-      <View style={styles.filterContainer}>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.filterContentContainer}>
-          {[
-            'Hamısı',
-            'İcra olunmamış',
-            'İcra olunan',
-            'Tamamlanıb',
-            'Ləğv edilmiş',
-          ].map(filter => (
-            <TouchableOpacity
-              key={filter}
-              style={[
-                styles.filterButton,
-                selectedFilter === filter && styles.activeFilter,
-              ]}
-              onPress={() => filterTasks(filter)}>
-              {filter !== 'Hamısı' && (
-                <Dot
-                  name="dot-fill"
-                  size={16}
-                  color={getStatusColor(
-                    filter === 'İcra olunan'
-                      ? 1
-                      : filter === 'Tamamlanıb'
-                      ? 4
-                      : filter === 'Ləğv edilmiş'
-                      ? 5
-                      : 0,
-                  )}
-                  style={{marginRight: 6}}
-                />
-              )}
-              <Text style={styles.filterText}>{filter}</Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-      </View>
+        <View style={styles.filterContainer}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.filterContentContainer}>
+            {[
+              'Hamısı',
+              'İcra olunmamış',
+              'İcra olunan',
+              'Tamamlanıb',
+              'Ləğv edilmiş',
+            ].map(filter => (
+              <TouchableOpacity
+                key={filter}
+                style={[
+                  styles.filterButton,
+                  selectedFilter === filter && styles.activeFilter,
+                ]}
+                onPress={() => filterTasks(filter)}>
+                {filter !== 'Hamısı' && (
+                  <Dot
+                    name="dot-fill"
+                    size={16}
+                    color={getStatusColor(
+                      filter === 'İcra olunan'
+                        ? 1
+                        : filter === 'Tamamlanıb'
+                        ? 4
+                        : filter === 'Ləğv edilmiş'
+                        ? 5
+                        : 0,
+                    )}
+                    style={{marginRight: 6}}
+                  />
+                )}
+                <Text style={styles.filterText}>{filter}</Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+
+      {filteredTasks.length > 0 && (
+        <Text style={styles.currentDay}>Bu gün</Text>
+      )}
 
       <ScrollView contentContainerStyle={styles.mainContainer}>
         {loading ? (
@@ -215,7 +225,18 @@ const TasksScreen: React.FC = () => {
             ListFooterComponent={<View style={{height: 20}} />}
           />
         ) : (
-          <Text style={styles.noResult}>Nəticə tapılmadı</Text>
+          <View style={styles.noResult}>
+            <Image
+              source={require('../assets/img/tasks_empty.png')}
+              style={styles.noContentImage}
+            />
+            <Text style={styles.noContentLabel}>
+              Sizin heç bir tapşırığınız yoxdur
+            </Text>
+            <Text style={styles.noContentText}>
+              Yeni tapşırığlar burada görünəcək.
+            </Text>
+          </View>
         )}
       </ScrollView>
     </View>
@@ -264,22 +285,22 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   statusText: {
-    color: '#095291', // Primary rəngi
-    textAlign: 'center', // Mətni ortada yerləşdirmək
-    fontFamily: 'DMSans-Medium', // Fontu təyin etmək
-    fontSize: 20, // Font ölçüsü
-    fontStyle: 'normal', // Font üslubu
-    fontWeight: '600', // Semibold (yəni, qalın, amma tam qalın deyil)
-    lineHeight: 26, // Sətir hündürlüyü (130% bərabərdir 26px)},
+    color: '#095291',
+    textAlign: 'center',
+    fontFamily: 'DMSans-Medium',
+    fontSize: 20,
+    fontStyle: 'normal',
+    fontWeight: '600',
+    lineHeight: 26,
   },
   statusLabel: {
-    color: '#616161', // Neutral rəngi
-    textAlign: 'center', // Mətni ortada yerləşdirmək
-    fontFamily: 'DMSans-Medium', // Fontu təyin etmək
-    fontSize: 12, // Font ölçüsü
-    fontStyle: 'normal', // Font üslubu
-    fontWeight: '500', // Medium (orta qalınlıq)
-    lineHeight: 18, // Sətir hündürlüyü (150% bərabərdir 18px)},
+    color: '#616161',
+    textAlign: 'center',
+    fontFamily: 'DMSans-Medium',
+    fontSize: 12,
+    fontStyle: 'normal',
+    fontWeight: '500',
+    lineHeight: 18,
     marginTop: 5,
   },
   filterContainer: {
@@ -304,21 +325,21 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     paddingHorizontal: 14,
     marginRight: 5,
-    borderRadius: 5, // Künclərin yuvarlaqlaşdırılması
-    backgroundColor: '#F5F9FC', // Arxa fon rəngi
+    borderRadius: 5,
+    backgroundColor: '#F5F9FC',
   },
   filterText: {
-    color: '#063A66', // Primary rəngi
-    textAlign: 'center', // Mətni ortada yerləşdirmək
-    fontFamily: 'DMSans-Regular', // Fontu təyin etmək
-    fontSize: 12, // Font ölçüsü
-    fontStyle: 'normal', // Font üslubu
-    fontWeight: '500', // Medium (orta qalınlıq)
-    lineHeight: 18, // Sətir hündürlüyü (150% bərabərdir 18px)
+    color: '#063A66',
+    textAlign: 'center',
+    fontFamily: 'DMSans-Regular',
+    fontSize: 12,
+    fontStyle: 'normal',
+    fontWeight: '500',
+    lineHeight: 18,
   },
   taskCard: {
     backgroundColor: '#fff',
-    borderRadius: 9,
+    borderRadius: 6,
     padding: 16,
     marginBottom: 10,
     flexDirection: 'row',
@@ -326,25 +347,69 @@ const styles = StyleSheet.create({
   },
   taskContent: {
     flex: 1,
+    justifyContent: 'flex-start',
+    flexDirection: 'column',
+    alignItems: 'flex-start',
   },
   taskTitle: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#001D45',
+    color: '#1269B5',
+    fontFamily: 'DMSans-SemiBold', // və ya əlavə etdiyin font adı
+    fontSize: 14,
+    lineHeight: 21,
   },
   taskText: {
     fontSize: 12,
     color: '#A8A8A8',
   },
   taskDistance: {
-    fontSize: 10,
-    fontWeight: '600',
-    color: '#A8A8A8',
+    color: '#616161',
+    fontFamily: 'DMSans-Regular', // və ya əlavə etdiyin font adı
+    fontSize: 12,
+    fontStyle: 'normal',
+    fontWeight: '400',
+    lineHeight: 18,
   },
   noResult: {
-    textAlign: 'center',
     color: '#A8A8A8',
     fontSize: 16,
     marginTop: 20,
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 5,
+    width: '100%',
+    height: '100%',
+  },
+  noContentImage: {
+    width: 150,
+    height: 150,
+  },
+  noContentLabel: {
+    color: '#063A66',
+    textAlign: 'center',
+    fontFamily: 'DMSans-Bold',
+    fontSize: 16,
+    fontStyle: 'normal',
+    fontWeight: '600',
+    lineHeight: 24,
+  },
+  noContentText: {
+    color: '#616161',
+    textAlign: 'center',
+    fontFamily: 'DMSans-SemiBold',
+    fontSize: 14,
+    fontStyle: 'normal',
+    fontWeight: '400',
+    lineHeight: 21,
+  },
+  currentDay: {
+    color: '#A8A8A8',
+    fontFamily: 'DMSans-Bold',
+    fontSize: 12,
+    fontStyle: 'normal',
+    fontWeight: '600',
+    lineHeight: 18,
+    paddingHorizontal: 20,
   },
 });

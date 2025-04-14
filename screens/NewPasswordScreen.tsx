@@ -1,3 +1,7 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {useNavigation, useRoute} from '@react-navigation/native';
+import {StackNavigationProp} from '@react-navigation/stack';
+import axios from 'axios';
 import React, {useState} from 'react';
 import {
   View,
@@ -5,21 +9,102 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Alert,
+  ActivityIndicator,
 } from 'react-native';
+import {RootStackParamList} from '../App';
+import CustomModal from '../components/Modal';
+
+type NavigationProp = StackNavigationProp<RootStackParamList, 'Login'>;
 
 const NewPasswordScreen = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = () => {
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalInfo, setModalInfo] = useState({
+    title: '',
+    description: '',
+    confirmText: '',
+    cancelText: '',
+    onConfirm: () => {},
+    onCancel: () => setModalVisible(false),
+  });
+
+  const navigation = useNavigation<NavigationProp>();
+  const route: any = useRoute();
+  const {email} = route.params || {};
+
+  const showModal = (
+    title: string,
+    description: string,
+    confirmText: string,
+    onConfirm: () => void,
+    cancelText?: string,
+    onCancel?: () => void,
+  ) => {
+    setModalInfo({
+      title,
+      description,
+      confirmText,
+      cancelText: cancelText || '',
+      onConfirm,
+      onCancel: onCancel || (() => setModalVisible(false)),
+    });
+    setModalVisible(true);
+  };
+
+  const handleSubmit = async () => {
     if (password !== confirmPassword) {
-      Alert.alert('Xəta', 'Şifrələr uyğun gəlmir');
+      showModal('Xəta', 'Şifrələr uyğun gəlmir', 'Bağla', () =>
+        setModalVisible(false),
+      );
       return;
     }
 
-    // Yeni şifrəni göndərmək və ya yadda saxlamaq üçün backend request
-    console.log('Yeni şifrə:', password);
+    setLoading(true);
+
+    try {
+      const token = await AsyncStorage.getItem('userToken');
+
+      const response = await axios.post(
+        'https://emanat-api.siesco.studio/auth/Auth/ConfirmPassword',
+        {
+          email: email,
+          newPassword: password,
+          confirmNewPassword: confirmPassword,
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      if (response.status === 200) {
+        showModal('Uğurlu', 'Şifrə yeniləndi', 'Davam et', () => {
+          setModalVisible(false);
+          navigation.navigate('Login');
+        });
+      } else {
+        showModal(
+          'Xəta',
+          'Şifrə yenilənmədi. Zəhmət olmasa, yenidən cəhd edin.',
+          'Bağla',
+          () => setModalVisible(false),
+        );
+      }
+    } catch (error) {
+      showModal(
+        'Xəta',
+        'Bir xəta baş verdi. Zəhmət olmasa, yenidən cəhd edin.',
+        'Bağla',
+        () => setModalVisible(false),
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -34,7 +119,7 @@ const NewPasswordScreen = () => {
       <TextInput
         style={styles.input}
         secureTextEntry
-        placeholder="yeni şifrə"
+        placeholder="Yeni şifrə"
         placeholderTextColor="#bbb"
         value={password}
         onChangeText={setPassword}
@@ -50,9 +135,26 @@ const NewPasswordScreen = () => {
         onChangeText={setConfirmPassword}
       />
 
-      <TouchableOpacity style={styles.button} onPress={handleSubmit}>
-        <Text style={styles.buttonText}>Daxil ol</Text>
+      <TouchableOpacity
+        style={styles.button}
+        onPress={handleSubmit}
+        disabled={loading}>
+        {loading ? (
+          <ActivityIndicator color="#fff" />
+        ) : (
+          <Text style={styles.buttonText}>Təsdiqlə</Text>
+        )}
       </TouchableOpacity>
+
+      <CustomModal
+        visible={modalVisible}
+        title={modalInfo.title}
+        description={modalInfo.description}
+        confirmText={modalInfo.confirmText}
+        cancelText={modalInfo.cancelText}
+        onConfirm={modalInfo.onConfirm}
+        onCancel={modalInfo.onCancel}
+      />
     </View>
   );
 };
@@ -65,15 +167,21 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#003366',
-    marginBottom: 12,
+    color: '#063A66',
+    fontFamily: 'DMSans-SemiBold',
+    fontSize: 36,
+    fontStyle: 'normal',
+    fontWeight: '500',
+    lineHeight: 46.8,
   },
   subtitle: {
-    fontSize: 16,
-    color: '#333',
-    marginBottom: 32,
+    color: '#424242',
+    fontFamily: 'DMSans-Regular',
+    fontSize: 12,
+    fontStyle: 'normal',
+    fontWeight: '400',
+    lineHeight: 18,
+    marginBottom: 15,
   },
   label: {
     fontSize: 14,
@@ -87,18 +195,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     fontSize: 16,
     marginBottom: 24,
+    fontFamily: 'DMSans-Regular',
   },
   button: {
-    backgroundColor: '#0066cc',
-    borderRadius: 10,
-    paddingVertical: 14,
+    backgroundColor: '#1269B5',
+    paddingVertical: 15,
+    borderRadius: 8,
     alignItems: 'center',
   },
-  buttonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
+  buttonText: {color: '#fff', fontSize: 16, fontFamily: 'DMSans-Regular'},
 });
 
 export default NewPasswordScreen;

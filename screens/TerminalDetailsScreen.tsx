@@ -13,6 +13,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {RootStackParamList} from '../App';
 import {useNavigation} from '@react-navigation/native';
+import TopHeader from '../components/TopHeader';
+import CustomModal from '../components/Modal';
 
 const TerminalDetailsScreen = ({route}: any) => {
   const {taskData} = route.params;
@@ -44,9 +46,15 @@ const TerminalDetailsScreen = ({route}: any) => {
       }
 
       setConfirmVisible(false);
+      await AsyncStorage.setItem('currentTask', JSON.stringify(taskData));
+      await AsyncStorage.setItem(
+        'routeStartTime',
+        new Date().getTime().toString(),
+      );
+
       navigation.navigate('TaskProcess', {
         taskData,
-        startTime: new Date().getTime(), // Pass start time when task starts
+        startTime: new Date().getTime(), 
       });
     } catch (error) {
       console.error('Task start error:', error);
@@ -54,6 +62,7 @@ const TerminalDetailsScreen = ({route}: any) => {
       setLoading(false);
     }
   };
+
   const getStatusText = (status: number) => {
     switch (status) {
       case 0:
@@ -63,7 +72,7 @@ const TerminalDetailsScreen = ({route}: any) => {
       case 2:
         return 'İnkassator terminala çatıb';
       case 3:
-        return 'İnkassiya prosesi gedir';
+        return 'İnkassasiya prosesi gedir';
       case 4:
         return 'Tapşırıq tamamlanıb';
       case 5:
@@ -77,83 +86,93 @@ const TerminalDetailsScreen = ({route}: any) => {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Icon name="chevron-left" size={24} color="#fff" />
-        </TouchableOpacity>
-        <Text style={styles.headerText}>Terminal</Text>
-        <View style={{width: 24}} />
-      </View>
+      <TopHeader title="Terminal detalları" />
 
       <View style={styles.terminalInfo}>
         <Text style={styles.terminalName}>
-          <Icon name="location-dot" size={20} color="#1976D2" /> Terminal :
-          {taskData?.terminal?.code}
+          <Icon name="location-dot" size={20} color="#1976D2" />
+          <Text> {taskData?.terminal?.code}</Text>
         </Text>
         <View style={styles.statusContainer}>
-          <Text style={styles.location}>{taskData.terminal?.address}</Text>
+          <Text style={styles.location}>
+            {' '}
+            {taskData.terminal?.address
+              ? taskData.terminal.address.charAt(0).toUpperCase() +
+                taskData.terminal.address.slice(1)
+              : ''}
+          </Text>
         </View>
       </View>
 
       <Image source={require('../assets/img/araz.png')} style={styles.image} />
 
       <View style={styles.details}>
-        <Text style={styles.detailTitle}>{taskData.routeName}</Text>
+        <Text style={styles.detailTitle}>
+          {taskData.terminal?.address
+            ? taskData.terminal.address.charAt(0).toUpperCase() +
+              taskData.terminal.address.slice(1)
+            : ''}
+        </Text>
 
-        <View style={styles.detailRow}>
-          <Icon name="location-dot" size={20} color="#1976D2" />
-          <Text style={styles.detailText}>{taskData.terminal?.address}</Text>
+        <View style={styles.timelineItem}>
+          <View style={styles.iconWrapper}>
+            <Icon name="location-dot" size={15} color="white" />
+          </View>
+          <View style={styles.textWrapper}>
+            <Text style={styles.detailText}>
+              {taskData.terminal?.address
+                ? taskData.terminal.address.charAt(0).toUpperCase() +
+                  taskData.terminal.address.slice(1)
+                : ''}
+            </Text>
+          </View>
         </View>
 
-        <View style={styles.detailRow}>
-          <Icon1 name="watch-later" size={20} color="#1976D2" />
-          <Text style={styles.detailText}>
-            {taskData.terminal.workingHours || 'Qeyd olunmayib'}
-          </Text>
+        <View style={styles.verticalLine} />
+
+        <View style={styles.timelineItem}>
+          <View style={styles.iconWrapper}>
+            <Icon1 name="watch-later" size={15} color="white" />
+          </View>
+          <View style={styles.textWrapper}>
+            <Text style={styles.detailText}>
+              {taskData.terminal?.workingHours
+                ? taskData.terminal.workingHours.charAt(0).toUpperCase() +
+                  taskData.terminal.workingHours.slice(1)
+                : ''}
+            </Text>
+          </View>
         </View>
 
-        <View style={styles.detailRow}>
-          <Icon name="phone" size={20} color="#1976D2" />
-          <Text style={styles.detailText}>
-            {taskData.terminal.phone || 'Qeyd olunmayib'}
-          </Text>
+        <View style={styles.verticalLine} />
+
+        <View style={styles.timelineItem}>
+          <View style={styles.iconWrapper}>
+            <Icon name="phone" size={15} color="white" />
+          </View>
+          <View style={styles.textWrapper}>
+            <Text style={styles.detailText}>
+              {taskData.terminal.phone || 'Qeyd olunmayib'}
+            </Text>
+          </View>
         </View>
       </View>
 
-      <Modal
+      <CustomModal
         visible={confirmVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setConfirmVisible(false)}>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContainer}>
-            <Text style={styles.modalTitle}>
-              Tapşırığa başlamaq istəyirsiniz?
-            </Text>
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.modalButton, {backgroundColor: '#1976D2'}]}
-                onPress={handleStartTask}
-                disabled={loading}>
-                <Text style={styles.modalButtonText}>Bəli</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalButton, {backgroundColor: '#ccc'}]}
-                onPress={() => setConfirmVisible(false)}>
-                <Text style={[styles.modalButtonText, {color: '#000'}]}>
-                  İmtina
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
+        title="Tapşırığa başlamaq istəyirsiniz?"
+        description="Tapşırığa başladıqdan sonra onu yalnız tamamladıqdan sonra bitirə bilərsiniz."
+        confirmText="Bəli"
+        cancelText="İmtina"
+        onConfirm={handleStartTask}
+        onCancel={() => setConfirmVisible(false)}
+      />
 
       {taskData.status === 0 ? (
         <TouchableOpacity
           style={styles.startButton}
           onPress={() => setConfirmVisible(true)}>
-          <Text style={styles.startButtonText}>Tapşırığa başla</Text>
+          <Text style={styles.startButtonText}>Marşruta başla </Text>
         </TouchableOpacity>
       ) : (
         <View
@@ -204,13 +223,17 @@ const styles = StyleSheet.create({
   },
   terminalName: {
     width: '100%',
-    fontSize: 18,
-    gap: 6,
-    fontWeight: 'bold',
+    color: '#063A66', 
+    fontFamily: 'DMSans-Bold',
+    fontSize: 16,
+    lineHeight: 24,
+    gap: 10,
   },
   location: {
-    color: '#666',
-    fontSize: 16,
+    color: '#99A7B6',
+    fontFamily: 'DMSans-Regular',
+    fontSize: 14,
+    lineHeight: 21,
   },
   distance: {
     color: '#1976D2',
@@ -228,11 +251,36 @@ const styles = StyleSheet.create({
   details: {
     padding: 20,
   },
+  timelineItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  iconWrapper: {
+    backgroundColor: '#1976D2',
+    width: 28,
+    height: 28,
+    borderRadius: 15,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 2,
+  },
+  textWrapper: {
+    marginLeft: 5,
+    flex: 1,
+  },
+  verticalLine: {
+    height: 20,
+    width: 2,
+    backgroundColor: '#99A7B6',
+    marginLeft: 13, // aligns with center of the icon
+    zIndex: 1,
+  },
   detailTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
+    color: '#063A66', 
+    fontFamily: 'DMSans-Bold',
+    fontSize: 16,
+    lineHeight: 19.2,
     marginBottom: 10,
-    color: '#2D64AF',
   },
   detailRow: {
     flexDirection: 'row',
@@ -240,22 +288,25 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   detailText: {
-    fontSize: 16,
+    color: '#212121',
+    fontFamily: 'DMSans-SemiBold',
+    fontSize: 12,
+    lineHeight: 18,
     marginLeft: 10,
-    color: '#001D45',
-    fontWeight: '500',
   },
   startButton: {
-    backgroundColor: '#BFDDF2',
+    backgroundColor: '#ECF5FD',
     padding: 15,
     borderRadius: 10,
-    margin: 20,
+    marginHorizontal: 20,
     alignItems: 'center',
   },
   startButtonText: {
-    color: '#1976D2',
-    fontSize: 16,
-    fontWeight: 'bold',
+    color: '#2D64AF', // var(--Button-primary, #2D64AF)
+    textAlign: 'center',
+    fontFamily: 'DMSans-SemiBold',
+    fontSize: 14,
+    lineHeight: 22,
   },
   modalOverlay: {
     flex: 1,

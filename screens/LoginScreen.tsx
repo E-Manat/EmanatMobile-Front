@@ -14,11 +14,17 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import {RootStackParamList} from '../App';
 import {StackNavigationProp} from '@react-navigation/stack';
+import CustomModal from '../components/Modal';
+import {Image} from 'react-native';
 
 type NavigationProp = StackNavigationProp<RootStackParamList, 'Login'>;
 
 const LoginScreen = () => {
   const navigation = useNavigation<NavigationProp>();
+
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalTitle, setModalTitle] = useState('');
+  const [modalDescription, setModalDescription] = useState('');
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -35,7 +41,9 @@ const LoginScreen = () => {
     setPasswordError('');
 
     if (!email || !password) {
-      Alert.alert('Xəta', 'Zəhmət olmasa bütün sahələri doldurun!');
+      setModalTitle('Xəta');
+      setModalDescription('Zəhmət olmasa bütün sahələri doldurun!');
+      setModalVisible(true);
       return;
     }
 
@@ -51,20 +59,24 @@ const LoginScreen = () => {
 
       if (response) {
         console.log(response, 'response login');
-        await AsyncStorage.setItem('userToken', response.data.accessToken);
+        await AsyncStorage.multiSet([
+          ['userToken', response.data.accessToken],
+          ['expiresAt', response.data.expires],
+          ['isLoggedIn', 'true'],
+        ]);
         await AsyncStorage.setItem('roleName', response.data.roleName);
         navigation.navigate('PinSetup');
       } else {
-        Alert.alert('Xəta', 'Gözlənilməz bir problem baş verdi!');
+        console.log('Xəta', 'Gözlənilməz bir problem baş verdi!');
       }
     } catch (error: any) {
       if (error.response || error.response.status === 401) {
         console.log(error, 'error');
-        setEmailError('Email və ya şifrə yanlışdır!');
-        setPasswordError('Email və ya şifrə yanlışdır!');
-        Alert.alert('Xəta', 'Daxil edilən məlumatlarda səhv var!');
+        setModalTitle('Xəta');
+        setModalDescription('Daxil edilən məlumatlarda səhv var!');
+        setModalVisible(true);
       } else {
-        Alert.alert('Şəbəkə xətası', 'İnternet bağlantınızı yoxlayın!');
+        console.log('sebeke xetasi');
       }
     } finally {
       setLoading(false);
@@ -73,12 +85,15 @@ const LoginScreen = () => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Daxil ol</Text>
+      <Image
+        source={require('../assets/img/logo.png')}
+        style={styles.profileImage}
+      />
+      <Text style={styles.title}>Xoş gəlmisiniz!</Text>
       <Text style={styles.subtitle}>
         Zəhmət olmasa, email və şifrənizi daxil edin
       </Text>
 
-      {/* Email input */}
       <View
         style={[
           styles.inputContainer,
@@ -99,7 +114,6 @@ const LoginScreen = () => {
       </View>
       {emailError ? <Text style={styles.errorText}>{emailError}</Text> : null}
 
-      {/* Şifrə input */}
       <View
         style={[
           styles.inputContainer,
@@ -127,7 +141,7 @@ const LoginScreen = () => {
         <Text style={styles.errorText}>{passwordError}</Text>
       ) : null}
 
-      <TouchableOpacity>
+      <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')}>
         <Text style={styles.forgotPassword}>Şifrəni unutmusuz?</Text>
       </TouchableOpacity>
 
@@ -141,6 +155,14 @@ const LoginScreen = () => {
           <Text style={styles.buttonText}>Daxil ol</Text>
         )}
       </TouchableOpacity>
+
+      <CustomModal
+        visible={modalVisible}
+        title={modalTitle}
+        description={modalDescription}
+        confirmText="Bağla"
+        onConfirm={() => setModalVisible(false)}
+      />
     </View>
   );
 };
@@ -152,8 +174,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     justifyContent: 'center',
   },
-  title: {fontSize: 36, fontWeight: '600', color: '#001D45', marginBottom: 10},
-  subtitle: {fontSize: 12, color: '#5D5D5D', marginBottom: 30},
+  title: {
+    color: '#063A66',
+    fontFamily: 'DMSans-SemiBold',
+    fontSize: 36,
+    fontStyle: 'normal',
+    fontWeight: '500',
+    lineHeight: 46.8,
+  },
+  subtitle: {
+    color: '#424242', // var(--Neutral-800)
+    fontFamily: 'DMSans-Regular', // Make sure it's loaded
+    fontSize: 12,
+    fontStyle: 'normal',
+    fontWeight: '400',
+    lineHeight: 18,
+  },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -165,12 +201,19 @@ const styles = StyleSheet.create({
     marginTop: 20,
     paddingVertical: 12,
   },
-  input: {flex: 1, fontSize: 16, color: '#9E9E9E', backgroundColor: '#F6F6F6'},
+  input: {
+    flex: 1,
+    fontSize: 16,
+    color: '#9E9E9E',
+    backgroundColor: '#F6F6F6',
+    fontFamily: 'DMSans-Regular',
+  },
   forgotPassword: {
     alignSelf: 'flex-end',
     color: '#777',
     fontSize: 14,
     marginVertical: 20,
+    fontFamily: 'DMSans-Regular',
   },
   button: {
     backgroundColor: '#1269B5',
@@ -178,8 +221,14 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: 'center',
   },
-  buttonText: {color: '#fff', fontSize: 16, fontWeight: 'bold'},
+  buttonText: {color: '#fff', fontSize: 16, fontFamily: 'DMSans-Regular'},
   errorText: {color: '#EF5350', fontSize: 12, marginVertical: 5},
+  profileImage: {
+    width: 70,
+    height: 70,
+    objectFit: 'contain',
+    marginBottom: 10,
+  },
 });
 
 export default LoginScreen;

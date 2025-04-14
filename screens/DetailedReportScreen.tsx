@@ -14,6 +14,13 @@ import {
 import Icon from 'react-native-vector-icons/Feather';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {apiService} from '../services/apiService';
+import {
+  BriefCaseIcon,
+  CalendarIcon,
+  InfoIcon,
+  NoteIcon,
+  TabletIcon,
+} from '../assets/icons';
 
 const DetailedReportScreen = () => {
   const navigation = useNavigation();
@@ -42,13 +49,13 @@ const DetailedReportScreen = () => {
   }, [report.id]);
 
   const renderDetail = (
-    icon: string,
+    icon: any,
     label: string,
     value: string,
     valueStyle: TextStyle = {},
   ) => (
     <View style={styles.detailRow}>
-      <Icon name={icon} size={20} color="#2D64AF" style={styles.icon} />
+      {icon}
       <View>
         <Text style={styles.label}>{label}</Text>
         <Text style={[styles.value, valueStyle]}>{value}</Text>
@@ -81,7 +88,7 @@ const DetailedReportScreen = () => {
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0'); // aylar 0-dan başlayır
+    const month = String(date.getMonth() + 1).padStart(2, '0'); 
     const year = date.getFullYear();
     const hours = String(date.getHours()).padStart(2, '0');
     const minutes = String(date.getMinutes()).padStart(2, '0');
@@ -101,35 +108,51 @@ const DetailedReportScreen = () => {
 
       <View style={styles.card}>
         {renderDetail(
-          'smartphone',
+          <TabletIcon color="#1269B5" />,
           'Terminal ID',
           detailedReport?.terminal?.code,
         )}
         {renderDetail(
-          'alert-circle',
+          <BriefCaseIcon color="#1269B5" />,
           'Problemin növü',
           detailedReport?.problem?.description,
         )}
-        {renderDetail('calendar', 'Tarix', formatDate(report.createdDate))}
-        {/* {renderDetail('user', 'Texniki işçi', 'Ali Əliyev')} */}
-        {renderDetail('info', 'Status', getStatusText(detailedReport?.reportStatus), {
-          color: detailedReport?.status === 0 ? 'red' : '#29C0B9',
-          fontWeight: 'bold',
-        })}
-        {renderDetail('clipboard', 'Qeyd', detailedReport?.description)}
+        {renderDetail(
+          <CalendarIcon color="#1269B5" />,
+          'Tarix',
+          formatDate(report.createdDate),
+        )}
+        {renderDetail(
+          <InfoIcon color="#1269B5" />,
+          'Status',
+          getStatusText(detailedReport?.reportStatus),
+          {
+            color: detailedReport?.status === 0 ? 'red' : '#29C0B9',
+            fontWeight: 'bold',
+          },
+        )}
+        {renderDetail(
+          <NoteIcon color="#1269B5" />,
+          'Qeyd',
+          detailedReport?.description,
+        )}
 
         <Text style={styles.label}>Terminal</Text>
 
-        <View style={styles.staticImagesContainer}>
-          {detailedReport?.images?.map((img: any, index: number) => (
-            <TouchableOpacity
-              key={index}
-              onPress={() => openModal({uri: img.imageUrl})}>
-              <Image source={{uri: img.imageUrl}} style={styles.image} />
+        <FlatList
+          data={detailedReport?.images}
+          keyExtractor={(item, index) => index.toString()}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{gap: 10, marginTop: 10}}
+          renderItem={({item}) => (
+            <TouchableOpacity onPress={() => openModal({uri: item.imageUrl})}>
+              <Image source={{uri: item.imageUrl}} style={styles.image} />
             </TouchableOpacity>
-          ))}
-        </View>
+          )}
+        />
       </View>
+
       <Modal
         visible={modalVisible}
         transparent={true}
@@ -164,10 +187,36 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingBottom: 15,
   },
-  headerText: {fontSize: 18, fontWeight: 'bold', color: '#2D64AF'},
-  card: {backgroundColor: '#F9F9F9', borderRadius: 10, padding: 16},
-  label: {fontSize: 14, fontWeight: 'bold', color: '#063A66', marginTop: 10},
-  value: {fontSize: 14, color: '#616161', marginTop: 4},
+  headerText: {
+    color: '#1269B5',
+    fontFamily: 'DMSans-SemiBold',
+    fontSize: 20,
+    fontStyle: 'normal',
+    fontWeight: '600',
+    lineHeight: 26, 
+  },
+  card: {
+    padding: 16,
+    shadowOffset: {width: 0, height: 1},
+    borderRadius: 8,
+    backgroundColor: '#FFF',
+    elevation: 8, 
+    shadowColor: 'rgba(135, 167, 202, 0.15)',
+  },
+  label: {
+    fontSize: 14,
+    fontFamily: 'DMSans-SemiBold',
+    color: '#063A66',
+    marginTop: 10,
+    marginHorizontal: 10,
+  },
+  value: {
+    fontSize: 14,
+    color: '#616161',
+    marginHorizontal: 10,
+    marginVertical: 5,
+    fontFamily: 'DMSans-Regular',
+  },
   image: {width: 100, height: 100, borderRadius: 5},
   detailRow: {flexDirection: 'row', alignItems: 'center', marginTop: 10},
   icon: {marginRight: 8},

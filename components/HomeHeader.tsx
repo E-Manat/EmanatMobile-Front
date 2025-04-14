@@ -48,9 +48,9 @@ const HomeHeader = () => {
           style={styles.notificationContainer}
           onPress={() => navigation.navigate('Bildirişlər')}>
           <Icon name="bell" size={22} color="#2D64AF" />
-          <View style={styles.badge}>
+          {/* <View style={styles.badge}>
             <Text style={styles.badgeText}>3</Text>
-          </View>
+          </View> */}
         </TouchableOpacity>
       </View>
 
