@@ -174,7 +174,6 @@ const TaskProcessScreen = ({route}: any) => {
       setSuccessModalVisible(true);
     } catch (error) {
       console.error('Error completing task:', error);
-      Alert.alert('Error', 'Failed to complete the task.');
     } finally {
       setLoading(false);
     }
@@ -211,7 +210,6 @@ const TaskProcessScreen = ({route}: any) => {
       setTimerActive(true);
     } catch (error) {
       console.error('Error starting collection:', error);
-      Alert.alert('Error', 'Failed to start collection.');
     } finally {
       setLoading(false);
     }

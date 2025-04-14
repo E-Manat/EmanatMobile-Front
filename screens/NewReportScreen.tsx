@@ -47,6 +47,9 @@ const NewReportScreen = () => {
 
   const navigation = useNavigation<NavigationProp>();
 
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [modalMessage, setModalMessage] = useState('');
+
   const takePhoto = () => {
     const options: any = {
       mediaType: 'photo',
@@ -143,6 +146,11 @@ const NewReportScreen = () => {
   }, []);
 
   const handleSubmit = async () => {
+    if (!selectedProblem || !selectedTerminal) {
+      setModalMessage('Zəhmət olmasa  problem növünü və  terminal  seçin.');
+      setIsModalVisible(true);
+      return;
+    }
     try {
       setLoading(true);
 
@@ -172,8 +180,8 @@ const NewReportScreen = () => {
       await apiService.postMultipart('/mobile/Report/CreateReport', formData);
       setSuccessModalVisible(true);
     } catch (error) {
-      Alert.alert('Xəta', 'Hesabat göndərilə bilmədi');
-      console.error(error);
+      setModalMessage('Hesabat yaradılarkən xəta baş verdi.');
+      setIsModalVisible(true);
     } finally {
       setLoading(false);
     }
@@ -319,6 +327,14 @@ const NewReportScreen = () => {
             </TouchableOpacity>
           </View>
         </View>
+
+        <CustomModal
+          visible={isModalVisible}
+          title="Xəta"
+          description={modalMessage}
+          onConfirm={() => setIsModalVisible(false)}
+          confirmText="Bağla"
+        />
 
         <CustomModal
           visible={isSuccessModalVisible}
