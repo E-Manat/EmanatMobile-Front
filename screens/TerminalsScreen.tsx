@@ -217,7 +217,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontStyle: 'normal',
     fontWeight: '600',
-    lineHeight: 21, 
+    lineHeight: 21,
   },
   infoText: {
     color: '#616161',

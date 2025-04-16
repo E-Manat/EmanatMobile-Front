@@ -87,28 +87,45 @@ const NewReportScreen = () => {
     });
   };
 
-  const pickVideo = () => {
-    Alert.alert('Video əlavə et', 'Videonu haradan əlavə etmək istəyirsiniz?', [
-      {
-        text: 'Kamera',
-        onPress: () => {
-          launchCamera({mediaType: 'video', quality: 1}, response => {
-            const uri = response.assets?.[0]?.uri;
-            if (uri) setSelectedVideos(prev => [...prev, uri]);
-          });
-        },
-      },
-      {
-        text: 'Qalereya',
-        onPress: () => {
-          launchImageLibrary({mediaType: 'video', quality: 1}, response => {
-            const uri = response.assets?.[0]?.uri;
-            if (uri) setSelectedVideos(prev => [...prev, uri]);
-          });
-        },
-      },
-      {text: 'Ləğv et', style: 'cancel'},
-    ]);
+  const pickVideoFromGallery = () => {
+    const options: any = {
+      mediaType: 'video',
+      quality: 1,
+      videoQuality: 'high',
+      selectionLimit: 1,
+    };
+
+    launchImageLibrary(options, response => {
+      if (response.didCancel) return;
+      if (response.errorCode) {
+        Alert.alert('Xəta', 'Video seçilə bilmədi');
+        return;
+      }
+
+      const uri = response.assets?.[0]?.uri;
+      if (uri) setSelectedVideos(prev => [...prev, uri]);
+    });
+  };
+
+  const recordVideo = () => {
+    const options: any = {
+      mediaType: 'video',
+      quality: 1,
+      videoQuality: 'high',
+      durationLimit: 60, // Max 1 dəqiqə
+      saveToPhotos: true,
+    };
+
+    launchCamera(options, response => {
+      if (response.didCancel) return;
+      if (response.errorCode) {
+        Alert.alert('Xəta', 'Video çəkilə bilmədi');
+        return;
+      }
+
+      const uri = response.assets?.[0]?.uri;
+      if (uri) setSelectedVideos(prev => [...prev, uri]);
+    });
   };
 
   const removeImage = (index: any) => {
@@ -363,19 +380,17 @@ const NewReportScreen = () => {
             takePhoto();
           }}
         />
+
         <VideoPickerModal
           visible={isVideoModalVisible}
           onClose={() => setVideoModalVisible(false)}
           onPickGallery={() => {
             setVideoModalVisible(false);
-            pickVideo();
-          }}
-          onPickFile={() => {
-            setVideoModalVisible(false);
-            Alert.alert('Qeyd', 'Bu funksiya hələlik aktiv deyil.');
+            pickVideoFromGallery();
           }}
           onRecordVideo={() => {
             setVideoModalVisible(false);
+            recordVideo();
           }}
         />
       </ScrollView>

@@ -137,7 +137,7 @@ const ProfileScreen = () => {
                 />
               </TouchableOpacity>
 
-              <TouchableOpacity style={styles.itemContainer}>
+              {/* <TouchableOpacity style={styles.itemContainer}>
                 <View style={styles.iconBox}>
                   <SecurityIcon color="#1269B5" />
                 </View>
@@ -148,7 +148,7 @@ const ProfileScreen = () => {
                   color="#98A2B3"
                   style={styles.arrowIcon}
                 />
-              </TouchableOpacity>
+              </TouchableOpacity> */}
 
               <TouchableOpacity
                 style={styles.itemContainer}
@@ -265,7 +265,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontStyle: 'normal',
     fontWeight: '600',
-    lineHeight: 24, // 150% of 16px
+    lineHeight: 24,
   },
   inputContainer: {
     marginHorizontal: 20,
@@ -319,7 +319,7 @@ const styles = StyleSheet.create({
   },
   text: {
     color: '#063A66',
-    fontFamily: 'DMSans-Medium', // əgər custom font əlavə etmisənsə
+    fontFamily: 'DMSans-Medium',
     fontSize: 14,
     fontWeight: '500',
     lineHeight: 21,

@@ -111,15 +111,15 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   title: {
-    color: '#063A66', // CSS'deki var(--Primary-primary-800)
-    fontFamily: 'DMSans-SemiBold', // DM Sans, Medium ağırlık için genellikle özel font ismi kullanılır
+    color: '#063A66',
+    fontFamily: 'DMSans-SemiBold',
     fontSize: 36,
     lineHeight: 46.8,
     paddingTop: 100,
   },
   subtitle: {
-    color: '#424242', // CSS değişkeninin varsayılan değeri
-    fontFamily: 'DMSans-Regular', // 400 ağırlık için genellikle Regular
+    color: '#424242',
+    fontFamily: 'DMSans-Regular',
     fontSize: 14,
     fontStyle: 'normal',
     lineHeight: 21,
@@ -142,12 +142,12 @@ const styles = StyleSheet.create({
     marginBottom: 32,
   },
   button: {
-    borderRadius: 8, // var(--s, 8px)
-    backgroundColor: '#1269B5', // var(--Primary-500)
+    borderRadius: 8,
+    backgroundColor: '#1269B5',
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    gap: 12, // Yalnızca React Native 0.71+ destekliyor, yoksa yerine margin kullan
+    gap: 12,
     height: 52,
     minWidth: 128,
     padding: 16,
@@ -155,7 +155,7 @@ const styles = StyleSheet.create({
   buttonText: {
     color: '#FFFFFF',
     textAlign: 'center',
-    fontFamily: 'DMSans-Regular', // 400 ağırlık = Regular
+    fontFamily: 'DMSans-Regular',
     fontSize: 14,
     fontStyle: 'normal',
     fontWeight: '400',

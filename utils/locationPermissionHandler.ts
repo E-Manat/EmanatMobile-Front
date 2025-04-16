@@ -1,80 +1,40 @@
-import {PermissionsAndroid, Platform, Alert, BackHandler} from 'react-native';
-import Geolocation from 'react-native-geolocation-service';
+import {PermissionsAndroid, Platform, Alert} from 'react-native';
+import Geolocation from '@react-native-community/geolocation';
+import {Linking, AppState} from 'react-native';
 
-export const requestLocationPermission = async () => {
-  if (Platform.OS === 'android') {
-    const granted = await PermissionsAndroid.request(
-      PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-      {
-        title: 'Lokasiya İcazəsi',
-        message: 'Tətbiqin işləməsi üçün lokasiyanız tələb olunur.',
-        buttonNeutral: 'Soruş sonra',
-        buttonNegative: 'İmtina et',
-        buttonPositive: 'İcazə ver',
-      },
-    );
-    return granted === PermissionsAndroid.RESULTS.GRANTED;
-  } else {
-    return true;
-  }
-};
-
-export const checkAndForceLocation = async () => {
-  const hasPermission = await requestLocationPermission();
-
-  if (!hasPermission) {
-    Alert.alert(
-      'Diqqət',
-      'Tətbiq işləmək üçün lokasiya icazəsi tələb edir.',
-      [
+export const checkAndForceLocation = async (): Promise<boolean> => {
+  try {
+    if (Platform.OS === 'android') {
+      const granted = await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
         {
-          text: 'Bağla',
-          onPress: () => BackHandler.exitApp(),
-          style: 'destructive',
+          title: 'GPS İcazəsi',
+          message:
+            'Tətbiq işləməsi üçün GPS icazəsinə ehtiyac var. Zəhmət olmasa aktiv edin.',
+          buttonNeutral: 'Soruş sonra',
+          buttonNegative: 'İmtina',
+          buttonPositive: 'İcazə ver',
         },
-      ],
-      {cancelable: false},
-    );
-    return;
-  }
-
-  Geolocation.getCurrentPosition(
-    position => {
-      console.log('Lokasiya tapıldı:', position);
-    },
-    error => {
-      console.log('Lokasiya xətası:', error);
-
-      let message = '';
-
-      switch (error.code) {
-        case 1:
-          message = 'Lokasiya icazəsi rədd edildi.';
-          break;
-        case 2:
-          message = 'Lokasiya məlumatı mövcud deyil.';
-          break;
-        case 3:
-          message = 'Lokasiya sorğusu zaman aşımına uğradı.';
-          break;
-        default:
-          message = 'Bilinməyən lokasiya xətası baş verdi.';
-          break;
-      }
-
-      Alert.alert(
-        'Lokasiya problemi',
-        message + '\nZəhmət olmasa, ayarlardan lokasiyanı aktiv edin.',
-        [
-          {
-            text: 'Bağla',
-            onPress: () => BackHandler.exitApp(),
-            style: 'destructive',
-          },
-        ],
-        {cancelable: false},
       );
-    },
-    {enableHighAccuracy: true, timeout: 10000, maximumAge: 1000},
-  );
+
+      return granted === PermissionsAndroid.RESULTS.GRANTED;
+    } else {
+      return new Promise((resolve) => {
+        Geolocation.requestAuthorization();
+        Geolocation.getCurrentPosition(
+          () => resolve(true),
+          (error) => {
+            Alert.alert(
+              'GPS İcazəsi',
+              'Tətbiq işləməsi üçün GPS icazəsini aktiv etməlisiniz.',
+            );
+            resolve(false);
+          },
+        );
+      });
+    }
+  } catch (error) {
+    console.error('GPS icazəsi xətası:', error);
+    return false;
+  }
 };

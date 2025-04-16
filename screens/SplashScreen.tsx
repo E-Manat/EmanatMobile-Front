@@ -1,32 +1,54 @@
-import React, {useEffect} from 'react';
-import {View, StyleSheet, Image} from 'react-native';
+import React, {useEffect, useState} from 'react';
+import {View, StyleSheet, Image, Alert, Linking, AppState} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {checkAndForceLocation} from '../utils/locationPermissionHandler';
+import CustomModal from '../components/Modal';
 
 const SplashScreen = ({navigation}: any) => {
+  const [modalVisible, setModalVisible] = useState(false);
   useEffect(() => {
-    // checkAndForceLocation();
+    const init = async () => {
+      const gpsAllowed = await checkAndForceLocation();
+      console.log(gpsAllowed, 'gps');
+      if (!gpsAllowed) {
+        setModalVisible(true);
+        return;
+      }
 
-    const checkUser = async () => {
-      try {
-        const userToken = await AsyncStorage.getItem('userToken');
-        const userPin = await AsyncStorage.getItem('userPin');
-        const isLoggedIn = await AsyncStorage.getItem('isLoggedIn');
+      const userToken = await AsyncStorage.getItem('userToken');
+      const userPin = await AsyncStorage.getItem('userPin');
+      const isLoggedIn = await AsyncStorage.getItem('isLoggedIn');
 
-        if (userToken && userPin && isLoggedIn) {
-          navigation.replace('Ana səhifə');
-        } else if (userToken) {
-          navigation.replace('PinSetup');
-        } else {
-          navigation.replace('Login');
-        }
-      } catch (error) {
-        console.log('AsyncStorage xətası:', error);
+      if (userToken && userPin && isLoggedIn) {
+        navigation.replace('Ana səhifə');
+      } else if (userToken) {
+        navigation.replace('PinSetup');
+      } else {
+        navigation.replace('Login');
       }
     };
 
-    checkUser();
-  }, [navigation]);
+    init();
+  }, []);
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener(
+      'change',
+      async nextAppState => {
+        if (nextAppState === 'active') {
+          const gpsAllowed = await checkAndForceLocation();
+          if (gpsAllowed) {
+            setModalVisible(false);
+            navigation.replace('SplashScreen'); // Eyni səhifəni yenidən yüklə
+          }
+        }
+      },
+    );
+
+    return () => {
+      subscription.remove();
+    };
+  }, []);
 
   useEffect(() => {
     const logAllAsyncStorage = async () => {
@@ -46,12 +68,21 @@ const SplashScreen = ({navigation}: any) => {
   }, []);
 
   return (
-    <View style={styles.container}>
-      <Image
-        source={require('../assets/img/splashImage.png')}
-        style={styles.emanatImage}
+    <>
+      <View style={styles.container}>
+        <Image
+          source={require('../assets/img/splashImage.png')}
+          style={styles.emanatImage}
+        />
+      </View>{' '}
+      <CustomModal
+        visible={modalVisible}
+        title="Diqqət"
+        description="Tətbiqin davam etməsi üçün GPS icazəsini verməlisiniz."
+        confirmText="İcazə ver"
+        onConfirm={() => Linking.openSettings()}
       />
-    </View>
+    </>
   );
 };
 

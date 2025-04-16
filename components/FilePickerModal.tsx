@@ -8,7 +8,7 @@ interface Props {
   visible: boolean;
   onClose: () => void;
   onPickGallery: () => void;
-  onPickFile: () => void;
+  onPickFile?: () => void;
   onTakePhoto: () => void;
 }
 

@@ -4,8 +4,6 @@ import HomeScreen from '../screens/HomeScreen';
 import TasksScreen from '../screens/TasksScreen';
 import ReportsScreen from '../screens/ReportsScreen';
 import ProfileScreen from '../screens/ProfileScreen';
-import ReportsIcon from 'react-native-vector-icons/SimpleLineIcons';
-import Icon from 'react-native-vector-icons/Feather';
 import {TouchableOpacity} from 'react-native';
 import {HomeIcon, ReportIcon, TaskIcon, UserIcon} from '../assets/icons';
 
@@ -38,10 +36,7 @@ const BottomTabNavigator = () => {
           shadowOpacity: 0.1,
         },
         tabBarButton: props => (
-          <TouchableOpacity
-            {...(props ?? {})} // Ensure props is never null or undefined
-            activeOpacity={0.6}
-          />
+          <TouchableOpacity {...(props ?? {})} activeOpacity={0.6} />
         ),
       })}>
       <Tab.Screen name="Ana səhifə" component={HomeScreen} />

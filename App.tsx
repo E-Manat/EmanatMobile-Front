@@ -25,6 +25,9 @@ import {setNavigation} from './services/apiService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {checkTokenExpiry} from './utils/checkTokenExpiry';
 import OtpSubmitScreen from './screens/OtpSubmitScreen';
+import 'react-native-url-polyfill/auto';
+import Toast from 'react-native-toast-message';
+
 const Stack = createNativeStackNavigator();
 enableScreens();
 
@@ -86,6 +89,7 @@ const App = () => {
         setNavigation(navigationRef);
       }}>
       <StatusBar />
+      <Toast />
       <Stack.Navigator
         initialRouteName="Splash"
         screenOptions={{

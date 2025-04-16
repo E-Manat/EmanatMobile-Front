@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useEffect, useMemo, useState} from 'react';
 import {
   View,
   Text,
@@ -11,17 +11,23 @@ import {
 import Icon from 'react-native-vector-icons/Feather';
 import IconCheck from 'react-native-vector-icons/Ionicons';
 import {useNavigation} from '@react-navigation/native';
+import * as signalR from '@microsoft/signalr';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import Sound from 'react-native-sound';
+import Toast from 'react-native-toast-message';
 
 const NotificationsScreen = () => {
   const navigation = useNavigation();
   const [filter, setFilter] = useState('all');
-  const [data, setData] = useState([]);
+  const [data, setData] = useState<any>([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedNotification, setSelectedNotification] = useState<any>(null);
 
-  const filteredData: any = (
-    filter === 'all' ? data : data?.filter((item: any) => item.unread)
-  ).sort((a: any, b: any) => b.unread - a.unread);
+  const filteredData = useMemo(() => {
+    return (
+      filter === 'all' ? data : data?.filter((item: any) => item.unread)
+    ).sort((a: any, b: any) => b.unread - a.unread);
+  }, [filter, data]);
 
   const markAllAsRead = () => {
     setData((prevData: any) =>
@@ -41,6 +47,112 @@ const NotificationsScreen = () => {
   const closeModal = () => {
     setSelectedNotification(null);
   };
+
+  const formatTime = (datetime: string) => {
+    const date = new Date(datetime);
+    return `${date.getHours()}:${String(date.getMinutes()).padStart(2, '0')}`;
+  };
+
+  const formatDate = (datetime: string) => {
+    const date = new Date(datetime);
+    return date.toLocaleDateString('az-AZ');
+  };
+
+  useEffect(() => {
+    let connection: signalR.HubConnection;
+
+    const setupConnection = async () => {
+      try {
+        const token = await AsyncStorage.getItem('userToken');
+        if (!token) return;
+
+        const response = await fetch(
+          'http://192.168.10.119:5009/api/Notification?target=Mobile',
+          {
+            method: 'GET',
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+          },
+        );
+
+        const notifications = await response.json();
+        console.log('📥 Serverdən gələn bildirişlər:', notifications);
+
+        const formattedNotifications = notifications.map((item: any) => ({
+          id: item.id,
+          title: item.title,
+          text: item.message,
+          unread: !item.isRead,
+          time: formatTime(item.createdAt),
+          date: formatDate(item.createdAt),
+        }));
+
+        setData(formattedNotifications);
+
+        connection = new signalR.HubConnectionBuilder()
+          .withUrl('http://192.168.10.119:5009/hubs/mobile', {
+            accessTokenFactory: () => token,
+          })
+          .withAutomaticReconnect()
+          .build();
+        connection.on('ReceiveNotification', (notification: any) => {
+          console.log('📩 Yeni real-time bildiriş:', notification);
+
+          const newNotification = {
+            id: notification.id,
+            title: notification.title,
+            text: notification.message,
+            unread: !notification.isRead,
+            time: formatTime(notification.createdAt),
+            date: formatDate(notification.createdAt),
+          };
+
+          setData((prev: any) => [newNotification, ...prev]);
+
+          Toast.show({
+            type: 'info',
+            text1: notification.title,
+            text2: notification.message,
+            position: 'top',
+            visibilityTime: 4000,
+            autoHide: true,
+          });
+
+          const ding = new Sound(
+            'notification.mp3',
+            Sound.MAIN_BUNDLE,
+            error => {
+              if (error) {
+                console.log('❌ Səs yükləmə xətası:', error);
+                return;
+              }
+              ding.play(success => {
+                if (!success) {
+                  console.log('🔇 Səs çalınmadı');
+                }
+              });
+            },
+          );
+        });
+
+        await connection.start();
+        console.log('✅ SignalR bağlantısı quruldu');
+      } catch (err) {
+        console.error('❌ Bildiriş və ya SignalR xətası:', err);
+      }
+    };
+
+    setupConnection();
+
+    return () => {
+      if (connection) {
+        connection.stop();
+        console.log('🔌 SignalR bağlantısı dayandırıldı');
+      }
+    };
+  }, []);
 
   const renderItem = ({item}: any) => (
     <TouchableOpacity onPress={() => handleNotificationPress(item)}>
@@ -72,66 +184,76 @@ const NotificationsScreen = () => {
             <IconCheck name="checkmark-done-sharp" size={20} color="#2D64AF" />
           </TouchableOpacity>
         ) : (
-          <View style={{width: 20}} /> 
+          <View style={{width: 20}} />
         )}
       </View>
 
-      {filteredData.length > 0 && (
-        <View style={styles.filterContainer}>
-          <TouchableOpacity
+      <View style={styles.filterContainer}>
+        <TouchableOpacity
+          style={[styles.filterButton, filter === 'all' && styles.activeFilter]}
+          onPress={() => setFilter('all')}>
+          <Text
             style={[
-              styles.filterButton,
-              filter === 'all' && styles.activeFilter,
-            ]}
-            onPress={() => setFilter('all')}>
-            <Text
-              style={[
-                styles.filterText,
-                filter === 'all' && styles.activeFilterText,
-              ]}>
-              Hamısı
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
+              styles.filterText,
+              filter === 'all' && styles.activeFilterText,
+            ]}>
+            Hamısı
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[
+            styles.filterButton,
+            filter === 'unread' && styles.activeFilter,
+          ]}
+          onPress={() => setFilter('unread')}>
+          <Text
             style={[
-              styles.filterButton,
-              filter === 'unread' && styles.activeFilter,
-            ]}
-            onPress={() => setFilter('unread')}>
-            <Text
-              style={[
-                styles.filterText,
-                filter === 'unread' && styles.activeFilterText,
-              ]}>
-              Oxunmamış
-            </Text>
-          </TouchableOpacity>
-        </View>
-      )}
+              styles.filterText,
+              filter === 'unread' && styles.activeFilterText,
+            ]}>
+            Oxunmamış
+          </Text>
+        </TouchableOpacity>
+      </View>
 
       <FlatList
         data={filteredData}
-        keyExtractor={(item: any) => item.id}
+        keyExtractor={(item: any) => String(item.id)}
         renderItem={renderItem}
         ListHeaderComponent={() =>
           filteredData.length ? (
             <Text style={styles.sectionTitle}>{filteredData[0].date}</Text>
           ) : null
         }
-        ListEmptyComponent={() => (
-          <View style={styles.noResult}>
-            <Image
-              source={require('../assets/img/notification_empty.png')}
-              style={styles.noContentImage}
-            />
-            <Text style={styles.noContentLabel}>
-              Hazırda heç bir bildirişiniz yoxdur.
-            </Text>
-            <Text style={styles.noContentText}>
-              Yeni bildirişlər burada görünəcək.
-            </Text>
-          </View>
-        )}
+        ListEmptyComponent={() =>
+          data.length === 0 ? (
+            <View style={styles.noResult}>
+              <Image
+                source={require('../assets/img/notification_empty.png')}
+                style={styles.noContentImage}
+              />
+              <Text style={styles.noContentLabel}>
+                Hazırda heç bir bildirişiniz yoxdur.
+              </Text>
+              <Text style={styles.noContentText}>
+                Yeni bildirişlər burada görünəcək.
+              </Text>
+            </View>
+          ) : (
+            // əgər filter === 'unread' və data var, amma unread yoxdursa
+            filter === 'unread' && (
+              <View style={styles.noResult}>
+                <Image
+                  source={require('../assets/img/notification_empty.png')}
+                  style={styles.noContentImage}
+                />
+                <Text style={styles.noContentLabel}>
+                  Oxunmamış bildiriş yoxdur.
+                </Text>
+              </View>
+            )
+          )
+        }
       />
 
       <Modal visible={modalVisible} transparent animationType="fade">
