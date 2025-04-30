@@ -18,12 +18,12 @@ import CustomModal from '../components/Modal';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {RootStackParamList} from '../App';
 
+import Config from 'react-native-config';
 type NavigationProp = StackNavigationProp<RootStackParamList, 'Login'>;
-
 const OtpSubmit = () => {
   const navigation = useNavigation<NavigationProp>();
 
-  const inputRefs = useRef([]);
+  const inputRefs: any = useRef([]);
   const [otp, setOtp] = useState(new Array(6).fill(''));
   const [modalVisible, setModalVisible] = useState(false);
   const [modalProps, setModalProps] = useState({});
@@ -33,7 +33,7 @@ const OtpSubmit = () => {
 
   const handleChange = (text: any, index: any) => {
     if (/^[0-9]$/.test(text)) {
-      const newOtp = [...otp];
+      const newOtp: any = [...otp];
       newOtp[index] = text;
       setOtp(newOtp);
       if (index < 5) {
@@ -52,7 +52,7 @@ const OtpSubmit = () => {
     try {
       const userToken = await AsyncStorage.getItem('userToken');
       const response = await axios.post(
-        'https://emanat-api.siesco.studio/auth/Auth/ConfirmOtp',
+        `${Config.API_URL}/auth/Auth/ConfirmOtp`,
         {email, otp: finalOtp},
         {
           headers: {
@@ -92,17 +92,17 @@ const OtpSubmit = () => {
         onConfirm: () => setModalVisible(false),
       });
     } finally {
-      setIsLoading(false); 
+      setIsLoading(false);
       setModalVisible(true);
     }
   };
 
   const handleResendOtp = async () => {
-    setIsLoading(true); 
+    setIsLoading(true);
     try {
       const userToken = await AsyncStorage.getItem('userToken');
       const response = await axios.post(
-        'https://emanat-api.siesco.studio/auth/Auth/SendEmail',
+        `${Config.API_URL}/auth/Auth/SendEmail`,
         {email},
         {
           headers: {
@@ -153,7 +153,7 @@ const OtpSubmit = () => {
         {otp.map((digit, index) => (
           <TextInput
             key={index}
-            ref={ref => (inputRefs.current[index] = ref)}
+            ref={(ref): any => (inputRefs.current[index] = ref)}
             style={styles.otpBox}
             maxLength={1}
             keyboardType="number-pad"

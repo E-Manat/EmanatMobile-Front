@@ -34,7 +34,7 @@ const TerminallarScreen = () => {
 
     try {
       const response = await apiService.get(
-        `/mobile/Terminal/GetById?id=${terminal.id}`,
+        `/Terminal/GetById?id=${terminal.id}`,
       );
       console.log(response, 'Terminal details');
       setSelectedTerminal(response);

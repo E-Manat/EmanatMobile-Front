@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   Modal,
+  Alert,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome6';
 import Icon1 from 'react-native-vector-icons/MaterialIcons';
@@ -15,7 +16,9 @@ import {RootStackParamList} from '../App';
 import {useNavigation} from '@react-navigation/native';
 import TopHeader from '../components/TopHeader';
 import CustomModal from '../components/Modal';
+import Config from 'react-native-config';
 
+console.log(Config.API_URL, 'jdfnS');
 const TerminalDetailsScreen = ({route}: any) => {
   const {taskData} = route.params;
   console.log(taskData, 'Task Data');
@@ -24,13 +27,25 @@ const TerminalDetailsScreen = ({route}: any) => {
   type NavigationProp = StackNavigationProp<RootStackParamList, 'Login'>;
   const [confirmVisible, setConfirmVisible] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [task, setTask] = useState(route.params.taskData);
+
+  const [taskInProgress, setTaskInProgress] = useState(false);
+  const [customModalVisible, setCustomModalVisible] = useState(false);
 
   const handleStartTask = async () => {
+    if (taskInProgress) {
+      setConfirmVisible(false);
+      setTaskInProgress(false);
+      return;
+    }
+
     try {
       setLoading(true);
-      const token = await AsyncStorage.getItem('userToken');
-      const url = `https://emanat-api.siesco.studio/mobile/CollectorTask/StartTask?taskId=${taskData.id}`;
+      setTaskInProgress(true);
 
+      const token = await AsyncStorage.getItem('userToken');
+      const url = `${Config.API_URL}/mobile/CollectorTask/StartTask?taskId=${taskData.id}`;
+      console.log(url, 'URL');
       const response = await fetch(url, {
         method: 'POST',
         headers: {
@@ -40,6 +55,17 @@ const TerminalDetailsScreen = ({route}: any) => {
 
       const resText: any = await response.text();
       console.log('Response:', resText);
+
+      if (
+        response.status === 400 &&
+        resText.includes(
+          'Hazırda yerinə yetirilən başqa bir tapşırıq mövcuddur',
+        )
+      ) {
+        setConfirmVisible(false); // Mövcud modalı bağlayırıq
+        setCustomModalVisible(true); // Yeni custom modalı açırıq
+        return;
+      }
 
       if (!response.ok) {
         throw new Error('Server error: ' + response.status);
@@ -54,12 +80,13 @@ const TerminalDetailsScreen = ({route}: any) => {
 
       navigation.navigate('TaskProcess', {
         taskData,
-        startTime: new Date().getTime(), 
+        startTime: new Date().getTime(),
       });
     } catch (error) {
       console.error('Task start error:', error);
     } finally {
       setLoading(false);
+      setTaskInProgress(false); 
     }
   };
 
@@ -168,6 +195,14 @@ const TerminalDetailsScreen = ({route}: any) => {
         onCancel={() => setConfirmVisible(false)}
       />
 
+      <CustomModal
+        visible={customModalVisible}
+        title="Xəta!"
+        description="Hazırda yerinə yetirilən başqa bir tapşırıq mövcuddur. Başqa bir tapşırığa başlaya bilməzsiniz"
+        confirmText="Bağla"
+        onConfirm={() => setCustomModalVisible(false)}
+      />
+
       {taskData.status === 0 ? (
         <TouchableOpacity
           style={styles.startButton}
@@ -178,9 +213,9 @@ const TerminalDetailsScreen = ({route}: any) => {
         <View
           style={[
             styles.startButton,
-            {backgroundColor: '#eee', borderColor: '#ccc', borderWidth: 1},
+            {backgroundColor: '#eee', borderColor: '#F5F5F5', borderWidth: 1},
           ]}>
-          <Text style={[styles.startButtonText, {color: '#999'}]}>
+          <Text style={[styles.startButtonText, {color: '#999999'}]}>
             {getStatusText(taskData.status)}
           </Text>
         </View>
@@ -223,7 +258,7 @@ const styles = StyleSheet.create({
   },
   terminalName: {
     width: '100%',
-    color: '#063A66', 
+    color: '#063A66',
     fontFamily: 'DMSans-Bold',
     fontSize: 16,
     lineHeight: 24,
@@ -276,7 +311,7 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   detailTitle: {
-    color: '#063A66', 
+    color: '#063A66',
     fontFamily: 'DMSans-Bold',
     fontSize: 16,
     lineHeight: 19.2,

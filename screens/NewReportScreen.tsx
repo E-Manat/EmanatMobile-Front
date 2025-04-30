@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import {Picker} from '@react-native-picker/picker';
 import Icon from 'react-native-vector-icons/Feather';
-import {useNavigation} from '@react-navigation/native';
+import {useNavigation, useRoute} from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
 import {RootStackParamList} from '../App';
@@ -24,10 +24,17 @@ import {ImageIcon, VideoIcon} from '../assets/icons';
 import VideoPickerModal from '../components/VideoPickerModal';
 import FilePickerModal from '../components/FilePickerModal';
 import CustomModal from '../components/Modal';
+import {RouteProp} from '@react-navigation/native';
 
+type RouteProps = RouteProp<RootStackParamList, 'YeniHesabat'>;
 type NavigationProp = StackNavigationProp<RootStackParamList, 'Login'>;
 
 const NewReportScreen = () => {
+  const route = useRoute<RouteProps>();
+  const terminalIdFromRoute = route.params?.terminalId;
+
+  console.log(terminalIdFromRoute, 'terminalIdFromRoute');
+
   const [selectedTerminal, setSelectedTerminal] = useState('');
   const [selectedProblem, setSelectedProblem] = useState('');
   const [selectedImages, setSelectedImages] = useState<any>([]);
@@ -49,6 +56,12 @@ const NewReportScreen = () => {
 
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [modalMessage, setModalMessage] = useState('');
+
+  useEffect(() => {
+    if (terminalIdFromRoute) {
+      setSelectedTerminal(terminalIdFromRoute);
+    }
+  }, [terminalIdFromRoute]);
 
   const takePhoto = () => {
     const options: any = {
@@ -140,7 +153,7 @@ const NewReportScreen = () => {
       try {
         const data = await apiService.get('/mobile/Terminal/GetAll');
         console.log(data, 'data');
-        setTerminalList(data); // Store fetched terminals in state
+        setTerminalList(data);
       } catch (error) {
         console.error('Terminals could not be fetched:', error);
       }
@@ -204,6 +217,18 @@ const NewReportScreen = () => {
     }
   };
 
+  useEffect(() => {
+    if (terminalList.length && terminalIdFromRoute) {
+      const matchedTerminal = terminalList.find(
+        terminal => terminal.id === terminalIdFromRoute,
+      );
+
+      if (matchedTerminal) {
+        setSelectedTerminal(matchedTerminal.id);
+      }
+    }
+  }, [terminalList, terminalIdFromRoute]);
+
   return (
     <>
       <TopHeader title="Yeni hesabat" />
@@ -230,14 +255,14 @@ const NewReportScreen = () => {
           </Picker>
 
           <Text style={styles.selectLabel}> Terminal seçin</Text>
+
           <Picker
             selectedValue={selectedTerminal}
-            onValueChange={itemValue => setSelectedTerminal(itemValue)}
-            style={styles.customPicker}>
+            onValueChange={itemValue => setSelectedTerminal(itemValue)}>
             <Picker.Item
-              label="Terminal "
+              label="Terminal seçin"
               value=""
-              style={styles.customPickerLabel}
+              style={styles.customPicker}
             />
             {terminalList?.map((terminal: any) => (
               <Picker.Item

@@ -15,9 +15,6 @@ const OtpScreen = () => {
     newOtp[index] = text;
     setOtp(newOtp);
   };
-
-  
-
   return (
     <View style={styles.container}>
       <Text style={styles.title}>OTP təsdiqlə</Text>

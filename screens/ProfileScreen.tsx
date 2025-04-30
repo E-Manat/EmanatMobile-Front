@@ -27,6 +27,9 @@ import {OutIcon, SecurityIcon, UserIcon} from '../assets/icons';
 import CustomModal from '../components/Modal';
 
 type NavigationProp = StackNavigationProp<RootStackParamList, 'Profil'>;
+import Config from 'react-native-config';
+
+console.log(Config.API_URL, 'jdfnS');
 
 const ProfileScreen = () => {
   const [phone, setPhone] = useState('');
@@ -50,17 +53,29 @@ const ProfileScreen = () => {
     try {
       setLoading(true);
 
-      const result: any = await apiService.get('/auth/Auth/GetProfile');
+      const token = await AsyncStorage.getItem('userToken');
+      if (!token) {
+        console.warn('Token tapılmadı');
+        return;
+      }
+
+      const response = await fetch(`${Config.API_URL}/mobile/User/GetProfile`, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        console.warn('❌ API cavabı uğursuz:', response.status);
+        return;
+      }
+
+      const result = await response.json();
       console.log('Profil məlumatları:', result);
 
       if (result) {
-        setFirstName(result.firstName || 'Ad yoxdur');
-        setLastName(result.lastName || 'Soyad yoxdur');
-        setPhone(result.phone || 'N/A');
-        setEmail(result.email || 'example@example.com');
-        setAddress(result.address || 'Ünvan daxil edilməyib');
-        setProfileImage(result.profileImage || null);
-
         const profileData = {
           firstName: result.firstName || 'Ad yoxdur',
           lastName: result.lastName || 'Soyad yoxdur',
@@ -70,13 +85,19 @@ const ProfileScreen = () => {
           profileImage: result.profileImage || null,
         };
 
+        setFirstName(profileData.firstName);
+        setLastName(profileData.lastName);
+        setPhone(profileData.phone);
+        setEmail(profileData.email);
+        setAddress(profileData.address);
+        setProfileImage(profileData.profileImage);
+
         await AsyncStorage.setItem('profileData', JSON.stringify(profileData));
-        setLoading(false);
-      } else {
-        console.log('API-dən uğursuz cavab:', result);
       }
     } catch (error) {
       console.log('Məlumat yükləmə xətası:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -93,6 +114,12 @@ const ProfileScreen = () => {
   const [logoutConfirmModalVisible, setLogoutConfirmModalVisible] =
     useState(false);
 
+  const getInitials = (name: string, surname: string) => {
+    const first = name?.trim()?.[0]?.toUpperCase() || 'A';
+    const last = surname?.trim()?.[0]?.toUpperCase() || 'B';
+    return `${first}${last}`;
+  };
+
   return (
     <KeyboardAvoidingView behavior="padding" style={{flex: 1}}>
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
@@ -103,14 +130,18 @@ const ProfileScreen = () => {
             <View style={styles.profileContainer}>
               <TouchableOpacity onPress={() => setModalVisible(true)}>
                 <View style={styles.imageContainer}>
-                  <Image
-                    source={
-                      profileImage
-                        ? {uri: profileImage}
-                        : require('../assets/img/default.jpg')
-                    }
-                    style={styles.profileImage}
-                  />
+                  {profileImage ? (
+                    <Image
+                      source={{uri: profileImage}}
+                      style={styles.profileImage}
+                    />
+                  ) : (
+                    <View style={styles.initialsPlaceholder}>
+                      <Text style={styles.initialsText}>
+                        {getInitials(firstName, lastName)}
+                      </Text>
+                    </View>
+                  )}
                 </View>
               </TouchableOpacity>
               <View>
@@ -237,6 +268,19 @@ const styles = StyleSheet.create({
   imageContainer: {
     position: 'relative',
     width: '100%',
+  },
+  initialsPlaceholder: {
+    width: 50,
+    height: 50,
+    borderRadius: 45,
+    backgroundColor: '#1269B5',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  initialsText: {
+    color: 'white',
+    fontSize: 20,
+    fontFamily: 'DMSans-Bold',
   },
   profileImage: {
     width: 60,

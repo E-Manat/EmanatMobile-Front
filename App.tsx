@@ -27,7 +27,7 @@ import {checkTokenExpiry} from './utils/checkTokenExpiry';
 import OtpSubmitScreen from './screens/OtpSubmitScreen';
 import 'react-native-url-polyfill/auto';
 import Toast from 'react-native-toast-message';
-
+import {GestureHandlerRootView} from 'react-native-gesture-handler';
 const Stack = createNativeStackNavigator();
 enableScreens();
 
@@ -40,7 +40,7 @@ export type RootStackParamList = {
   ProfileDetail: undefined;
   Bildirişlər: undefined;
   Hesabatlar: undefined;
-  YeniHesabat: undefined;
+  YeniHesabat: {terminalId?: any};
   Terminallar: undefined;
   TerminalEtrafli: {taskData: any};
   HesabatEtrafli: {report: any};
@@ -82,53 +82,60 @@ const App = () => {
     checkAuth();
   }, []);
 
+  // AsyncStorage.clear();
+
   return (
-    <NavigationContainer
-      ref={nav => {
-        navigationRef.current = nav;
-        setNavigation(navigationRef);
-      }}>
-      <StatusBar />
-      <Toast />
-      <Stack.Navigator
-        initialRouteName="Splash"
-        screenOptions={{
-          headerShown: false,
-          gestureEnabled: true,
-          animation: 'slide_from_right',
+    <GestureHandlerRootView style={{flex: 1}}>
+      <NavigationContainer
+        ref={nav => {
+          navigationRef.current = nav;
+          setNavigation(navigationRef);
         }}>
-        <Stack.Group>
-          <Stack.Screen name="Splash" component={SplashScreen} />
-          <Stack.Screen name="Login" component={LoginScreen} />
-          <Stack.Screen name="Ana səhifə" component={BottomTabNavigator} />
-          <Stack.Screen name="Tapşırıqlar" component={TasksScreen} />
-          <Stack.Screen name="Profil" component={ProfileScreen} />
-          <Stack.Screen name="Bildirişlər" component={NotificationsScreen} />
-          <Stack.Screen name="Hesabatlar" component={ReportsScreen} />
-          <Stack.Screen name="YeniHesabat" component={NewReportScreen} />
-          <Stack.Screen name="Terminallar" component={TerminalsScreen} />
-          <Stack.Screen name="TaskProcess" component={TaskProcessScreen} />
-          <Stack.Screen name="ProfileDetail" component={ProfileDetailScreen} />
-          <Stack.Screen
-            name="ForgotPassword"
-            component={ForgotPasswordScreen}
-          />
-          <Stack.Screen name="NewPassword" component={NewPasswordScreen} />
-          <Stack.Screen name="Otp" component={OtpScreen} />
-          <Stack.Screen name="OtpSubmit" component={OtpSubmitScreen} />
-          <Stack.Screen
-            name="HesabatEtrafli"
-            component={DetailedReportScreen}
-          />
-          <Stack.Screen
-            name="TerminalEtrafli"
-            component={TerminalDetailsScreen}
-          />
-          <Stack.Screen name="PinSetup" component={PinSetupScreen} />
-        </Stack.Group>
-      </Stack.Navigator>
-      <DraggableTaskButton />
-    </NavigationContainer>
+        <StatusBar />
+        <Stack.Navigator
+          initialRouteName="Splash"
+          screenOptions={{
+            headerShown: false,
+            gestureEnabled: true,
+            animation: 'slide_from_right',
+          }}>
+          <Stack.Group>
+            <Stack.Screen name="Splash" component={SplashScreen} />
+            <Stack.Screen name="Login" component={LoginScreen} />
+            <Stack.Screen name="Ana səhifə" component={BottomTabNavigator} />
+            <Stack.Screen name="Tapşırıqlar" component={TasksScreen} />
+            <Stack.Screen name="Profil" component={ProfileScreen} />
+            <Stack.Screen name="Bildirişlər" component={NotificationsScreen} />
+            <Stack.Screen name="Hesabatlar" component={ReportsScreen} />
+            <Stack.Screen name="YeniHesabat" component={NewReportScreen} />
+            <Stack.Screen name="Terminallar" component={TerminalsScreen} />
+            <Stack.Screen name="TaskProcess" component={TaskProcessScreen} />
+            <Stack.Screen
+              name="ProfileDetail"
+              component={ProfileDetailScreen}
+            />
+            <Stack.Screen
+              name="ForgotPassword"
+              component={ForgotPasswordScreen}
+            />
+            <Stack.Screen name="NewPassword" component={NewPasswordScreen} />
+            <Stack.Screen name="Otp" component={OtpScreen} />
+            <Stack.Screen name="OtpSubmit" component={OtpSubmitScreen} />
+            <Stack.Screen
+              name="HesabatEtrafli"
+              component={DetailedReportScreen}
+            />
+            <Stack.Screen
+              name="TerminalEtrafli"
+              component={TerminalDetailsScreen}
+            />
+            <Stack.Screen name="PinSetup" component={PinSetupScreen} />
+          </Stack.Group>
+        </Stack.Navigator>
+        <DraggableTaskButton />
+      </NavigationContainer>
+      <Toast />
+    </GestureHandlerRootView>
   );
 };
 

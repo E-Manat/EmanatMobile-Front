@@ -3,7 +3,6 @@ const path = require('path');
 
 const defaultConfig = getDefaultConfig(__dirname);
 
-// SVG üçün düzəlişlər
 defaultConfig.transformer = {
   ...defaultConfig.transformer,
   babelTransformerPath: require.resolve('react-native-svg-transformer'),

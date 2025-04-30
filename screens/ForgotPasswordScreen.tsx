@@ -14,6 +14,7 @@ import {RootStackParamList} from '../App';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import Icon from 'react-native-vector-icons/Feather';
+import Config from 'react-native-config';
 type NavigationProp = StackNavigationProp<RootStackParamList, 'Login'>;
 const ForgotPasswordScreen = () => {
   const [email, setEmail] = useState('');
@@ -33,7 +34,7 @@ const ForgotPasswordScreen = () => {
       const userToken = await AsyncStorage.getItem('userToken');
 
       const response = await axios.post(
-        'https://emanat-api.siesco.studio/auth/Auth/SendEmail',
+        `${Config.API_URL}/auth/Auth/SendEmail`,
         {email},
         {
           headers: {

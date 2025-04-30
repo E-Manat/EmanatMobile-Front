@@ -1,4 +1,4 @@
-import React, {useEffect, useMemo, useState} from 'react';
+import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import {
   View,
   Text,
@@ -7,21 +7,40 @@ import {
   StyleSheet,
   Modal,
   Image,
+  ActivityIndicator,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
 import IconCheck from 'react-native-vector-icons/Ionicons';
-import {useNavigation} from '@react-navigation/native';
-import * as signalR from '@microsoft/signalr';
+import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Sound from 'react-native-sound';
 import Toast from 'react-native-toast-message';
-
+import * as signalR from '@microsoft/signalr';
+import {Swipeable} from 'react-native-gesture-handler';
+import Config from 'react-native-config';
 const NotificationsScreen = () => {
   const navigation = useNavigation();
   const [filter, setFilter] = useState('all');
   const [data, setData] = useState<any>([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedNotification, setSelectedNotification] = useState<any>(null);
+  const [loading, setLoading] = useState<boolean>(false);
+
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [selectionMode, setSelectionMode] = useState(false);
+
+  const handleLongPress = (id: string) => {
+    setSelectionMode(true);
+    if (!selectedIds.includes(id)) {
+      setSelectedIds(prev => [...prev, id]);
+    }
+  };
+
+  const handleSelect = (id: string) => {
+    setSelectedIds(prev =>
+      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id],
+    );
+  };
 
   const filteredData = useMemo(() => {
     return (
@@ -29,12 +48,6 @@ const NotificationsScreen = () => {
     ).sort((a: any, b: any) => b.unread - a.unread);
   }, [filter, data]);
 
-  const markAllAsRead = () => {
-    setData((prevData: any) =>
-      prevData.map((item: any) => ({...item, unread: false})),
-    );
-    setModalVisible(false);
-  };
   const handleNotificationPress = (notification: any) => {
     setData((prevData: any) =>
       prevData.map((item: any) =>
@@ -42,6 +55,7 @@ const NotificationsScreen = () => {
       ),
     );
     setSelectedNotification(notification);
+    markAsRead(notification.id);
   };
 
   const closeModal = () => {
@@ -58,45 +72,81 @@ const NotificationsScreen = () => {
     return date.toLocaleDateString('az-AZ');
   };
 
+  const fetchNotifications = useCallback(async () => {
+    setLoading(true);
+    try {
+      const token = await AsyncStorage.getItem('userToken');
+      if (!token) {
+        console.warn('Token tapılmadı');
+        setLoading(false);
+        return;
+      }
+
+      const response = await fetch(
+        `${Config.API_URL}/notification/Notification/Get`,
+        {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        },
+      );
+
+      if (response.ok) {
+        const text = await response.text();
+        if (text) {
+          const notifications = JSON.parse(text);
+          const formattedNotifications = notifications.map((item: any) => ({
+            id: item.id,
+            title: item.title,
+            text: item.message,
+            unread: !item.isRead,
+            time: formatTime(item.createdAt),
+            date: formatDate(item.createdAt),
+          }));
+          setData(formattedNotifications);
+        } else {
+          setData([]);
+        }
+      } else {
+        console.error('❌ API xətası:', response.status, response.statusText);
+        setData([]);
+      }
+    } catch (err) {
+      console.error('❌ Bildiriş GET xətası:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchNotifications();
+    }, [fetchNotifications]),
+  );
+
   useEffect(() => {
     let connection: signalR.HubConnection;
 
-    const setupConnection = async () => {
+    const connectSignalR = async () => {
       try {
         const token = await AsyncStorage.getItem('userToken');
-        if (!token) return;
-
-        const response = await fetch(
-          'http://192.168.10.119:5009/api/Notification?target=Mobile',
-          {
-            method: 'GET',
-            headers: {
-              Authorization: `Bearer ${token}`,
-              'Content-Type': 'application/json',
-            },
-          },
-        );
-
-        const notifications = await response.json();
-        console.log('📥 Serverdən gələn bildirişlər:', notifications);
-
-        const formattedNotifications = notifications.map((item: any) => ({
-          id: item.id,
-          title: item.title,
-          text: item.message,
-          unread: !item.isRead,
-          time: formatTime(item.createdAt),
-          date: formatDate(item.createdAt),
-        }));
-
-        setData(formattedNotifications);
+        if (!token) {
+          console.warn('Token tapılmadı');
+          return;
+        }
 
         connection = new signalR.HubConnectionBuilder()
           .withUrl('http://192.168.10.119:5009/hubs/mobile', {
             accessTokenFactory: () => token,
           })
           .withAutomaticReconnect()
+          .configureLogging(signalR.LogLevel.Information)
           .build();
+
+        console.log(connection, 'comnnec');
+
         connection.on('ReceiveNotification', (notification: any) => {
           console.log('📩 Yeni real-time bildiriş:', notification);
 
@@ -109,10 +159,10 @@ const NotificationsScreen = () => {
             date: formatDate(notification.createdAt),
           };
 
-          setData((prev: any) => [newNotification, ...prev]);
+          // setData((prev: any) => [newNotification, ...prev]);
 
           Toast.show({
-            type: 'info',
+            type: 'success', // 'info' əvəzinə
             text1: notification.title,
             text2: notification.message,
             position: 'top',
@@ -140,36 +190,303 @@ const NotificationsScreen = () => {
         await connection.start();
         console.log('✅ SignalR bağlantısı quruldu');
       } catch (err) {
-        console.error('❌ Bildiriş və ya SignalR xətası:', err);
+        console.error('❌ SignalR bağlantı xətası:', err);
       }
     };
 
-    setupConnection();
+    connectSignalR();
 
-    return () => {
-      if (connection) {
-        connection.stop();
-        console.log('🔌 SignalR bağlantısı dayandırıldı');
-      }
-    };
+    // return () => {
+    //   if (connection) {
+    //     connection.stop();
+    //     console.log('🔌 SignalR bağlantısı dayandırıldı');
+    //   }
+    // };
   }, []);
 
-  const renderItem = ({item}: any) => (
-    <TouchableOpacity onPress={() => handleNotificationPress(item)}>
-      <View style={styles.notificationCard}>
-        {item.unread && <View style={styles.unreadDot} />}
-        <View style={styles.notificationContent}>
-          <View style={styles.notificationHeader}>
-            <Text style={styles.notificationTitle}>{item.title}</Text>
-            <Text style={styles.notificationTime}>{item.time}</Text>
+  const fetchUnreadNotifications = useCallback(async () => {
+    setLoading(true);
+    try {
+      const token = await AsyncStorage.getItem('userToken');
+      if (!token) {
+        console.warn('Token tapılmadı');
+        setLoading(false);
+        return;
+      }
+
+      const response = await fetch(
+        `${Config.API_URL}/notification/Notification/GetUnreads`,
+        {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        },
+      );
+
+      if (response.ok) {
+        const text = await response.text();
+        if (text) {
+          const notifications = JSON.parse(text);
+          const formattedNotifications = notifications.map((item: any) => ({
+            id: item.id,
+            title: item.title,
+            text: item.message,
+            unread: !item.isRead,
+            time: formatTime(item.createdAt),
+            date: formatDate(item.createdAt),
+          }));
+          setData(formattedNotifications);
+        } else {
+          setData([]);
+        }
+      } else {
+        console.error('❌ API xətası:', response.status, response.statusText);
+        setData([]);
+      }
+    } catch (err) {
+      console.error('❌ Oxunmamış GET xətası:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (filter === 'unread') {
+      fetchUnreadNotifications();
+    } else {
+      fetchNotifications();
+    }
+  }, [filter, fetchNotifications, fetchUnreadNotifications]);
+
+  const [successMessage, setSuccessMessage] = useState('');
+
+  console.log(data, 'data');
+
+  const markAllAsRead = async () => {
+    try {
+      const token = await AsyncStorage.getItem('userToken');
+      if (!token) {
+        console.warn('Token tapılmadı');
+        return;
+      }
+
+      const response = await fetch(
+        `${Config.API_URL}/notification/Notification/MarkAllAsRead`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        },
+      );
+      console.log(response, 'response');
+      if (response) {
+        setData((prevData: any) =>
+          prevData.map((item: any) => ({...item, unread: false})),
+        );
+        setSuccessMessage('Bütün bildirişlər uğurla işarələndi!');
+        setModalVisible(false);
+      } else {
+        Toast.show({
+          type: 'error',
+          text1: 'Xəta baş verdi',
+          text2: 'Bildirişlər işarələnə bilmədi',
+        });
+      }
+    } catch (err) {
+      console.error('❌ markAllAsRead API xətası:', err);
+    }
+  };
+
+  const markAsRead = async (notificationId: string) => {
+    try {
+      const token = await AsyncStorage.getItem('userToken');
+      if (!token) {
+        console.warn('Token tapılmadı');
+        return;
+      }
+
+      const response = await fetch(
+        `${Config.API_URL}/notification/Notification/MarkAsRead`,
+        {
+          method: 'PATCH',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({notificationId: notificationId}),
+        },
+      );
+
+      if (!response.ok) {
+        console.error('❌ markAsRead API xətası:', response.status);
+      }
+    } catch (err) {
+      console.error('❌ markAsRead istisna xətası:', err);
+    }
+  };
+
+  const handleSwipeDelete = async (id: string) => {
+    try {
+      const token = await AsyncStorage.getItem('userToken');
+      if (!token) {
+        console.warn('Token tapılmadı');
+        return;
+      }
+
+      console.log(id);
+
+      const response: any = await fetch(
+        `${Config.API_URL}/notification/Notification/Delete`,
+        {
+          method: 'DELETE',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({notificationId: id}),
+        },
+      );
+
+      console.log(response, 'response');
+
+      if (response) {
+        setData((prev: any) => prev.filter((item: any) => item.id !== id));
+        Toast.show({
+          type: 'success',
+          text1: 'Bildiriş silindi',
+        });
+      } else {
+        console.error('❌ Bildiriş silinmədi:', response.status);
+      }
+    } catch (err) {
+      console.error('❌ handleSwipeDelete istisna:', err);
+    }
+  };
+
+  const renderItem = ({item}: any) => {
+    const isSelected = selectedIds.includes(item.id);
+
+    return (
+      <Swipeable
+        renderRightActions={() => (
+          <TouchableOpacity
+            onPress={() => handleSwipeDelete(item.id)}
+            style={{
+              backgroundColor: '#FF3B30',
+              justifyContent: 'center',
+              alignItems: 'center',
+              width: 80,
+            }}>
+            <Text style={{color: 'white', fontWeight: 'bold'}}>Sil</Text>
+          </TouchableOpacity>
+        )}>
+        <TouchableOpacity
+          onPress={() =>
+            selectionMode
+              ? handleSelect(item.id)
+              : handleNotificationPress(item)
+          }
+          onLongPress={() => handleLongPress(item.id)}
+          style={[
+            styles.notificationCard,
+            isSelected && {backgroundColor: '#e6f0ff'},
+          ]}>
+          {item.unread && <View style={styles.unreadDot} />}
+          <View style={styles.notificationContent}>
+            <View style={styles.notificationHeader}>
+              <Text style={styles.notificationTitle}>{item.title}</Text>
+              <Text style={styles.notificationTime}>{item.time}</Text>
+            </View>
+            <Text style={styles.notificationText}>
+              {item.text.slice(0, 100)}..
+            </Text>
           </View>
-          <Text style={styles.notificationText}>
-            {item.text.slice(0, 100)}..
-          </Text>
-        </View>
-      </View>
-    </TouchableOpacity>
-  );
+        </TouchableOpacity>
+      </Swipeable>
+    );
+  };
+  console.log(selectedIds, 'selectedIds');
+
+  const handleBulkDelete = async () => {
+    try {
+      const token = await AsyncStorage.getItem('userToken');
+      if (!token) return console.warn('Token tapılmadı');
+
+      const response = await fetch(
+        `${Config.API_URL}/notification/Notification/DeleteSelectedIds`,
+        {
+          method: 'DELETE',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({notificationIds: selectedIds}),
+        },
+      );
+
+      if (response.ok) {
+        setData((prev: any) =>
+          prev.filter((item: any) => !selectedIds.includes(item.id)),
+        );
+        setSelectedIds([]);
+        setSelectionMode(false);
+
+        Toast.show({
+          type: 'success',
+          text1: 'Seçilmiş bildirişlər silindi',
+        });
+      } else {
+        Toast.show({
+          type: 'error',
+          text1: 'Xəta baş verdi',
+          text2: 'Bildirişlər silinmədi',
+        });
+      }
+    } catch (err) {
+      console.error('❌ handleBulkDelete istisna:', err);
+    }
+  };
+
+  const handleDeleteAll = async () => {
+    try {
+      const token = await AsyncStorage.getItem('userToken');
+      if (!token) return console.warn('Token tapılmadı');
+
+      const response = await fetch(
+        `${Config.API_URL}/notification/Notification/DeleteAll`,
+        {
+          method: 'DELETE',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({}),
+        },
+      );
+      console.log(response, 'response');
+      if (response) {
+        setData([]);
+        setSelectedIds([]);
+        setSelectionMode(false);
+        Toast.show({
+          type: 'success',
+          text1: 'Bütün bildirişlər silindi',
+        });
+      } else {
+        Toast.show({
+          type: 'error',
+          text1: 'Xəta baş verdi',
+          text2: 'Bildirişlər silinmədi',
+        });
+      }
+    } catch (err) {
+      console.error('❌ handleDeleteAll istisna:', err);
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -185,6 +502,22 @@ const NotificationsScreen = () => {
           </TouchableOpacity>
         ) : (
           <View style={{width: 20}} />
+        )}
+
+        {selectionMode && selectedIds.length > 0 && (
+          <TouchableOpacity
+            onPress={handleBulkDelete}
+            style={{
+              backgroundColor: 'red',
+              padding: 10,
+              alignItems: 'center',
+              margin: 10,
+              borderRadius: 10,
+            }}>
+            <Text style={{color: 'white', fontFamily: 'DMSans-Regular'}}>
+              Seçilmişləri Sil ({selectedIds.length})
+            </Text>
+          </TouchableOpacity>
         )}
       </View>
 
@@ -216,45 +549,73 @@ const NotificationsScreen = () => {
         </TouchableOpacity>
       </View>
 
-      <FlatList
-        data={filteredData}
-        keyExtractor={(item: any) => String(item.id)}
-        renderItem={renderItem}
-        ListHeaderComponent={() =>
-          filteredData.length ? (
-            <Text style={styles.sectionTitle}>{filteredData[0].date}</Text>
-          ) : null
-        }
-        ListEmptyComponent={() =>
-          data.length === 0 ? (
-            <View style={styles.noResult}>
-              <Image
-                source={require('../assets/img/notification_empty.png')}
-                style={styles.noContentImage}
-              />
-              <Text style={styles.noContentLabel}>
-                Hazırda heç bir bildirişiniz yoxdur.
-              </Text>
-              <Text style={styles.noContentText}>
-                Yeni bildirişlər burada görünəcək.
-              </Text>
-            </View>
-          ) : (
-            // əgər filter === 'unread' və data var, amma unread yoxdursa
-            filter === 'unread' && (
+      {loading ? (
+        <ActivityIndicator
+          size="large"
+          color="#1269B5"
+          style={{marginTop: 60}}
+        />
+      ) : (
+        <FlatList
+          data={filteredData}
+          keyExtractor={(item: any) => String(item.id)}
+          renderItem={renderItem}
+          ListHeaderComponent={() =>
+            filteredData.length ? (
+              <>
+                <View
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                  }}>
+                  <Text style={styles.sectionTitle}>
+                    {filteredData[0].date}
+                  </Text>
+                  <TouchableOpacity
+                    onPress={handleDeleteAll}
+                    style={{
+                      padding: 10,
+                      borderRadius: 8,
+                      marginBottom: 10,
+                    }}>
+                    <Text style={{color: '#000'}}>Hamısını Sil</Text>
+                  </TouchableOpacity>
+                </View>
+              </>
+            ) : null
+          }
+          ListEmptyComponent={() =>
+            data.length === 0 ? (
               <View style={styles.noResult}>
                 <Image
                   source={require('../assets/img/notification_empty.png')}
                   style={styles.noContentImage}
                 />
                 <Text style={styles.noContentLabel}>
-                  Oxunmamış bildiriş yoxdur.
+                  Hazırda heç bir bildirişiniz yoxdur.
+                </Text>
+                <Text style={styles.noContentText}>
+                  Yeni bildirişlər burada görünəcək.
                 </Text>
               </View>
+            ) : (
+              filter === 'unread' && (
+                <View style={styles.noResult}>
+                  <Image
+                    source={require('../assets/img/notification_empty.png')}
+                    style={styles.noContentImage}
+                  />
+                  <Text style={styles.noContentLabel}>
+                    Oxunmamış bildiriş yoxdur.
+                  </Text>
+                </View>
+              )
             )
-          )
-        }
-      />
+          }
+        />
+      )}
 
       <Modal visible={modalVisible} transparent animationType="fade">
         <View style={styles.modalContainer}>

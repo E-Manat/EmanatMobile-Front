@@ -8,7 +8,6 @@ import {
 } from 'react-native';
 import React, {useEffect, useState} from 'react';
 import TopHeader from '../components/TopHeader';
-import Icon from 'react-native-vector-icons/Feather';
 import {useNavigation} from '@react-navigation/native';
 import {apiService} from '../services/apiService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -22,7 +21,6 @@ const ProfileDetailScreen = () => {
   const [address, setAddress] = useState('');
   const [profileImage, setProfileImage] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
-  const [isEdited, setIsEdited] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const navigation = useNavigation<NavigationProp>();
@@ -137,8 +135,8 @@ const styles = StyleSheet.create({
     marginTop: 15,
   },
   label: {
-    color: '#9E9E9E', // var() dəstəklənmir, fallback istifadə olunur
-    fontFamily: 'DMSans-Bold', // Font əlavə olunmalıdır
+    color: '#9E9E9E',
+    fontFamily: 'DMSans-Bold',
     fontSize: 12,
     fontStyle: 'normal',
     fontWeight: '500',

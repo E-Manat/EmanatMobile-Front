@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Config from 'react-native-config';
 
-const BASE_URL = 'https://emanat-api.siesco.studio';
+console.log(Config.API_URL,'jdfnS'); 
 
 let navigationRef: any = null;
 
@@ -42,7 +43,7 @@ const request = async (
   };
 
   try {
-    const res = await fetch(`${BASE_URL}${endpoint}`, options);
+    const res = await fetch(`${Config.API_URL}${endpoint}`, options);
     console.log(res, 'geden sorgu');
     
     if (res.status === 401) {
@@ -82,7 +83,7 @@ export const apiService = {
       Authorization: `Bearer ${token}`,
     };
   
-    const res = await fetch(`${BASE_URL}${endpoint}`, {
+    const res = await fetch(`${Config.API_URL}${endpoint}`, {
       method: 'GET',
       headers,
     });

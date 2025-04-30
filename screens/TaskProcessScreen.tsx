@@ -15,8 +15,7 @@ import {StackNavigationProp} from '@react-navigation/stack';
 import {useNavigation} from '@react-navigation/native';
 import TopHeader from '../components/TopHeader';
 import CustomModal from '../components/Modal';
-import Geolocation from 'react-native-geolocation-service';
-import {PermissionsAndroid, Platform} from 'react-native';
+import Config from 'react-native-config';
 type NavigationProp = StackNavigationProp<RootStackParamList, 'Hesabatlar'>;
 
 const TaskProcessScreen = ({route}: any) => {
@@ -115,7 +114,7 @@ const TaskProcessScreen = ({route}: any) => {
   const completeTask = async () => {
     setLoading(true);
     const token = await AsyncStorage.getItem('userToken');
-    const url = `https://emanat-api.siesco.studio/mobile/CollectorTask/CompleteTask?taskId=${taskData.id}`;
+    const url = `${Config.API_URL}/mobile/CollectorTask/CompleteTask?taskId=${taskData.id}`;
 
     try {
       const response = await fetch(url, {
@@ -187,7 +186,7 @@ const TaskProcessScreen = ({route}: any) => {
   const startCollection = async () => {
     setLoading(true);
     const token = await AsyncStorage.getItem('userToken');
-    const url = `https://emanat-api.siesco.studio/mobile/CollectorTask/StartCollection?taskId=${taskData.id}`;
+    const url = `${Config.API_URL}/mobile/CollectorTask/StartCollection?taskId=${taskData.id}`;
 
     try {
       const response = await fetch(url, {
@@ -344,7 +343,9 @@ const TaskProcessScreen = ({route}: any) => {
           confirmText="Bağla"
           onConfirm={() => {
             setSuccessModalVisible(false);
-            navigation.navigate('YeniHesabat');
+            navigation.navigate('YeniHesabat', {
+              terminalId: taskData?.terminal?.id,
+            });
           }}
         />
       </View>

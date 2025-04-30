@@ -15,7 +15,9 @@ import {RootStackParamList} from '../App';
 import CustomModal from '../components/Modal';
 
 type NavigationProp = StackNavigationProp<RootStackParamList, 'Login'>;
+import Config from 'react-native-config';
 
+console.log(Config.API_URL, 'jdfnS');
 const NewPasswordScreen = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -68,7 +70,7 @@ const NewPasswordScreen = () => {
       const token = await AsyncStorage.getItem('userToken');
 
       const response = await axios.post(
-        'https://emanat-api.siesco.studio/auth/Auth/ConfirmPassword',
+        `${Config.API_URL}/auth/Auth/ConfirmPassword`,
         {
           email: email,
           newPassword: password,

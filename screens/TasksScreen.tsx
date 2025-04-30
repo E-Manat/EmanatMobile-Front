@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {useNavigation} from '@react-navigation/native';
-import React, {useEffect, useState} from 'react';
+import {useFocusEffect, useNavigation} from '@react-navigation/native';
+import React, {useCallback, useEffect, useState} from 'react';
 import {
   View,
   Text,
@@ -17,7 +17,8 @@ import {RootStackParamList} from '../App';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {apiService} from '../services/apiService';
 import TopHeader from '../components/TopHeader';
-
+import Toast from 'react-native-toast-message';
+import * as signalR from '@microsoft/signalr';
 type NavigationProp = StackNavigationProp<RootStackParamList, 'PinSetup'>;
 
 interface Task {
@@ -38,9 +39,9 @@ const TasksScreen: React.FC = () => {
     switch (status) {
       case 5:
         return '#EF4444'; // Canceled (Ləğv edilib)
-      case 3:
-      case 2:
       case 1:
+      case 2:
+      case 3:
         return '#FFB600'; // In progress (İcra olunur)
       case 4:
         return '#29C0B9'; // Completed (Tamamlanıb)
@@ -58,53 +59,60 @@ const TasksScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp>();
   const [filteredTasks, setFilteredTasks] = useState<any>([]);
 
-  useEffect(() => {
-    const fetchTasks = async () => {
-      try {
-        setLoading(true);
-        const userRole = await AsyncStorage.getItem('roleName');
-        const endpoint =
-          userRole === 'Collector'
-            ? '/mobile/CollectorTask/GetAll'
-            : '/mobile/TechnicianTask/GetAll';
-        const response = await apiService.get(endpoint);
-        console.log(response, 'response');
-        setTasksData(response);
-        setFilteredTasks(response.tasks);
-      } catch (error) {
-        console.error('Reportlar alınarkən xəta:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchTasks = async (statusFilter?: number) => {
+    try {
+      setLoading(true);
+      const userRole = await AsyncStorage.getItem('roleName');
+      const endpointBase =
+        userRole === 'Collector'
+          ? '/mobile/CollectorTask/GetAll'
+          : '/mobile/TechnicianTask/GetAll';
 
-    fetchTasks();
-  }, []);
+      const url =
+        statusFilter !== undefined
+          ? `${endpointBase}?status=${statusFilter}`
+          : endpointBase;
+      console.log(url, 'url');
+      const response = await apiService.get(url);
+      setTasksData(response);
+      setFilteredTasks(response.tasks);
+    } catch (error) {
+      console.error('Reportlar alınarkən xəta:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const filterTasks = (filter: any) => {
-    let filtered = [...tasksData.tasks];
+  useFocusEffect(
+    useCallback(() => {
+      fetchTasks(); // Default olaraq bütün dataları gətir
+    }, []),
+  );
+
+  const filterTasks = (filter: string) => {
+    setSelectedFilter(filter);
+
     switch (filter) {
       case 'İcra olunmamış':
-        filtered = filtered.filter((task: any) => task.status === 0); // NotStarted
+        fetchTasks(0); // Not started
         break;
       case 'İcra olunan':
-        filtered = filtered.filter((task: any) =>
-          [1, 2, 3].includes(task.status),
-        ); // InTransit, Arrived, CollectionInProgress
+        fetchTasks(1); // Backdə 1, 2, 3 ümumiyyətlə 1-lə gələcək kimi qəbul edirik
         break;
-      case 'Tamamlanıb ':
-        filtered = filtered.filter((task: any) => task.status === 4); // Completed
+      case 'Tamamlanıb':
+        fetchTasks(4); // Completed
         break;
       case 'Ləğv edilmiş':
-        filtered = filtered.filter((task: any) => task.status === 5); // Canceled
+        fetchTasks(5); // Cancelled
         break;
+      case 'Hamısı':
       default:
+        fetchTasks(); // Statussuz bütün datalar
         break;
     }
-
-    setSelectedFilter(filter);
-    setFilteredTasks(filtered);
   };
+
+  console.log(tasksData, 'tasksData');
 
   const renderTask = ({item}: any) => (
     <TouchableOpacity
@@ -114,6 +122,7 @@ const TasksScreen: React.FC = () => {
           const taskDetails = await apiService.get(
             `/mobile/CollectorTask/GetById?id=${item.id}`,
           );
+          console.log(taskDetails, 'taskDetails');
           navigation.navigate('TerminalEtrafli', {taskData: taskDetails});
         } catch (err) {
           console.error('Detalları alarkən xəta:', err);
@@ -134,7 +143,7 @@ const TasksScreen: React.FC = () => {
           <Dot
             name="dot-fill"
             size={16}
-            color={getStatusColor(item.status)} 
+            color={getStatusColor(item.status)}
             style={{marginRight: 6}}
           />
         </View>
@@ -142,13 +151,145 @@ const TasksScreen: React.FC = () => {
     </TouchableOpacity>
   );
 
+  // useEffect(() => {
+  //   const setupSignalR = async () => {
+  //     const token = await AsyncStorage.getItem('userToken');
+  //     if (!token) return;
+
+  //     const connection = new signalR.HubConnectionBuilder()
+  //       .withUrl('http://192.168.10.119:5009/hubs/mobile', {
+  //         accessTokenFactory: () => token,
+  //         transport:
+  //           signalR.HttpTransportType.WebSockets |
+  //           signalR.HttpTransportType.ServerSentEvents |
+  //           signalR.HttpTransportType.LongPolling,
+  //       })
+  //       .withAutomaticReconnect()
+  //       .build();
+
+  //     connection.on('TaskCreated', data => {
+  //       console.log('🆕 Yeni tapşırıq gəldi:', data);
+
+  //       const newTask = {
+  //         id: data.taskId,
+  //         terminalId: data.terminalId,
+  //         code: data.terminalCode,
+  //         address: data.terminalAddress,
+  //         status: data.status,
+  //         createdDate: data.createdDate,
+  //         isCurrentTask: data.isCurrentTask,
+  //       };
+
+  //       const statusMatchesFilter =
+  //         selectedFilter === 'Hamısı' ||
+  //         (selectedFilter === 'İcra olunmamış' && data.status === 0) ||
+  //         (selectedFilter === 'İcra olunan' &&
+  //           [1, 2, 3].includes(data.status)) ||
+  //         (selectedFilter === 'Tamamlanıb' && data.status === 4) ||
+  //         (selectedFilter === 'Ləğv edilmiş' && data.status === 5);
+
+  //       if (statusMatchesFilter) {
+  //         setFilteredTasks((prev: any) => [newTask, ...prev]);
+  //       }
+
+  //       setTasksData((prev: any) => ({
+  //         ...prev,
+  //         tasks: [newTask, ...(prev?.tasks || [])],
+  //         pendingTaskCount:
+  //           data.status === 0
+  //             ? (prev?.pendingTaskCount || 0) + 1
+  //             : prev?.pendingTaskCount,
+  //         inProgressTaskCount: [1, 2, 3].includes(data.status)
+  //           ? (prev?.inProgressTaskCount || 0) + 1
+  //           : prev?.inProgressTaskCount,
+  //         completedTaskCount:
+  //           data.status === 4
+  //             ? (prev?.completedTaskCount || 0) + 1
+  //             : prev?.completedTaskCount,
+  //       }));
+
+  //       Toast.show({
+  //         type: 'info',
+  //         text1: '🆕 Yeni tapşırıq əlavə olundu! nerminnn',
+  //         text2: `Terminal ID: ${data.terminalCode}`,
+  //       });
+  //     });
+
+  //     connection
+  //       .start()
+  //       .then(() => console.log('🔗 SignalR bağlantısı quruldu'))
+  //       .catch(err => console.error('SignalR bağlantı xətası:', err));
+  //   };
+
+  //   setupSignalR();
+  // }, []);
+
+  useEffect(() => {
+    let connection: signalR.HubConnection;
+
+    const connectSignalR = async () => {
+      try {
+        const token = await AsyncStorage.getItem('userToken');
+        if (!token) {
+          console.warn('Token tapılmadı');
+          return;
+        }
+
+        connection = new signalR.HubConnectionBuilder()
+          .withUrl('http://192.168.10.119:5009/hubs/mobile', {
+            accessTokenFactory: () => token,
+          })
+          .withAutomaticReconnect()
+          .configureLogging(signalR.LogLevel.Information)
+          .build();
+
+        console.log(connection, 'comnnec');
+
+        connection.on('TaskCreated', (notification: any) => {
+          console.log('📩 Yeni real-time bildiriş: tttt', notification);
+
+          // setData((prev: any) => [newNotification, ...prev]);
+
+          Toast.show({
+            type: 'success', // 'info' əvəzinə
+            text1: notification.title,
+            text2: notification.message,
+            position: 'top',
+            visibilityTime: 4000,
+            autoHide: true,
+          });
+        });
+
+        await connection.start();
+        console.log('✅ SignalR bağlantısı quruldu');
+      } catch (err) {
+        console.error('❌ SignalR bağlantı xətası:', err);
+      }
+    };
+
+    connectSignalR();
+
+    // return () => {
+    //   if (connection) {
+    //     connection.stop();
+    //     console.log('🔌 SignalR bağlantısı dayandırıldı');
+    //   }
+    // };
+  }, []);
+
   return (
     <View style={styles.container}>
       <TopHeader title="Tapşırıqlar" />
       <View style={styles.statusContainer}>
         <View style={styles.statusItem}>
           <Text style={styles.statusText}>
-            {tasksData?.remainingTaskCount || 0}
+            {tasksData?.pendingTaskCount || 0}
+          </Text>
+          <Text style={styles.statusLabel}>Gözləyən</Text>
+        </View>
+        <View style={styles.statusItem}>
+          <Text style={styles.statusText}>
+            {tasksData?.inProgressTaskCount || 0}
           </Text>
           <Text style={styles.statusLabel}>Icra olunan</Text>
         </View>
@@ -156,58 +297,52 @@ const TasksScreen: React.FC = () => {
           <Text style={styles.statusText}>
             {tasksData?.completedTaskCount || 0}
           </Text>
-          <Text style={styles.statusLabel}>İcra olunmuş</Text>
-        </View>
-        <View style={styles.statusItem}>
-          <Text style={styles.statusText}>
-            {tasksData?.pendingTaskCount || 0}
-          </Text>
-          <Text style={styles.statusLabel}>Qalan</Text>
+          <Text style={styles.statusLabel}>Tamamlanmış</Text>
         </View>
       </View>
 
-        <View style={styles.filterContainer}>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.filterContentContainer}>
-            {[
-              'Hamısı',
-              'İcra olunmamış',
-              'İcra olunan',
-              'Tamamlanıb',
-              'Ləğv edilmiş',
-            ].map(filter => (
-              <TouchableOpacity
-                key={filter}
-                style={[
-                  styles.filterButton,
-                  selectedFilter === filter && styles.activeFilter,
-                ]}
-                onPress={() => filterTasks(filter)}>
-                {filter !== 'Hamısı' && (
-                  <Dot
-                    name="dot-fill"
-                    size={16}
-                    color={getStatusColor(
-                      filter === 'İcra olunan'
-                        ? 1
-                        : filter === 'Tamamlanıb'
-                        ? 4
-                        : filter === 'Ləğv edilmiş'
-                        ? 5
-                        : 0,
-                    )}
-                    style={{marginRight: 6}}
-                  />
-                )}
-                <Text style={styles.filterText}>{filter}</Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
+      <View style={styles.filterContainer}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.filterContentContainer}>
+          {[
+            'Hamısı',
+            'İcra olunmamış',
+            'İcra olunan',
+            'Tamamlanıb',
+            'Ləğv edilmiş',
+          ].map(filter => (
+            <TouchableOpacity
+              key={filter}
+              style={[
+                styles.filterButton,
+                selectedFilter === filter && styles.activeFilter,
+              ]}
+              onPress={() => filterTasks(filter)}>
+              {filter !== 'Hamısı' && (
+                <Dot
+                  name="dot-fill"
+                  size={16}
+                  color={getStatusColor(
+                    filter === 'İcra olunan'
+                      ? 1
+                      : filter === 'Tamamlanıb'
+                      ? 4
+                      : filter === 'Ləğv edilmiş'
+                      ? 5
+                      : 0,
+                  )}
+                  style={{marginRight: 6}}
+                />
+              )}
+              <Text style={styles.filterText}>{filter}</Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      </View>
 
-      {filteredTasks.length > 0 && (
+      {filteredTasks?.length > 0 && (
         <Text style={styles.currentDay}>Bu gün</Text>
       )}
 
