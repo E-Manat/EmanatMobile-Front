@@ -19,8 +19,9 @@ import {apiService} from '../services/apiService';
 import TopHeader from '../components/TopHeader';
 import Toast from 'react-native-toast-message';
 import * as signalR from '@microsoft/signalr';
+import {RefreshIcon} from '../assets/icons';
 type NavigationProp = StackNavigationProp<RootStackParamList, 'PinSetup'>;
-
+import Config from 'react-native-config';
 interface Task {
   id: string;
   date: string;
@@ -151,79 +152,6 @@ const TasksScreen: React.FC = () => {
     </TouchableOpacity>
   );
 
-  // useEffect(() => {
-  //   const setupSignalR = async () => {
-  //     const token = await AsyncStorage.getItem('userToken');
-  //     if (!token) return;
-
-  //     const connection = new signalR.HubConnectionBuilder()
-  //       .withUrl('http://192.168.10.119:5009/hubs/mobile', {
-  //         accessTokenFactory: () => token,
-  //         transport:
-  //           signalR.HttpTransportType.WebSockets |
-  //           signalR.HttpTransportType.ServerSentEvents |
-  //           signalR.HttpTransportType.LongPolling,
-  //       })
-  //       .withAutomaticReconnect()
-  //       .build();
-
-  //     connection.on('TaskCreated', data => {
-  //       console.log('🆕 Yeni tapşırıq gəldi:', data);
-
-  //       const newTask = {
-  //         id: data.taskId,
-  //         terminalId: data.terminalId,
-  //         code: data.terminalCode,
-  //         address: data.terminalAddress,
-  //         status: data.status,
-  //         createdDate: data.createdDate,
-  //         isCurrentTask: data.isCurrentTask,
-  //       };
-
-  //       const statusMatchesFilter =
-  //         selectedFilter === 'Hamısı' ||
-  //         (selectedFilter === 'İcra olunmamış' && data.status === 0) ||
-  //         (selectedFilter === 'İcra olunan' &&
-  //           [1, 2, 3].includes(data.status)) ||
-  //         (selectedFilter === 'Tamamlanıb' && data.status === 4) ||
-  //         (selectedFilter === 'Ləğv edilmiş' && data.status === 5);
-
-  //       if (statusMatchesFilter) {
-  //         setFilteredTasks((prev: any) => [newTask, ...prev]);
-  //       }
-
-  //       setTasksData((prev: any) => ({
-  //         ...prev,
-  //         tasks: [newTask, ...(prev?.tasks || [])],
-  //         pendingTaskCount:
-  //           data.status === 0
-  //             ? (prev?.pendingTaskCount || 0) + 1
-  //             : prev?.pendingTaskCount,
-  //         inProgressTaskCount: [1, 2, 3].includes(data.status)
-  //           ? (prev?.inProgressTaskCount || 0) + 1
-  //           : prev?.inProgressTaskCount,
-  //         completedTaskCount:
-  //           data.status === 4
-  //             ? (prev?.completedTaskCount || 0) + 1
-  //             : prev?.completedTaskCount,
-  //       }));
-
-  //       Toast.show({
-  //         type: 'info',
-  //         text1: '🆕 Yeni tapşırıq əlavə olundu! nerminnn',
-  //         text2: `Terminal ID: ${data.terminalCode}`,
-  //       });
-  //     });
-
-  //     connection
-  //       .start()
-  //       .then(() => console.log('🔗 SignalR bağlantısı quruldu'))
-  //       .catch(err => console.error('SignalR bağlantı xətası:', err));
-  //   };
-
-  //   setupSignalR();
-  // }, []);
-
   useEffect(() => {
     let connection: signalR.HubConnection;
 
@@ -236,7 +164,7 @@ const TasksScreen: React.FC = () => {
         }
 
         connection = new signalR.HubConnectionBuilder()
-          .withUrl('http://192.168.10.119:5009/hubs/mobile', {
+          .withUrl(`${Config.API_URL}/notification/hubs/mobile`, {
             accessTokenFactory: () => token,
           })
           .withAutomaticReconnect()
@@ -279,7 +207,11 @@ const TasksScreen: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <TopHeader title="Tapşırıqlar" />
+      <TopHeader
+        title="Tapşırıqlar"
+        onRightPress={() => fetchTasks()}
+        rightIconComponent={<RefreshIcon color="#fff" />}
+      />
       <View style={styles.statusContainer}>
         <View style={styles.statusItem}>
           <Text style={styles.statusText}>

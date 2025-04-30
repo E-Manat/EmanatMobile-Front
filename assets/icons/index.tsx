@@ -17,6 +17,7 @@ import OutIcon from './out.svg';
 import VideoIcon from './video.svg';
 import ImageIcon from './image.svg';
 import FolderIcon from './folder-minus.svg';
+import RefreshIcon from './refresh.svg';
 export {
   HomeIcon,
   MapIcon,
@@ -37,4 +38,5 @@ export {
   VideoIcon,
   FolderIcon,
   ImageIcon,
+  RefreshIcon,
 };

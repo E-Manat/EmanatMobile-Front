@@ -180,7 +180,7 @@ const TaskProcessScreen = ({route}: any) => {
 
   const handleConfirmComplete = async () => {
     setModalVisible(false);
-    await completeTask(); // Sənin funksiyan burada çağrılır
+    await completeTask();
   };
 
   const startCollection = async () => {
@@ -200,7 +200,7 @@ const TaskProcessScreen = ({route}: any) => {
         throw new Error('Server error: ' + response.status);
       }
 
-      setTimerActive(false); // Stop route timer
+      setTimerActive(false);
       setStep(1);
       await AsyncStorage.setItem(
         'collectionStartTime',
@@ -224,6 +224,7 @@ const TaskProcessScreen = ({route}: any) => {
 
   const openInWaze = async () => {
     const address = taskData?.terminal?.address;
+    console.log(address, 'adresimiz');
 
     if (!address) {
       Alert.alert('Xəta', 'Ünvan tapılmadı.');

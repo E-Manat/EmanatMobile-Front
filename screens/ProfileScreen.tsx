@@ -59,7 +59,7 @@ const ProfileScreen = () => {
         return;
       }
 
-      const response = await fetch(`${Config.API_URL}/mobile/User/GetProfile`, {
+      const response = await fetch(`${Config.API_URL}/auth/User/GetProfile`, {
         method: 'GET',
         headers: {
           Authorization: `Bearer ${token}`,

@@ -138,7 +138,7 @@ const NotificationsScreen = () => {
         }
 
         connection = new signalR.HubConnectionBuilder()
-          .withUrl('http://192.168.10.119:5009/hubs/mobile', {
+          .withUrl(`${Config.API_URL}/notification/hubs/mobile`, {
             accessTokenFactory: () => token,
           })
           .withAutomaticReconnect()

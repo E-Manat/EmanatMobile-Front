@@ -12,9 +12,10 @@ type TopHeaderProps = {
   title: string;
   rightIconName?: string;
   onRightPress?: () => void;
+  rightIconComponent?: React.ReactNode;
 };
 
-const TopHeader = ({title, rightIconName, onRightPress}: TopHeaderProps) => {
+const TopHeader = ({title, rightIconName, onRightPress,rightIconComponent}: TopHeaderProps) => {
   const navigation = useNavigation<NavigationProp>();
 
   return (
@@ -29,12 +30,16 @@ const TopHeader = ({title, rightIconName, onRightPress}: TopHeaderProps) => {
 
       <Text style={styles.headerText}>{title}</Text>
 
-      {rightIconName ? (
+      {rightIconComponent ? (
+        <TouchableOpacity onPress={onRightPress}>
+          {rightIconComponent}
+        </TouchableOpacity>
+      ) : rightIconName ? (
         <TouchableOpacity onPress={onRightPress}>
           <Icon name={rightIconName} size={24} color="#fff" />
         </TouchableOpacity>
       ) : (
-        <View style={{width: 24}} /> // boş yer tutsun deyə
+        <View style={{width: 24}} />
       )}
     </LinearGradient>
   );

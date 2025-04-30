@@ -36,7 +36,7 @@ const ProfileDetailScreen = () => {
     try {
       setLoading(true);
 
-      const result: any = await apiService.get('/auth/Auth/GetProfile');
+      const result: any = await apiService.get('/auth/User/GetProfile');
       console.log('Profil məlumatları:', result);
 
       if (result) {
