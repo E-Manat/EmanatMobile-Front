@@ -5,6 +5,7 @@ import {
   StyleSheet,
   Dimensions,
   TouchableOpacity,
+  View,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -13,15 +14,16 @@ import {StackNavigationProp} from '@react-navigation/stack';
 import {RootStackParamList} from '../App';
 
 const {width, height} = Dimensions.get('window');
-const BUTTON_SIZE = 40;
+const BUTTON_SIZE = 50;
 const MARGIN = 10;
 const SAFE_AREA_BOTTOM = 50;
 
 const DraggableTaskButton = () => {
   const position = useRef(new Animated.ValueXY({x: 20, y: 400})).current;
   const scale = useRef(new Animated.Value(1)).current;
-  const lastOffset = useRef({x: 20, y: 400}).current;
   const [visible, setVisible] = useState(false);
+  const lastTap = useRef<number>(0);
+
   type NavigationProp = StackNavigationProp<RootStackParamList, 'TaskProcess'>;
   const navigation = useNavigation<NavigationProp>();
 
@@ -32,8 +34,7 @@ const DraggableTaskButton = () => {
     };
 
     checkCurrentTask();
-
-    const interval = setInterval(checkCurrentTask, 1000);
+    const interval = setInterval(checkCurrentTask, 1500);
     return () => clearInterval(interval);
   }, []);
 
@@ -57,9 +58,16 @@ const DraggableTaskButton = () => {
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
+      onPanResponderGrant: () => {
+        position.setOffset({
+          x: position.x._value,
+          y: position.y._value,
+        });
+        position.setValue({x: 0, y: 0});
+      },
       onPanResponderMove: (e, gestureState) => {
-        const newX = lastOffset.x + gestureState.dx;
-        const newY = lastOffset.y + gestureState.dy;
+        const newX = gestureState.dx + position.x._offset;
+        const newY = gestureState.dy + position.y._offset;
 
         const limitedX = Math.max(
           MARGIN,
@@ -70,29 +78,23 @@ const DraggableTaskButton = () => {
           Math.min(newY, height - BUTTON_SIZE - MARGIN - SAFE_AREA_BOTTOM),
         );
 
-        position.setValue({x: limitedX, y: limitedY});
+        position.x.setValue(limitedX - position.x._offset);
+        position.y.setValue(limitedY - position.y._offset);
       },
-      onPanResponderRelease: (e, gestureState) => {
-        lastOffset.x = Math.max(
-          MARGIN,
-          Math.min(
-            lastOffset.x + gestureState.dx,
-            width - BUTTON_SIZE - MARGIN,
-          ),
-        );
-
-        lastOffset.y = Math.max(
-          MARGIN,
-          Math.min(
-            lastOffset.y + gestureState.dy,
-            height - BUTTON_SIZE - MARGIN - SAFE_AREA_BOTTOM,
-          ),
-        );
+      onPanResponderRelease: () => {
+        position.flattenOffset();
       },
     }),
   ).current;
 
   const handlePress = async () => {
+    const now = Date.now();
+    if (now - lastTap.current < 300) {
+      // Double click - heç nə etmə
+      return;
+    }
+    lastTap.current = now;
+
     const task = await AsyncStorage.getItem('currentTask');
     if (task) {
       const taskData = JSON.parse(task);
@@ -115,8 +117,12 @@ const DraggableTaskButton = () => {
           ],
         },
       ]}>
-      <TouchableOpacity onPress={handlePress}>
-        <Icon color="#fff" name="share-location" size={24} />
+      <TouchableOpacity
+        onPress={handlePress}
+        activeOpacity={0.8}
+        style={styles.buttonTouchable}
+        hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
+        <Icon color="#fff" name="share-location" size={26} />
       </TouchableOpacity>
     </Animated.View>
   );
@@ -132,6 +138,16 @@ const styles = StyleSheet.create({
     width: BUTTON_SIZE,
     height: BUTTON_SIZE,
     backgroundColor: '#38C172',
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 6,
+    shadowColor: '#000',
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    shadowOffset: {width: 0, height: 2},
+  },
+  buttonTouchable: {
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },

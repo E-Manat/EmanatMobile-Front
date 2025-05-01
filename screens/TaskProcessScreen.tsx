@@ -8,6 +8,9 @@ import {
   Alert,
   Image,
   Linking,
+  Platform,
+  PermissionsAndroid,
+  ActivityIndicator,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {RootStackParamList} from '../App';
@@ -16,6 +19,7 @@ import {useNavigation} from '@react-navigation/native';
 import TopHeader from '../components/TopHeader';
 import CustomModal from '../components/Modal';
 import Config from 'react-native-config';
+import Geolocation from '@react-native-community/geolocation';
 type NavigationProp = StackNavigationProp<RootStackParamList, 'Hesabatlar'>;
 
 const TaskProcessScreen = ({route}: any) => {
@@ -29,6 +33,7 @@ const TaskProcessScreen = ({route}: any) => {
   const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [successModalVisible, setSuccessModalVisible] = useState(false);
+  const [completeTaskLoading, setCompleteTaskLoading] = useState(false);
 
   useEffect(() => {
     const restoreTimers = async () => {
@@ -111,12 +116,76 @@ const TaskProcessScreen = ({route}: any) => {
     };
   }, [step, timerActive]);
 
+  const getLocation = async (): Promise<{
+    latitude: number;
+    longitude: number;
+  } | null> => {
+    return new Promise(async resolve => {
+      const success = (position: any) => {
+        const {latitude, longitude} = position.coords;
+        console.log('📍 Uğurla koordinat tapıldı:', latitude, longitude);
+        resolve({latitude, longitude});
+      };
+
+      const error = (err: any) => {
+        console.error('❌ Koordinat xətası:', err.message);
+        resolve(null);
+      };
+
+      try {
+        if (Platform.OS === 'android') {
+          const granted = await PermissionsAndroid.requestMultiple([
+            PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+            PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION,
+          ]);
+
+          const fineGranted =
+            granted['android.permission.ACCESS_FINE_LOCATION'] ===
+            PermissionsAndroid.RESULTS.GRANTED;
+          const coarseGranted =
+            granted['android.permission.ACCESS_COARSE_LOCATION'] ===
+            PermissionsAndroid.RESULTS.GRANTED;
+
+          if (fineGranted || coarseGranted) {
+            Geolocation.getCurrentPosition(success, error, {
+              enableHighAccuracy: true,
+              timeout: 15000,
+              maximumAge: 1000,
+            });
+          } else {
+            Alert.alert('❗ GPS icazəsi verilməyib');
+            resolve(null);
+          }
+        } else {
+          Geolocation.getCurrentPosition(success, error, {
+            enableHighAccuracy: true,
+            timeout: 15000,
+            maximumAge: 1000,
+          });
+        }
+      } catch (e) {
+        console.error('❌ getLocation funksiyasında xəta:', e);
+        resolve(null);
+      }
+    });
+  };
+
   const completeTask = async () => {
-    setLoading(true);
-    const token = await AsyncStorage.getItem('userToken');
-    const url = `${Config.API_URL}/mobile/CollectorTask/CompleteTask?taskId=${taskData.id}`;
+    setCompleteTaskLoading(true);
 
     try {
+      const token = await AsyncStorage.getItem('userToken');
+      const location = await getLocation();
+
+      if (!location) {
+        console.warn('Koordinatlar tapılmadı, 0 olaraq göndərilir');
+      }
+
+      const latitude = location?.latitude ?? 0;
+      const longitude = location?.longitude ?? 0;
+
+      const url = `${Config.API_URL}/mobile/CollectorTask/CompleteTask?taskId=${taskData.id}&latitude=${latitude}&longitude=${longitude}`;
+
       const response = await fetch(url, {
         method: 'POST',
         headers: {
@@ -130,51 +199,20 @@ const TaskProcessScreen = ({route}: any) => {
         throw new Error('Server error: ' + response.status);
       }
 
-      // if (Platform.OS === 'android') {
-      //   const granted = await PermissionsAndroid.request(
-      //     PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-      //   );
-
-      //   if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-      //     Geolocation.getCurrentPosition(
-      //       position => {
-      //         const {latitude, longitude} = position.coords;
-      //         console.log('Cari koordinatlar:', latitude, longitude);
-      //       },
-      //       error => {
-      //         console.error('Koordinat xətası:', error.message);
-      //       },
-      //       {enableHighAccuracy: true, timeout: 10000, maximumAge: 1000},
-      //     );
-      //   } else {
-      //     console.log('İcazə verilmədi');
-      //   }
-      // } else {
-      //   // iOS üçün
-      //   Geolocation.getCurrentPosition(
-      //     position => {
-      //       const {latitude, longitude} = position.coords;
-      //       console.log('Cari koordinatlar:', latitude, longitude);
-      //     },
-      //     error => {
-      //       console.error('Koordinat xətası:', error.message);
-      //     },
-      //     {enableHighAccuracy: true, timeout: 10000, maximumAge: 1000},
-      //   );
-      // }
-
       setStep(2);
       setTimerActive(false);
+
       await AsyncStorage.multiRemove([
         'currentTask',
         'routeStartTime',
         'collectionStartTime',
       ]);
+
       setSuccessModalVisible(true);
     } catch (error) {
       console.error('Error completing task:', error);
     } finally {
-      setLoading(false);
+      setCompleteTaskLoading(false);
     }
   };
 
@@ -195,6 +233,7 @@ const TaskProcessScreen = ({route}: any) => {
           Authorization: `Bearer ${token}`,
         },
       });
+      console.log(response);
 
       if (!response.ok) {
         throw new Error('Server error: ' + response.status);
@@ -324,7 +363,13 @@ const TaskProcessScreen = ({route}: any) => {
             </TouchableOpacity>
           ) : (
             <TouchableOpacity style={styles.primaryButton} disabled>
-              <Text style={styles.primaryButtonText}>Tapşırıq tamamlandı</Text>
+              <Text style={styles.primaryButtonText}>
+                {completeTaskLoading ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  'Tapşırıq tamamlandı'
+                )}
+              </Text>
             </TouchableOpacity>
           )}
         </View>
