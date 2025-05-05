@@ -73,6 +73,8 @@ const TasksScreen: React.FC = () => {
         statusFilter !== undefined
           ? `${endpointBase}?status=${statusFilter}`
           : endpointBase;
+
+      console.log(url, 'url');
       console.log(url, 'url');
       const response = await apiService.get(url);
       setTasksData(response);
@@ -221,7 +223,6 @@ const TasksScreen: React.FC = () => {
         connection.on('TaskCreated', (notification: any) => {
           console.log('📩 noti yeni:', notification);
 
-      
           Toast.show({
             type: 'success', // 'info' əvəzinə
             text1: notification.title,

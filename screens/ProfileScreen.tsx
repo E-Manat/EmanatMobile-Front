@@ -39,7 +39,7 @@ const ProfileScreen = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [isEdited, setIsEdited] = useState(false);
   const [loading, setLoading] = useState(true);
-
+  const [roleName, setRoleName] = useState('');
   const navigation = useNavigation<NavigationProp>();
 
   useEffect(() => {
@@ -91,6 +91,13 @@ const ProfileScreen = () => {
         setEmail(profileData.email);
         setAddress(profileData.address);
         setProfileImage(profileData.profileImage);
+
+        const savedRole = await AsyncStorage.getItem('roleName'); 
+        if (savedRole === 'Technician') {
+          setRoleName('Texnik'); 
+        } else {
+          setRoleName(savedRole || 'Inkassator'); 
+        }
 
         await AsyncStorage.setItem('profileData', JSON.stringify(profileData));
       }
@@ -148,7 +155,7 @@ const ProfileScreen = () => {
                 <Text style={styles.profileName}>
                   {firstName} {lastName}
                 </Text>
-                <Text style={styles.profileRoleName}>Inkassator</Text>
+                <Text style={styles.profileRoleName}>{roleName}</Text>
               </View>
             </View>
 

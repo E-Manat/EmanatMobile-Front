@@ -66,7 +66,9 @@ const App = () => {
 
   const [modalVisible, setModalVisible] = useState(false);
   const [newVersionCode, setNewVersionCode] = useState(0);
-  const [downloadUrl, setDownloadUrl] = useState('');
+  const [downloadUrl, setDownloadUrl] = useState(
+    'https://drive.google.com/drive/folders/1ndnxNUn1Bn1LZM28RBzxhiT1MccvGoRp?usp=drive_link',
+  );
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -98,29 +100,46 @@ const App = () => {
     try {
       const currentVersionCode = await getVersion();
       console.log(currentVersionCode, 'currentVersion');
-      // const userToken = await AsyncStorage.getItem('userToken');
+
+      const versionCode = parseInt(currentVersionCode, 10);
+      if (isNaN(versionCode)) {
+        console.error('Yanlış versionCode:', currentVersionCode);
+        return;
+      }
+
+      const userToken = await AsyncStorage.getItem('userToken');
+      console.log('User Token:', userToken);
+
+      const requestPayload = {
+        versionCode: versionCode,
+      };
+
+      console.log(requestPayload, 'ayload');
+
       const response = await axios.post(
         `${Config.API_URL}/mobile/Version/Check`,
+        requestPayload,
         {
-          versionCode: currentVersionCode,
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${userToken}`,
+          },
         },
-        // {
-        //   headers: {
-        //     'Content-Type': 'application/json',
-        //     Authorization: `Bearer ${userToken}`,
-        //   },
-        // },
       );
 
       console.log(response, 'Version/Check');
 
-      if (response.data.versionCode > currentVersionCode) {
+      // Yeni versiya varsa modalı göstəririk
+      if (response.data.versionCode > versionCode) {
         setNewVersionCode(response.data.versionCode);
         setDownloadUrl(response.data.downloadUrl);
-        setModalVisible(true);
+        setModalVisible(true); // Modalı açırıq
       }
-    } catch (error) {
-      console.error('Versiya yoxlanarkən xəta baş verdi:', error);
+    } catch (error: any) {
+      console.error('Yeniləmə yoxlanarkən xəta:', error);
+      if (error.response) {
+        console.error('Xəta cavabı:', error.response.data);
+      }
     }
   };
 
@@ -136,26 +155,24 @@ const App = () => {
       );
       console.log('Yeni versiya serverə yükləndi:', response.data);
     } catch (error) {
-      console.error('Yeni versiya yüklənərkən xəta baş verdi:', error);
+      console.error('Yeni versiya yüklənərkən xəta:', error);
     }
   };
 
-  const handleVersionUpload = async () => {
-    await uploadNewVersion();
-  };
-
+  // Tətbiqi yeniləyirik
   const handleUpdate = async () => {
     if (downloadUrl) {
-      Linking.openURL(downloadUrl);
+      Linking.openURL(downloadUrl); // Yeniləmə linkinə yönləndiririk
     }
 
     try {
+      // Serverə yeniləmə məlumatlarını göndəririk
       await axios.post(`${Config.API_URL}/mobile/Version/Update`, {
         newVersionCode: newVersionCode,
       });
       console.log('Yeni versiya serverə göndərildi');
 
-      await handleVersionUpload();
+      await uploadNewVersion(); // Yeni versiyanı serverə yükləyirik
     } catch (error) {
       console.error(
         'Yeniləmə məlumatı serverə göndərilərkən xəta baş verdi:',
@@ -167,7 +184,7 @@ const App = () => {
   };
 
   useEffect(() => {
-    checkForUpdate();
+    checkForUpdate(); // Komponent yüklənərkən yeniləmə yoxlanır
   }, []);
 
   return (
