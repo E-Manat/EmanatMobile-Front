@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   View,
   Text,
@@ -62,8 +62,8 @@ const TerminalDetailsScreen = ({route}: any) => {
           'Hazırda yerinə yetirilən başqa bir tapşırıq mövcuddur',
         )
       ) {
-        setConfirmVisible(false); // Mövcud modalı bağlayırıq
-        setCustomModalVisible(true); // Yeni custom modalı açırıq
+        setConfirmVisible(false);
+        setCustomModalVisible(true);
         return;
       }
 
@@ -86,9 +86,18 @@ const TerminalDetailsScreen = ({route}: any) => {
       console.error('Task start error:', error);
     } finally {
       setLoading(false);
-      setTaskInProgress(false); 
+      setTaskInProgress(false);
     }
   };
+
+  const [statusText, setStatusText] = useState('');
+
+  useEffect(() => {
+    if (taskData?.status !== undefined) {
+      const status = getStatusText(taskData.status);
+      setStatusText(status);
+    }
+  }, [taskData]);
 
   const getStatusText = (status: number) => {
     switch (status) {
@@ -216,7 +225,7 @@ const TerminalDetailsScreen = ({route}: any) => {
             {backgroundColor: '#eee', borderColor: '#F5F5F5', borderWidth: 1},
           ]}>
           <Text style={[styles.startButtonText, {color: '#999999'}]}>
-            {getStatusText(taskData.status)}
+            {statusText}
           </Text>
         </View>
       )}

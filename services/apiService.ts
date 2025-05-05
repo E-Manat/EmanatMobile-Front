@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Config from 'react-native-config';
 
-console.log(Config.API_URL,'jdfnS'); 
+console.log(Config.API_URL,'API_URL'); 
 
 let navigationRef: any = null;
 

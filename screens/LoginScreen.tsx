@@ -62,6 +62,7 @@ const LoginScreen = () => {
         console.log(response, 'response login');
         await AsyncStorage.multiSet([
           ['userToken', response.data.accessToken],
+          ['userId', response.data.userId],
           ['expiresAt', response.data.expires],
           ['isLoggedIn', 'true'],
         ]);

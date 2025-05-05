@@ -152,6 +152,51 @@ const TasksScreen: React.FC = () => {
     </TouchableOpacity>
   );
 
+  const connectSignalR = async () => {
+    try {
+      const token = await AsyncStorage.getItem('userToken');
+      if (!token) {
+        console.warn('Token tapılmadı');
+        return;
+      }
+
+      // SignalR bağlantısını kuruyoruz
+      const connection: any = new signalR.HubConnectionBuilder()
+        .withUrl(`${Config.API_URL}/notification/hubs/mobile`, {
+          accessTokenFactory: () => token,
+        })
+        .withAutomaticReconnect()
+        .configureLogging(signalR.LogLevel.Information)
+        .build();
+
+      connection.on('TaskCreated', (notification: any) => {
+        console.log('📩 Yeni bildiriş alındı:', notification);
+        console.log(notification, 'noti');
+        const newNotification = {
+          id: notification.id,
+          title: notification.terminalCode,
+          terminalAddress: notification.terminalAddress,
+        };
+
+        setTasksData((prev: any) => [newNotification, ...prev]);
+
+        Toast.show({
+          type: 'success',
+          text1: notification.title,
+          text2: notification.message,
+          position: 'top',
+          visibilityTime: 4000,
+          autoHide: true,
+        });
+      });
+
+      await connection.start();
+      console.log('✅ SignalR bağlantısı quruldu');
+    } catch (err) {
+      console.error('❌ SignalR bağlantı hatası:', err);
+    }
+  };
+
   useEffect(() => {
     let connection: signalR.HubConnection;
 
@@ -174,10 +219,9 @@ const TasksScreen: React.FC = () => {
         console.log(connection, 'comnnec');
 
         connection.on('TaskCreated', (notification: any) => {
-          console.log('📩 Yeni real-time bildiriş: tttt', notification);
+          console.log('📩 noti yeni:', notification);
 
-          // setData((prev: any) => [newNotification, ...prev]);
-
+      
           Toast.show({
             type: 'success', // 'info' əvəzinə
             text1: notification.title,
@@ -203,6 +247,10 @@ const TasksScreen: React.FC = () => {
     //     console.log('🔌 SignalR bağlantısı dayandırıldı');
     //   }
     // };
+  }, []);
+
+  useEffect(() => {
+    fetchTasks(); // Task'ları yüklüyoruz
   }, []);
 
   return (

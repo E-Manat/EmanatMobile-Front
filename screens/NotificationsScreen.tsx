@@ -126,82 +126,47 @@ const NotificationsScreen = () => {
     }, [fetchNotifications]),
   );
 
+  console.log(AsyncStorage.getAllKeys);
+  const [connectionId, setConnectionId] = useState(null);
+
   useEffect(() => {
-    let connection: signalR.HubConnection;
-
-    const connectSignalR = async () => {
+    const setupConnection = async () => {
       try {
-        const token = await AsyncStorage.getItem('userToken');
-        if (!token) {
-          console.warn('Token tapılmadı');
-          return;
-        }
+        const userId = await AsyncStorage.getItem('userId');
+        console.log(userId, 'userid');
+        if (!userId) return;
 
-        connection = new signalR.HubConnectionBuilder()
-          .withUrl(`${Config.API_URL}/notification/hubs/mobile`, {
+        const token = await AsyncStorage.getItem('userToken');
+        if (!token) return;
+
+        const connection: any = new signalR.HubConnectionBuilder()
+          .withUrl(`${Config.BASE_URL}/notification/hubs/mobile`, {
             accessTokenFactory: () => token,
           })
           .withAutomaticReconnect()
-          .configureLogging(signalR.LogLevel.Information)
           .build();
 
-        console.log(connection, 'comnnec');
-
-        connection.on('ReceiveNotification', (notification: any) => {
-          console.log('📩 Yeni real-time bildiriş:', notification);
-
-          const newNotification = {
-            id: notification.id,
-            title: notification.title,
-            text: notification.message,
-            unread: !notification.isRead,
-            time: formatTime(notification.createdAt),
-            date: formatDate(notification.createdAt),
-          };
-
-          // setData((prev: any) => [newNotification, ...prev]);
-
-          Toast.show({
-            type: 'success', // 'info' əvəzinə
-            text1: notification.title,
-            text2: notification.message,
-            position: 'top',
-            visibilityTime: 4000,
-            autoHide: true,
+        connection
+          .start()
+          .then(() => {
+            console.log('SignalR bağlantısı kuruldu');
+            console.log('Connection ID:', connection.connectionId);
+            setConnectionId(connection.connectionId);
+          })
+          .catch((err: any) => {
+            console.error('SignalR bağlantı hatası:', err);
           });
 
-          const ding = new Sound(
-            'notification.mp3',
-            Sound.MAIN_BUNDLE,
-            error => {
-              if (error) {
-                console.log('❌ Səs yükləmə xətası:', error);
-                return;
-              }
-              ding.play(success => {
-                if (!success) {
-                  console.log('🔇 Səs çalınmadı');
-                }
-              });
-            },
-          );
+        connection.on('TaskCreated', (data: any) => {
+          console.log('Task Created Message:', data);
+          // Task gəldikdə frontend yenilənə bilər
         });
-
-        await connection.start();
-        console.log('✅ SignalR bağlantısı quruldu');
       } catch (err) {
-        console.error('❌ SignalR bağlantı xətası:', err);
+        console.error('AsyncStorage və ya SignalR xəta:', err);
       }
     };
 
-    connectSignalR();
-
-    // return () => {
-    //   if (connection) {
-    //     connection.stop();
-    //     console.log('🔌 SignalR bağlantısı dayandırıldı');
-    //   }
-    // };
+    setupConnection();
   }, []);
 
   const fetchUnreadNotifications = useCallback(async () => {

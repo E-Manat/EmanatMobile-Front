@@ -1,5 +1,5 @@
-import {StatusBar} from 'react-native';
-import React, {useEffect, useRef} from 'react';
+import {Linking, StatusBar} from 'react-native';
+import React, {useEffect, useRef, useState} from 'react';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {NavigationContainer} from '@react-navigation/native';
 import {enableScreens} from 'react-native-screens';
@@ -28,6 +28,12 @@ import OtpSubmitScreen from './screens/OtpSubmitScreen';
 import 'react-native-url-polyfill/auto';
 import Toast from 'react-native-toast-message';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
+import {getVersion} from 'react-native-device-info';
+import Config from 'react-native-config';
+
+import axios from 'axios';
+import CustomModal from './components/Modal';
+
 const Stack = createNativeStackNavigator();
 enableScreens();
 
@@ -58,6 +64,10 @@ const App = () => {
     setNavigation(navigationRef.current);
   }, []);
 
+  const [modalVisible, setModalVisible] = useState(false);
+  const [newVersionCode, setNewVersionCode] = useState(0);
+  const [downloadUrl, setDownloadUrl] = useState('');
+
   useEffect(() => {
     const checkAuth = async () => {
       const isExpired = await checkTokenExpiry();
@@ -84,6 +94,82 @@ const App = () => {
 
   // AsyncStorage.clear();
 
+  const checkForUpdate = async () => {
+    try {
+      const currentVersionCode = await getVersion();
+      console.log(currentVersionCode, 'currentVersion');
+      // const userToken = await AsyncStorage.getItem('userToken');
+      const response = await axios.post(
+        `${Config.API_URL}/mobile/Version/Check`,
+        {
+          versionCode: currentVersionCode,
+        },
+        // {
+        //   headers: {
+        //     'Content-Type': 'application/json',
+        //     Authorization: `Bearer ${userToken}`,
+        //   },
+        // },
+      );
+
+      console.log(response, 'Version/Check');
+
+      if (response.data.versionCode > currentVersionCode) {
+        setNewVersionCode(response.data.versionCode);
+        setDownloadUrl(response.data.downloadUrl);
+        setModalVisible(true);
+      }
+    } catch (error) {
+      console.error('Versiya yoxlanarkən xəta baş verdi:', error);
+    }
+  };
+
+  const uploadNewVersion = async () => {
+    try {
+      const response = await axios.post(
+        `${Config.API_URL}/mobile/Version/Upload`,
+        {
+          versionCode: newVersionCode,
+          versionName: '1.1.0',
+          downloadUrl: downloadUrl,
+        },
+      );
+      console.log('Yeni versiya serverə yükləndi:', response.data);
+    } catch (error) {
+      console.error('Yeni versiya yüklənərkən xəta baş verdi:', error);
+    }
+  };
+
+  const handleVersionUpload = async () => {
+    await uploadNewVersion();
+  };
+
+  const handleUpdate = async () => {
+    if (downloadUrl) {
+      Linking.openURL(downloadUrl);
+    }
+
+    try {
+      await axios.post(`${Config.API_URL}/mobile/Version/Update`, {
+        newVersionCode: newVersionCode,
+      });
+      console.log('Yeni versiya serverə göndərildi');
+
+      await handleVersionUpload();
+    } catch (error) {
+      console.error(
+        'Yeniləmə məlumatı serverə göndərilərkən xəta baş verdi:',
+        error,
+      );
+    }
+
+    setModalVisible(false); // Modalı bağlayırıq
+  };
+
+  useEffect(() => {
+    checkForUpdate();
+  }, []);
+
   return (
     <GestureHandlerRootView style={{flex: 1}}>
       <NavigationContainer
@@ -91,7 +177,16 @@ const App = () => {
           navigationRef.current = nav;
           setNavigation(navigationRef);
         }}>
-        <StatusBar />
+        <StatusBar />{' '}
+        {newVersionCode > 0 && (
+          <CustomModal
+            visible={true}
+            title="Yeniləmə Mövcuddur"
+            description="Yeni versiya mövcuddur. Tətbiqi yeniləmək istəyirsiniz?"
+            confirmText="Yenilə"
+            onConfirm={handleUpdate}
+          />
+        )}
         <Stack.Navigator
           initialRouteName="Splash"
           screenOptions={{

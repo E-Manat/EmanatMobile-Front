@@ -14,7 +14,7 @@ import {StackNavigationProp} from '@react-navigation/stack';
 import {RootStackParamList} from '../App';
 
 const {width, height} = Dimensions.get('window');
-const BUTTON_SIZE = 50;
+const BUTTON_SIZE = 45;
 const MARGIN = 10;
 const SAFE_AREA_BOTTOM = 50;
 
@@ -140,10 +140,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#38C172',
     justifyContent: 'center',
     alignItems: 'center',
-    elevation: 6,
     shadowColor: '#000',
     shadowOpacity: 0.3,
-    shadowRadius: 5,
     shadowOffset: {width: 0, height: 2},
   },
   buttonTouchable: {

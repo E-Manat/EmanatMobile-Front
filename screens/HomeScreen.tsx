@@ -26,7 +26,6 @@ const HomeScreen = () => {
     logAllAsyncStorage();
   }, []);
 
-
   return (
     <ScrollView style={globalStyles.container}>
       <HomeHeader />

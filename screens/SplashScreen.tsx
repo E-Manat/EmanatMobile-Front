@@ -3,9 +3,15 @@ import {View, StyleSheet, Image, Alert, Linking, AppState} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {checkAndForceLocation} from '../utils/locationPermissionHandler';
 import CustomModal from '../components/Modal';
+import axios from 'axios';
+import Config from 'react-native-config';
+import {getVersion} from 'react-native-device-info';
 
 const SplashScreen = ({navigation}: any) => {
   const [modalVisible, setModalVisible] = useState(false);
+  const [newVersionCode, setNewVersionCode] = useState(0);
+  const [downloadUrl, setDownloadUrl] = useState('');
+
   useEffect(() => {
     const init = async () => {
       const gpsAllowed = await checkAndForceLocation();
