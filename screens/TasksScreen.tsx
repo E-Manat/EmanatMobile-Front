@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
-import React, {useCallback, useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {
   View,
   Text,
@@ -34,7 +34,7 @@ interface Task {
   phone?: string;
 }
 const TasksScreen: React.FC = () => {
-  const [selectedFilter, setSelectedFilter] = useState<string>('Hamısı');
+  const [selectedFilter, setSelectedFilter] = useState<string>('İcra olunan');
 
   const getStatusColor = (status: number) => {
     switch (status) {
@@ -59,6 +59,13 @@ const TasksScreen: React.FC = () => {
 
   const navigation = useNavigation<NavigationProp>();
   const [filteredTasks, setFilteredTasks] = useState<any>([]);
+
+  const tasksRef = useRef<Task[]>([]);
+  const connectionRef = useRef<signalR.HubConnection | null>(null);
+
+  useEffect(() => {
+    tasksRef.current = filteredTasks;
+  }, [filteredTasks]);
 
   const fetchTasks = async (statusFilter?: number) => {
     try {
@@ -154,17 +161,12 @@ const TasksScreen: React.FC = () => {
   );
 
   useEffect(() => {
-    let connection: signalR.HubConnection;
-
     const connectSignalR = async () => {
       try {
         const token = await AsyncStorage.getItem('userToken');
-        if (!token) {
-          console.warn('Token tapılmadı');
-          return;
-        }
+        if (!token || connectionRef.current) return;
 
-        connection = new signalR.HubConnectionBuilder()
+        const connection = new signalR.HubConnectionBuilder()
           .withUrl(
             `https://emanat-api.siesco.studio/notification/hubs/mobile`,
             {
@@ -175,27 +177,25 @@ const TasksScreen: React.FC = () => {
           .configureLogging(signalR.LogLevel.Information)
           .build();
 
-        console.log(connection, 'comnnec');
-
         connection.on('CollectorTaskCreated', (notification: any) => {
-          console.log('📩 noti yeni:', notification);
+          const alreadyExists = tasksRef.current.some(
+            t => t.id === notification.taskId,
+          );
+          if (alreadyExists) return;
 
-          // filteredTasks((prevTasks: any) => [
-          //   ...(Array.isArray(prevTasks) ? prevTasks : []), // prevTasks bir array değilse, boş bir array kullan
-          //   {
-          //     taskId: notification.taskId,
-          //     terminalId: notification.terminalId,
-          //     status: notification.status,
-          //     createdDate: notification.createdDate,
-          //     terminalAddress: notification.terminalAddress,
-          //     terminalCode: notification.terminalCode,
-          //   },
-          // ]);
+          const newTask: any = {
+            id: notification.taskId,
+            status: notification.status,
+            address: notification.terminalAddress,
+            code: notification.terminalCode,
+          };
+
+          setFilteredTasks((prev: any) => [...prev, newTask]);
 
           Toast.show({
             type: 'success',
-            text1: `Yeni Task: ${notification.taskId}`,
-            text2: `Status: ${notification.status}, Terminal: ${notification.terminalAddress}`,
+            text1: `Yeni Task: ${notification.terminalCode}`,
+            text2: notification.terminalAddress,
             position: 'top',
             visibilityTime: 4000,
             autoHide: true,
@@ -203,7 +203,7 @@ const TasksScreen: React.FC = () => {
         });
 
         await connection.start();
-        console.log('✅ SignalR bağlantısı quruldu');
+        connectionRef.current = connection;
       } catch (err) {
         console.error('❌ SignalR bağlantı xətası:', err);
       }
@@ -211,12 +211,12 @@ const TasksScreen: React.FC = () => {
 
     connectSignalR();
 
-    // return () => {
-    //   if (connection) {
-    //     connection.stop();
-    //     console.log('🔌 SignalR bağlantısı dayandırıldı');
-    //   }
-    // };
+    return () => {
+      if (connectionRef.current) {
+        connectionRef.current.stop();
+        connectionRef.current = null;
+      }
+    };
   }, []);
 
   return (

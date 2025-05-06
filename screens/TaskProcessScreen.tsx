@@ -172,7 +172,6 @@ const TaskProcessScreen = ({route}: any) => {
 
   const completeTask = async () => {
     setCompleteTaskLoading(true);
-
     try {
       const token = await AsyncStorage.getItem('userToken');
       const location = await getLocation();
@@ -282,6 +281,48 @@ const TaskProcessScreen = ({route}: any) => {
     }
   };
 
+  const renderBottomButton = () => {
+    if (step === 0) {
+      return (
+        <TouchableOpacity
+          style={styles.primaryButton}
+          onPress={startCollection}
+          disabled={loading}>
+          <Text style={styles.primaryButtonText}>
+            {loading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              'İnkassasiyaya başla'
+            )}
+          </Text>
+        </TouchableOpacity>
+      );
+    }
+
+    if (step === 1) {
+      return (
+        <TouchableOpacity
+          style={styles.primaryButton}
+          onPress={() => setModalVisible(true)}
+          disabled={loading || completeTaskLoading}>
+          <Text style={styles.primaryButtonText}>
+            {completeTaskLoading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              'Tapşırığı sonlandır'
+            )}
+          </Text>
+        </TouchableOpacity>
+      );
+    }
+
+    return (
+      <TouchableOpacity style={styles.primaryButton} disabled>
+        <Text style={styles.primaryButtonText}>Tapşırıq tamamlandı</Text>
+      </TouchableOpacity>
+    );
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.container}>
@@ -347,31 +388,7 @@ const TaskProcessScreen = ({route}: any) => {
             />
             <Text style={styles.secondaryButtonText}>Xəritəyə bax</Text>
           </TouchableOpacity>
-          {step === 0 ? (
-            <TouchableOpacity
-              style={styles.primaryButton}
-              onPress={startCollection}
-              disabled={loading}>
-              <Text style={styles.primaryButtonText}>İnkassasiyaya başla</Text>
-            </TouchableOpacity>
-          ) : step === 1 ? (
-            <TouchableOpacity
-              style={styles.primaryButton}
-              onPress={() => setModalVisible(true)}
-              disabled={loading}>
-              <Text style={styles.primaryButtonText}>Tapşırığı sonlandır</Text>
-            </TouchableOpacity>
-          ) : (
-            <TouchableOpacity style={styles.primaryButton} disabled>
-              <Text style={styles.primaryButtonText}>
-                {completeTaskLoading ? (
-                  <ActivityIndicator color="#fff" />
-                ) : (
-                  'Tapşırıq tamamlandı'
-                )}
-              </Text>
-            </TouchableOpacity>
-          )}
+          {renderBottomButton()}
         </View>
         <CustomModal
           visible={modalVisible}

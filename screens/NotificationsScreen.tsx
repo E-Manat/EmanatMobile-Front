@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useMemo, useState} from 'react';
+import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {
   View,
   Text,
@@ -127,11 +127,9 @@ const NotificationsScreen = () => {
   );
 
   console.log(AsyncStorage.getAllKeys);
-  const [connectionId, setConnectionId] = useState(null);
+  const connectionRef = useRef<signalR.HubConnection | null>(null);
 
   useEffect(() => {
-    let connection: signalR.HubConnection;
-
     const connectSignalR = async () => {
       try {
         const token = await AsyncStorage.getItem('userToken');
@@ -140,7 +138,12 @@ const NotificationsScreen = () => {
           return;
         }
 
-        connection = new signalR.HubConnectionBuilder()
+        if (connectionRef.current) {
+          console.log('⚠️ Mövcud bağlantı var, yenidən qurulmur');
+          return;
+        }
+
+        const connection = new signalR.HubConnectionBuilder()
           .withUrl(
             'https://emanat-api.siesco.studio/notification/hubs/mobile',
             {
@@ -150,6 +153,9 @@ const NotificationsScreen = () => {
           .withAutomaticReconnect()
           .configureLogging(signalR.LogLevel.Information)
           .build();
+
+        // Eyni event-lərin təkrarlanmaması üçün əvvəlcə silirik
+        connection.off('ReceiveNotification');
 
         connection.on('ReceiveNotification', (notification: any) => {
           console.log('📩 Yeni real-time bildiriş:', notification);
@@ -192,6 +198,8 @@ const NotificationsScreen = () => {
         });
 
         await connection.start();
+        connectionRef.current = connection;
+
         console.log('✅ SignalR bağlantısı quruldu');
       } catch (err) {
         console.error('❌ SignalR bağlantı xətası:', err);
@@ -200,12 +208,13 @@ const NotificationsScreen = () => {
 
     connectSignalR();
 
-    // return () => {
-    //   if (connection) {
-    //     connection.stop();
-    //     console.log('🔌 SignalR bağlantısı dayandırıldı');
-    //   }
-    // };
+    return () => {
+      if (connectionRef.current) {
+        connectionRef.current.stop();
+        console.log('🔌 SignalR bağlantısı dayandırıldı');
+        connectionRef.current = null;
+      }
+    };
   }, []);
 
   const fetchUnreadNotifications = useCallback(async () => {
