@@ -155,6 +155,7 @@ const NewReportScreen = () => {
         console.log(data, 'data');
         setTerminalList(data);
       } catch (error) {
+        setTerminalList([]);
         console.error('Terminals could not be fetched:', error);
       }
     };
@@ -219,7 +220,7 @@ const NewReportScreen = () => {
 
   useEffect(() => {
     if (terminalList.length && terminalIdFromRoute) {
-      const matchedTerminal = terminalList.find(
+      const matchedTerminal = terminalList?.find(
         terminal => terminal.id === terminalIdFromRoute,
       );
 
@@ -264,14 +265,15 @@ const NewReportScreen = () => {
               value=""
               style={styles.customPicker}
             />
-            {terminalList?.map((terminal: any) => (
-              <Picker.Item
-                key={terminal.id}
-                label={terminal.code}
-                value={terminal.id}
-                style={styles.customPickerLabel}
-              />
-            ))}
+            {terminalList &&
+              terminalList?.map((terminal: any) => (
+                <Picker.Item
+                  key={terminal.id}
+                  label={terminal.code}
+                  value={terminal.id}
+                  style={styles.customPickerLabel}
+                />
+              ))}
           </Picker>
 
           <Text style={styles.imageContentLabel}>

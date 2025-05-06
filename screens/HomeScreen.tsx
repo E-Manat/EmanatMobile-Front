@@ -1,4 +1,4 @@
-import React, {useEffect} from 'react';
+import React, {useEffect, useState} from 'react';
 import {ScrollView, View, StyleSheet} from 'react-native';
 import MenuCard from '../components/MenuCard';
 import Banner from '../components/Banner';
@@ -26,6 +26,21 @@ const HomeScreen = () => {
     logAllAsyncStorage();
   }, []);
 
+  const [roleName, setRoleName] = useState<string | null>(null);
+
+  useEffect(() => {
+    const getRoleFromAsyncStorage = async () => {
+      try {
+        const role = await AsyncStorage.getItem('roleName');
+        setRoleName(role);
+      } catch (error) {
+        console.error('Error reading roleName from AsyncStorage:', error);
+      }
+    };
+
+    getRoleFromAsyncStorage();
+  }, []);
+
   return (
     <ScrollView style={globalStyles.container}>
       <HomeHeader />
@@ -36,12 +51,17 @@ const HomeScreen = () => {
         screenName="Tapşırıqlar"
         iconName={<Image1 />}
       />
-      <MenuCard
-        title="Terminallar"
-        description="Ərazi üzrə terminalların siyahısı"
-        screenName="Terminallar"
-        iconName={<Image2 />}
-      />
+      {roleName && roleName === 'Collector' ? (
+        <MenuCard
+          title="Terminallar"
+          description="Ərazi üzrə terminalların siyahısı"
+          screenName="Terminallar"
+          iconName={<Image2 />}
+        />
+      ) : (
+        ''
+      )}
+
       <MenuCard
         title="Hesabatlar"
         description="Yerinə yetirilmiş tapşırıqlar üzrə hesabat"

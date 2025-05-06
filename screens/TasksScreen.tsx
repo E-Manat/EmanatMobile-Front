@@ -75,7 +75,6 @@ const TasksScreen: React.FC = () => {
           : endpointBase;
 
       console.log(url, 'url');
-      console.log(url, 'url');
       const response = await apiService.get(url);
       setTasksData(response);
       setFilteredTasks(response.tasks);
@@ -154,51 +153,6 @@ const TasksScreen: React.FC = () => {
     </TouchableOpacity>
   );
 
-  const connectSignalR = async () => {
-    try {
-      const token = await AsyncStorage.getItem('userToken');
-      if (!token) {
-        console.warn('Token tapılmadı');
-        return;
-      }
-
-      // SignalR bağlantısını kuruyoruz
-      const connection: any = new signalR.HubConnectionBuilder()
-        .withUrl(`${Config.API_URL}/notification/hubs/mobile`, {
-          accessTokenFactory: () => token,
-        })
-        .withAutomaticReconnect()
-        .configureLogging(signalR.LogLevel.Information)
-        .build();
-
-      connection.on('TaskCreated', (notification: any) => {
-        console.log('📩 Yeni bildiriş alındı:', notification);
-        console.log(notification, 'noti');
-        const newNotification = {
-          id: notification.id,
-          title: notification.terminalCode,
-          terminalAddress: notification.terminalAddress,
-        };
-
-        setTasksData((prev: any) => [newNotification, ...prev]);
-
-        Toast.show({
-          type: 'success',
-          text1: notification.title,
-          text2: notification.message,
-          position: 'top',
-          visibilityTime: 4000,
-          autoHide: true,
-        });
-      });
-
-      await connection.start();
-      console.log('✅ SignalR bağlantısı quruldu');
-    } catch (err) {
-      console.error('❌ SignalR bağlantı hatası:', err);
-    }
-  };
-
   useEffect(() => {
     let connection: signalR.HubConnection;
 
@@ -211,22 +165,37 @@ const TasksScreen: React.FC = () => {
         }
 
         connection = new signalR.HubConnectionBuilder()
-          .withUrl(`${Config.API_URL}/notification/hubs/mobile`, {
-            accessTokenFactory: () => token,
-          })
+          .withUrl(
+            `https://emanat-api.siesco.studio/notification/hubs/mobile`,
+            {
+              accessTokenFactory: () => token,
+            },
+          )
           .withAutomaticReconnect()
           .configureLogging(signalR.LogLevel.Information)
           .build();
 
         console.log(connection, 'comnnec');
 
-        connection.on('TaskCreated', (notification: any) => {
+        connection.on('CollectorTaskCreated', (notification: any) => {
           console.log('📩 noti yeni:', notification);
 
+          // filteredTasks((prevTasks: any) => [
+          //   ...(Array.isArray(prevTasks) ? prevTasks : []), // prevTasks bir array değilse, boş bir array kullan
+          //   {
+          //     taskId: notification.taskId,
+          //     terminalId: notification.terminalId,
+          //     status: notification.status,
+          //     createdDate: notification.createdDate,
+          //     terminalAddress: notification.terminalAddress,
+          //     terminalCode: notification.terminalCode,
+          //   },
+          // ]);
+
           Toast.show({
-            type: 'success', // 'info' əvəzinə
-            text1: notification.title,
-            text2: notification.message,
+            type: 'success',
+            text1: `Yeni Task: ${notification.taskId}`,
+            text2: `Status: ${notification.status}, Terminal: ${notification.terminalAddress}`,
             position: 'top',
             visibilityTime: 4000,
             autoHide: true,
@@ -248,10 +217,6 @@ const TasksScreen: React.FC = () => {
     //     console.log('🔌 SignalR bağlantısı dayandırıldı');
     //   }
     // };
-  }, []);
-
-  useEffect(() => {
-    fetchTasks(); // Task'ları yüklüyoruz
   }, []);
 
   return (

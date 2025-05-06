@@ -1,4 +1,4 @@
-import {Linking, StatusBar} from 'react-native';
+import {Button, Linking, StatusBar} from 'react-native';
 import React, {useEffect, useRef, useState} from 'react';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {NavigationContainer} from '@react-navigation/native';
@@ -96,12 +96,37 @@ const App = () => {
 
   // AsyncStorage.clear();
 
+  useEffect(() => {
+    const checkAuth = async () => {
+      const isExpired = await checkTokenExpiry();
+      if (isExpired) {
+        await AsyncStorage.multiRemove([
+          'userToken',
+          'expiresAt',
+          'isLoggedIn',
+        ]);
+        navigationRef?.current?.reset({
+          index: 0,
+          routes: [{name: 'Login'}],
+        });
+      } else {
+        navigationRef?.current?.reset({
+          index: 0,
+          routes: [{name: 'Home'}],
+        });
+      }
+    };
+
+    checkAuth();
+  }, []);
+
   const checkForUpdate = async () => {
     try {
       const currentVersionCode = await getVersion();
       console.log(currentVersionCode, 'currentVersion');
 
       const versionCode = parseInt(currentVersionCode, 10);
+      console.log(versionCode, 'versioncode');
       if (isNaN(versionCode)) {
         console.error('Yanlış versionCode:', currentVersionCode);
         return;
@@ -114,7 +139,7 @@ const App = () => {
         versionCode: versionCode,
       };
 
-      console.log(requestPayload, 'ayload');
+      console.log(requestPayload, 'payload');
 
       const response = await axios.post(
         `${Config.API_URL}/mobile/Version/Check`,
@@ -129,11 +154,10 @@ const App = () => {
 
       console.log(response, 'Version/Check');
 
-      // Yeni versiya varsa modalı göstəririk
       if (response.data.versionCode > versionCode) {
         setNewVersionCode(response.data.versionCode);
         setDownloadUrl(response.data.downloadUrl);
-        setModalVisible(true); // Modalı açırıq
+        setModalVisible(true);
       }
     } catch (error: any) {
       console.error('Yeniləmə yoxlanarkən xəta:', error);
@@ -148,7 +172,7 @@ const App = () => {
       const response = await axios.post(
         `${Config.API_URL}/mobile/Version/Upload`,
         {
-          versionCode: newVersionCode,
+          versionCode: newVersionCode + 1,
           versionName: '1.1.0',
           downloadUrl: downloadUrl,
         },
@@ -159,20 +183,18 @@ const App = () => {
     }
   };
 
-  // Tətbiqi yeniləyirik
   const handleUpdate = async () => {
     if (downloadUrl) {
-      Linking.openURL(downloadUrl); // Yeniləmə linkinə yönləndiririk
+      Linking.openURL(downloadUrl);
     }
 
     try {
-      // Serverə yeniləmə məlumatlarını göndəririk
       await axios.post(`${Config.API_URL}/mobile/Version/Update`, {
         newVersionCode: newVersionCode,
       });
       console.log('Yeni versiya serverə göndərildi');
 
-      await uploadNewVersion(); // Yeni versiyanı serverə yükləyirik
+      await uploadNewVersion();
     } catch (error) {
       console.error(
         'Yeniləmə məlumatı serverə göndərilərkən xəta baş verdi:',
@@ -180,11 +202,11 @@ const App = () => {
       );
     }
 
-    setModalVisible(false); // Modalı bağlayırıq
+    setModalVisible(false);
   };
 
   useEffect(() => {
-    checkForUpdate(); // Komponent yüklənərkən yeniləmə yoxlanır
+    checkForUpdate();
   }, []);
 
   return (
@@ -195,6 +217,7 @@ const App = () => {
           setNavigation(navigationRef);
         }}>
         <StatusBar />{' '}
+        {/* <Button title="Versiyanı Göndər" onPress={uploadNewVersion} /> */}
         {newVersionCode > 0 && (
           <CustomModal
             visible={true}

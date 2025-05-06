@@ -92,11 +92,11 @@ const ProfileScreen = () => {
         setAddress(profileData.address);
         setProfileImage(profileData.profileImage);
 
-        const savedRole = await AsyncStorage.getItem('roleName'); 
+        const savedRole = await AsyncStorage.getItem('roleName');
         if (savedRole === 'Technician') {
-          setRoleName('Texnik'); 
+          setRoleName('Texnik');
         } else {
-          setRoleName(savedRole || 'Inkassator'); 
+          setRoleName('Inkassator');
         }
 
         await AsyncStorage.setItem('profileData', JSON.stringify(profileData));
