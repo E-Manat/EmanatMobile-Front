@@ -137,7 +137,7 @@ const TerminallarScreen = () => {
                 label="Terminal ID"
                 value={selectedTerminal?.code}
               />
-              <InfoItem icon={<AvatarIcon />} label="Şirkət" value="E-manat" />
+              {/* <InfoItem icon={<AvatarIcon />} label="Şirkət" value="E-manat" /> */}
               <InfoItem
                 icon={<MapIcon color="#1269B5" />}
                 label="Bölgə"

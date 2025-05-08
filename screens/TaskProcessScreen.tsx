@@ -419,8 +419,8 @@ const TaskProcessScreen = ({route}: any) => {
           visible={successModalVisible}
           title="Tapşırıq tamamlandı"
           description="Tapşırıq uğurla tamamlandı."
-          confirmText="Bağla"
-          onConfirm={() => {
+          cancelText="Bağla"
+          onCancel={() => {
             setSuccessModalVisible(false);
             navigation.navigate('YeniHesabat', {
               terminalId: taskData?.terminal?.id,

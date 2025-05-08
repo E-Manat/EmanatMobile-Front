@@ -128,13 +128,13 @@ const ReportsScreen = () => {
   const renderFilterOption = (option: string) => (
     <TouchableOpacity
       key={option}
-      style={{flexDirection: 'row', alignItems: 'center', marginVertical: 5}}
+      style={{flexDirection: 'row', alignItems: 'center', marginVertical: 10}}
       onPress={() => {
         setSelectedFilters([option]);
       }}>
       <View style={styles.checkBox}>
         {selectedFilters.includes(option) && (
-          <Icon name="check" size={20} color="#2D64AF" />
+          <Icon name="check" size={17} color="#2D64AF" />
         )}
       </View>
       <Text style={styles.filterOptionText}>{option}</Text>
@@ -271,10 +271,10 @@ const styles = StyleSheet.create({
     fontFamily: 'DMSans-Regular',
     borderRadius: 10,
     marginVertical: 15,
-    justifyContent: 'space-between', // Ensures icons and input are spaced well
+    justifyContent: 'space-between',
   },
   filterIcon: {
-    marginLeft: 10, // Space between the search input and filter icon
+    marginLeft: 10,
   },
 
   input: {
@@ -426,14 +426,14 @@ const styles = StyleSheet.create({
     lineHeight: 24,
   },
   checkBox: {
-    width: 30, // Increase width
-    height: 30, // Increase height
+    width: 20, // Increase width
+    height: 20, // Increase height
     borderRadius: 5,
-    borderWidth: 2, // Slightly thicker border
+    borderWidth: 1, // Slightly thicker border
     borderColor: '#75ACDA',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'EFF8FF',
+    backgroundColor: '#EFF8FF',
     marginRight: 10,
   },
 });

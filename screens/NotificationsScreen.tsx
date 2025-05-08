@@ -765,7 +765,7 @@ const styles = StyleSheet.create({
   notificationTitle: {
     fontSize: 16,
     fontFamily: 'DMSans-SemiBold',
-    color: '#001D45',
+    color: '#1269B5',
     flex: 1,
   },
   notificationTime: {
@@ -786,22 +786,22 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.3)',
   },
   modalContent: {
-    width: '80%',
+    width: '85%',
     backgroundColor: '#FFF',
     padding: 20,
     borderRadius: 10,
-    alignItems: 'center',
   },
   modalTitle: {
-    fontSize: 24,
+    fontSize: 20,
     fontFamily: 'DMSans-SemiBold',
     color: '#001D45',
     marginBottom: 10,
+    textAlign: 'left',
   },
   modalText: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#A8A8A8',
-    textAlign: 'center',
+    textAlign: 'left',
     marginBottom: 20,
     fontFamily: 'DMSans-Regular',
   },
@@ -829,7 +829,7 @@ const styles = StyleSheet.create({
   },
   confirmText: {color: '#FFF', fontSize: 14, fontFamily: 'DMSans-SemiBold'},
   closeButton: {
-    paddingVertical: 20,
+    paddingVertical: 15,
     paddingHorizontal: 20,
     backgroundColor: '#fff',
     borderWidth: 1,
@@ -846,9 +846,11 @@ const styles = StyleSheet.create({
     fontFamily: 'DMSans-SemiBold',
   },
   image: {
-    width: 85,
-    height: 85,
+    width: 50,
+    height: 57,
     objectFit: 'cover',
+    marginBottom: 5,
+    alignSelf: 'center',
   },
   noResult: {
     color: '#A8A8A8',
@@ -886,7 +888,7 @@ const styles = StyleSheet.create({
     lineHeight: 21,
   },
   deleteAllText: {
-    color: 'var(--Neutral-700, #616161)',
+    color: '#063A66',
     fontFamily: 'DMSans-SemiBold',
     fontSize: 12,
     fontStyle: 'normal',

@@ -30,24 +30,20 @@ const ImageSlider = () => {
       Animated.sequence([
         Animated.timing(scaleAnim, {
           toValue: 1.2,
-          duration: 500,
+          duration: 1000,
           useNativeDriver: true,
         }),
         Animated.timing(scaleAnim, {
           toValue: 1,
-          duration: 500,
+          duration: 1000,
           useNativeDriver: true,
         }),
       ]),
     ).start();
   }, []);
 
-  // const handleButtonPress = () => {
-  //   navigation.navigate('TaskProcess');
-  // };
-
   return (
-    <Swiper autoplay height={250} showsPagination={false}>
+    <Swiper autoplay height={250} showsPagination={false} autoplayTimeout={5}>
       {images.map((image, index) => (
         <View key={index} style={styles.imageContainer}>
           <Image source={image} style={styles.image} />

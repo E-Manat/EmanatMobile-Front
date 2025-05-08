@@ -167,6 +167,7 @@ const NewReportScreen = () => {
     const fetchProblems = async () => {
       try {
         const data = await apiService.get('/mobile/Problem/GetAll');
+        console.log(data);
         setProblemList(data);
       } catch (error) {
         console.error('Problem siyahısı alınmadı:', error);
@@ -219,7 +220,7 @@ const NewReportScreen = () => {
   };
 
   useEffect(() => {
-    if (terminalList.length && terminalIdFromRoute) {
+    if (terminalList.length && terminalIdFromRoute !== undefined) {
       const matchedTerminal = terminalList?.find(
         terminal => terminal.id === terminalIdFromRoute,
       );
@@ -245,14 +246,15 @@ const NewReportScreen = () => {
               value=""
               style={styles.customPickerLabel}
             />
-            {problemList?.map((problem: any) => (
-              <Picker.Item
-                key={problem.id}
-                label={problem.description}
-                value={problem.id}
-                style={styles.customPickerLabel}
-              />
-            ))}
+            {problemList &&
+              problemList?.map((problem: any) => (
+                <Picker.Item
+                  key={problem.id}
+                  label={problem.description}
+                  value={problem.id}
+                  style={styles.customPickerLabel}
+                />
+              ))}
           </Picker>
 
           <Text style={styles.selectLabel}> Terminal seçin</Text>

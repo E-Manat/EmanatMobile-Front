@@ -172,6 +172,8 @@ const TasksScreen: React.FC = () => {
     const connectSignalR = async () => {
       try {
         const token = await AsyncStorage.getItem('userToken');
+        const roleName = await AsyncStorage.getItem('roleName');
+
         if (!token || connectionRef.current) return;
 
         const connection = new signalR.HubConnectionBuilder()
@@ -185,7 +187,12 @@ const TasksScreen: React.FC = () => {
           .configureLogging(signalR.LogLevel.Information)
           .build();
 
-        connection.on('CollectorTaskCreated', (notification: any) => {
+        const eventName =
+          roleName === 'Collector'
+            ? 'CollectorTaskCreated'
+            : 'TechnicianTaskCreated';
+
+        connection.on(eventName, (notification: any) => {
           const alreadyExists = tasksRef.current.some(
             t => t.id === notification.taskId,
           );
@@ -226,7 +233,6 @@ const TasksScreen: React.FC = () => {
       }
     };
   }, []);
-
   return (
     <View style={styles.container}>
       <TopHeader
@@ -429,8 +435,9 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     padding: 16,
     marginBottom: 10,
+    display: 'flex',
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
   },
   taskContent: {
     flex: 1,
