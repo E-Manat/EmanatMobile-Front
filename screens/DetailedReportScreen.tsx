@@ -186,6 +186,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingBottom: 15,
+    marginTop: 15,
   },
   headerText: {
     color: '#1269B5',
@@ -197,11 +198,11 @@ const styles = StyleSheet.create({
   },
   card: {
     padding: 16,
-    shadowOffset: {width: 0, height: 1},
     borderRadius: 8,
     backgroundColor: '#FFF',
+    shadowColor: '#d7dee6',
+    shadowRadius: 9,
     elevation: 8,
-    shadowColor: 'rgba(135, 167, 202, 0.15)',
   },
   label: {
     fontSize: 14,

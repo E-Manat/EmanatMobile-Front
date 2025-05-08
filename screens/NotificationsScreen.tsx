@@ -683,7 +683,7 @@ export default NotificationsScreen;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFF',
+    backgroundColor: '#F7F9FB',
     paddingHorizontal: 16,
   },
   header: {
@@ -703,10 +703,14 @@ const styles = StyleSheet.create({
     borderRadius: 25,
     padding: 4,
     marginBottom: 10,
+    backgroundColor: '#fff',
+    overflow: 'hidden',
+    width: '90%',
+    alignSelf: 'center',
   },
   filterButton: {
     flex: 1,
-    paddingVertical: 10,
+    paddingVertical: 12,
     alignItems: 'center',
     borderRadius: 25,
   },
@@ -720,7 +724,7 @@ const styles = StyleSheet.create({
   },
   activeFilterText: {
     color: '#FFF',
-    fontFamily: 'DMSans-Regular',
+    fontFamily: 'DMSans-SemiBold',
   },
   sectionTitle: {
     fontSize: 14,
@@ -857,7 +861,7 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     textAlign: 'center',
-    paddingTop:"30%"
+    paddingTop: '30%',
   },
   noContentImage: {
     width: 180,

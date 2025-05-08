@@ -432,7 +432,7 @@ const TaskProcessScreen = ({route}: any) => {
   );
 };
 
-const CIRCLE_SIZE = 30;
+const CIRCLE_SIZE = 32;
 export default TaskProcessScreen;
 
 const styles = StyleSheet.create({
@@ -551,8 +551,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   image: {
-    width: 40,
-    height: 40,
+    width: 42,
+    height: 42,
   },
   profileImage: {width: 25, height: 25, resizeMode: 'contain'},
 });

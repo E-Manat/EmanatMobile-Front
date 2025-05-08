@@ -5,6 +5,6 @@ export const globalStyles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 20,
     paddingVertical: 10,
-    fontFamily: 'Montserrat', backgroundColor:"#fff"
+    fontFamily: 'Montserrat', backgroundColor:"#F7F9FB"
   },
 });

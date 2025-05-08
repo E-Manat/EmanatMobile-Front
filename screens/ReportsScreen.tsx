@@ -252,7 +252,7 @@ const ReportsScreen = () => {
 export default ReportsScreen;
 
 const styles = StyleSheet.create({
-  container: {flex: 1, backgroundColor: '#fff'},
+  container: {flex: 1, backgroundColor: '#F7F9FB'},
   header: {
     backgroundColor: '#2D64AF',
     height: 80,

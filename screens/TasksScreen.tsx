@@ -338,7 +338,7 @@ export default TasksScreen;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#F7F9FB',
   },
   header: {
     backgroundColor: '#2D64AF',
@@ -364,9 +364,6 @@ const styles = StyleSheet.create({
     width: '89%',
     zIndex: 3,
     backgroundColor: '#fff',
-    shadowColor: 'rgba(83, 121, 198, 0.95)',
-    shadowRadius: 6,
-    elevation: 3,
     borderRadius: 10,
   },
   statusItem: {
@@ -416,7 +413,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     marginRight: 5,
     borderRadius: 5,
-    backgroundColor: '#F5F9FC',
+    backgroundColor: '#fff',
   },
   filterText: {
     color: '#063A66',
@@ -434,9 +431,6 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     flexDirection: 'row',
     alignItems: 'center',
-    shadowColor: '#75ACDA',
-    shadowRadius: 5,
-    elevation: 6,
   },
   taskContent: {
     flex: 1,

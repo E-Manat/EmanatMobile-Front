@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome6';
 import Icon1 from 'react-native-vector-icons/MaterialIcons';
+import Icon2 from 'react-native-vector-icons/Octicons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {RootStackParamList} from '../App';
@@ -151,10 +152,10 @@ const TerminalDetailsScreen = ({route}: any) => {
       <TopHeader title="Tapşırıq detalları" />
 
       <View style={styles.terminalInfo}>
-        <Text style={styles.terminalName}>
+        <View style={styles.terminalName}>
           <Icon name="location-dot" size={20} color="#1976D2" />
-          <Text> {taskData?.terminal?.code}</Text>
-        </Text>
+          <Text style={styles.terminalCode}> {taskData?.terminal?.code}</Text>
+        </View>
         <View style={styles.statusContainer}>
           <Text style={styles.location}>
             {' '}
@@ -224,7 +225,7 @@ const TerminalDetailsScreen = ({route}: any) => {
         {taskData.taskDuration && (
           <View style={styles.timelineItem}>
             <View style={styles.iconWrapper}>
-              <Icon name="phone" size={15} color="white" />
+              <Icon2 name="check-circle-fill" size={15} color="white" />
             </View>
             <View style={styles.textWrapper}>
               <Text style={styles.detailText}>
@@ -306,22 +307,22 @@ const styles = StyleSheet.create({
   },
   terminalInfo: {
     padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ddd',
   },
   terminalName: {
     width: '100%',
-    color: '#063A66',
-    fontFamily: 'DMSans-Bold',
-    fontSize: 16,
-    lineHeight: 24,
-    gap: 10,
+    gap: 3,
+    display: 'flex',
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+    flexDirection: 'row',
   },
+  terminalCode: {color: '#063A66', fontFamily: 'DMSans-Bold', fontSize: 16},
   location: {
     color: '#99A7B6',
     fontFamily: 'DMSans-Regular',
     fontSize: 14,
     lineHeight: 21,
+    marginTop: 10,
   },
   distance: {
     color: '#1976D2',
@@ -357,7 +358,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   verticalLine: {
-    height: 20,
+    height: 26,
     width: 2,
     backgroundColor: '#99A7B6',
     marginLeft: 13, // aligns with center of the icon
@@ -366,7 +367,7 @@ const styles = StyleSheet.create({
   detailTitle: {
     color: '#063A66',
     fontFamily: 'DMSans-Bold',
-    fontSize: 16,
+    fontSize: 18,
     lineHeight: 19.2,
     marginBottom: 10,
   },
@@ -378,7 +379,7 @@ const styles = StyleSheet.create({
   detailText: {
     color: '#212121',
     fontFamily: 'DMSans-SemiBold',
-    fontSize: 12,
+    fontSize: 14,
     lineHeight: 18,
     marginLeft: 10,
   },
