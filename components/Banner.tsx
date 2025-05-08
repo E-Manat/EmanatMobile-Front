@@ -47,7 +47,7 @@ const ImageSlider = () => {
   // };
 
   return (
-    <Swiper autoplay height={200} showsPagination={false}>
+    <Swiper autoplay height={250} showsPagination={false}>
       {images.map((image, index) => (
         <View key={index} style={styles.imageContainer}>
           <Image source={image} style={styles.image} />
@@ -69,7 +69,7 @@ const ImageSlider = () => {
 const styles = StyleSheet.create({
   imageContainer: {
     width: '100%',
-    height: 200,
+    height: 250,
     borderRadius: 20,
     alignSelf: 'center',
     overflow: 'hidden',

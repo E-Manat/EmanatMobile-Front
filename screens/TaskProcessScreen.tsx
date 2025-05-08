@@ -20,6 +20,7 @@ import TopHeader from '../components/TopHeader';
 import CustomModal from '../components/Modal';
 import Config from 'react-native-config';
 import Geolocation from '@react-native-community/geolocation';
+
 type NavigationProp = StackNavigationProp<RootStackParamList, 'Hesabatlar'>;
 
 const TaskProcessScreen = ({route}: any) => {
@@ -34,6 +35,8 @@ const TaskProcessScreen = ({route}: any) => {
   const [modalVisible, setModalVisible] = useState(false);
   const [successModalVisible, setSuccessModalVisible] = useState(false);
   const [completeTaskLoading, setCompleteTaskLoading] = useState(false);
+
+  const [roleName, setRoleName] = useState<string | null>(null);
 
   useEffect(() => {
     const restoreTimers = async () => {
@@ -57,7 +60,13 @@ const TaskProcessScreen = ({route}: any) => {
       }
     };
 
+    const loadRoleName = async () => {
+      const storedRoleName = await AsyncStorage.getItem('roleName');
+      setRoleName(storedRoleName);
+    };
+
     restoreTimers();
+    loadRoleName();
   }, []);
 
   useEffect(() => {
@@ -183,7 +192,10 @@ const TaskProcessScreen = ({route}: any) => {
       const latitude = location?.latitude ?? 0;
       const longitude = location?.longitude ?? 0;
 
-      const url = `${Config.API_URL}/mobile/CollectorTask/CompleteTask?taskId=${taskData.id}&latitude=${latitude}&longitude=${longitude}`;
+      const url =
+        roleName === 'Collector'
+          ? `${Config.API_URL}/mobile/CollectorTask/CompleteTask?taskId=${taskData.id}&latitude=${latitude}&longitude=${longitude}`
+          : `${Config.API_URL}/mobile/TechnicianTask/CompleteTask?taskId=${taskData.id}&latitude=${latitude}&longitude=${longitude}`;
 
       const response = await fetch(url, {
         method: 'POST',
@@ -214,7 +226,6 @@ const TaskProcessScreen = ({route}: any) => {
       setCompleteTaskLoading(false);
     }
   };
-
   const handleConfirmComplete = async () => {
     setModalVisible(false);
     await completeTask();
@@ -223,7 +234,10 @@ const TaskProcessScreen = ({route}: any) => {
   const startCollection = async () => {
     setLoading(true);
     const token = await AsyncStorage.getItem('userToken');
-    const url = `${Config.API_URL}/mobile/CollectorTask/StartCollection?taskId=${taskData.id}`;
+    const url =
+      roleName === 'Collector'
+        ? `${Config.API_URL}/mobile/CollectorTask/StartCollection?taskId=${taskData.id}`
+        : `${Config.API_URL}/mobile/TechnicianTask/StartTechnicalWork?taskId=${taskData.id}`;
 
     try {
       const response = await fetch(url, {
@@ -291,8 +305,10 @@ const TaskProcessScreen = ({route}: any) => {
           <Text style={styles.primaryButtonText}>
             {loading ? (
               <ActivityIndicator color="#fff" />
-            ) : (
+            ) : roleName === 'Collector' ? (
               'İnkassasiyaya başla'
+            ) : (
+              'Tətbiqə başla'
             )}
           </Text>
         </TouchableOpacity>
@@ -353,7 +369,7 @@ const TaskProcessScreen = ({route}: any) => {
               <View style={styles.stepContent}>
                 <Text
                   style={step >= 0 ? styles.stepTitleActive : styles.stepTitle}>
-                  Marşrut
+                  {roleName === 'Collector' ? 'Marşrut' : 'Marşrut'}
                 </Text>
                 <Text style={styles.stepTime}>{formatTime(taskTimer)}</Text>
               </View>
@@ -368,7 +384,7 @@ const TaskProcessScreen = ({route}: any) => {
               <View style={styles.stepContent}>
                 <Text
                   style={step >= 1 ? styles.stepTitleActive : styles.stepTitle}>
-                  İnkassasiya
+                  {roleName === 'Collector' ? 'İnkassasiya' : 'Tətbiqə başla'}
                 </Text>
                 <Text style={styles.stepTime}>
                   {formatTime(collectionTimer)}
@@ -416,7 +432,7 @@ const TaskProcessScreen = ({route}: any) => {
   );
 };
 
-const CIRCLE_SIZE = 28;
+const CIRCLE_SIZE = 30;
 export default TaskProcessScreen;
 
 const styles = StyleSheet.create({
@@ -434,7 +450,14 @@ const styles = StyleSheet.create({
     marginTop: 5,
   },
   distance: {color: '#1269B5', fontFamily: 'DMSans-SemiBold', marginLeft: 5},
-  timeline: {marginTop: 20},
+  timeline: {
+    height: 'auto',
+    width: '100%',
+    marginTop: 30,
+    shadowColor: '#75ACDA',
+    shadowRadius: 5,
+    elevation: 6,
+  },
   circle: {
     width: CIRCLE_SIZE,
     height: CIRCLE_SIZE,
@@ -454,7 +477,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   stepNum: {
-    fontSize: 10,
+    fontSize: 12,
     fontFamily: 'DMSans-SemiBold',
     color: '#fff',
   },
@@ -487,12 +510,11 @@ const styles = StyleSheet.create({
     fontFamily: 'DMSans-SemiBold',
   },
   verticalLine: {
-    height: 20,
+    height: 60,
     borderLeftWidth: 1,
     borderColor: '#ccc',
     borderStyle: 'dashed',
     marginLeft: CIRCLE_SIZE / 2,
-    alignSelf: 'flex-start',
   },
   bottomButtons: {
     paddingHorizontal: 20,

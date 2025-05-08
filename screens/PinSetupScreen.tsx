@@ -87,17 +87,47 @@ const PinSetupScreen = () => {
       </View>
 
       <View style={styles.numberPad}>
-        {['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'].map(num => (
+        <View style={styles.row}>
+          {['1', '2', '3'].map(num => (
+            <TouchableOpacity
+              key={num}
+              style={styles.numButton}
+              onPress={() => handlePress(num)}>
+              <Text style={styles.numText}>{num}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+        <View style={styles.row}>
+          {['4', '5', '6'].map(num => (
+            <TouchableOpacity
+              key={num}
+              style={styles.numButton}
+              onPress={() => handlePress(num)}>
+              <Text style={styles.numText}>{num}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+        <View style={styles.row}>
+          {['7', '8', '9'].map(num => (
+            <TouchableOpacity
+              key={num}
+              style={styles.numButton}
+              onPress={() => handlePress(num)}>
+              <Text style={styles.numText}>{num}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+        <View style={styles.row}>
+          <View style={styles.numButtonPlaceholder} />
           <TouchableOpacity
-            key={num}
             style={styles.numButton}
-            onPress={() => handlePress(num)}>
-            <Text style={styles.numText}>{num}</Text>
+            onPress={() => handlePress('0')}>
+            <Text style={styles.numText}>0</Text>
           </TouchableOpacity>
-        ))}
-        <TouchableOpacity style={styles.numButton} onPress={handleDelete}>
-          <Text style={styles.numText}>⌫</Text>
-        </TouchableOpacity>
+          <TouchableOpacity style={styles.numButton} onPress={handleDelete}>
+            <Text style={styles.numText}>⌫</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       <TouchableOpacity onPress={handleForgotPin}>
@@ -164,6 +194,18 @@ const styles = StyleSheet.create({
     width: '25%',
     objectFit: 'contain',
     margin: 0,
+  },
+
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    marginBottom: 10,
+  },
+
+  numButtonPlaceholder: {
+    width: 60,
+    height: 60,
   },
 });
 

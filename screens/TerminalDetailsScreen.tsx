@@ -17,20 +17,24 @@ import {useNavigation} from '@react-navigation/native';
 import TopHeader from '../components/TopHeader';
 import CustomModal from '../components/Modal';
 import Config from 'react-native-config';
+type NavigationProp = StackNavigationProp<RootStackParamList, 'Hesabatlar'>;
 
-console.log(Config.API_URL, 'jdfnS');
 const TerminalDetailsScreen = ({route}: any) => {
   const {taskData} = route.params;
-  console.log(taskData, 'Task Data');
-  console.log(route);
-
-  type NavigationProp = StackNavigationProp<RootStackParamList, 'Login'>;
   const [confirmVisible, setConfirmVisible] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [task, setTask] = useState(route.params.taskData);
-
   const [taskInProgress, setTaskInProgress] = useState(false);
   const [customModalVisible, setCustomModalVisible] = useState(false);
+  const [roleName, setRoleName] = useState<string | null>(null);
+
+  useEffect(() => {
+    const loadRoleName = async () => {
+      const storedRoleName = await AsyncStorage.getItem('roleName');
+      setRoleName(storedRoleName);
+    };
+
+    loadRoleName();
+  }, []);
 
   const handleStartTask = async () => {
     if (taskInProgress) {
@@ -44,8 +48,11 @@ const TerminalDetailsScreen = ({route}: any) => {
       setTaskInProgress(true);
 
       const token = await AsyncStorage.getItem('userToken');
-      const url = `${Config.API_URL}/mobile/CollectorTask/StartTask?taskId=${taskData.id}`;
-      console.log(url, 'URL');
+      const url =
+        roleName === 'Collector'
+          ? `${Config.API_URL}/mobile/CollectorTask/StartTask?taskId=${taskData.id}`
+          : `${Config.API_URL}/mobile/TechnicianTask/StartRoute?taskId=${taskData.id}`;
+
       const response = await fetch(url, {
         method: 'POST',
         headers: {
@@ -54,7 +61,6 @@ const TerminalDetailsScreen = ({route}: any) => {
       });
 
       const resText: any = await response.text();
-      console.log('Response:', resText);
 
       if (
         response.status === 400 &&
@@ -90,39 +96,59 @@ const TerminalDetailsScreen = ({route}: any) => {
     }
   };
 
-  const [statusText, setStatusText] = useState('');
-
-  useEffect(() => {
-    if (taskData?.status !== undefined) {
-      const status = getStatusText(taskData.status);
-      setStatusText(status);
-    }
-  }, [taskData]);
-
   const getStatusText = (status: number) => {
-    switch (status) {
-      case 0:
-        return 'Tapşırığa başla';
-      case 1:
-        return 'Tapşırıq icra olunur (Yoldadır)';
-      case 2:
-        return 'İnkassator terminala çatıb';
-      case 3:
-        return 'İnkassasiya prosesi gedir';
-      case 4:
-        return 'Tapşırıq tamamlanıb';
-      case 5:
-        return 'Tapşırıq ləğv olunub';
-      default:
-        return 'Naməlum status';
+    if (roleName === 'Collector') {
+      switch (status) {
+        case 0:
+          return 'Tapşırığa başla';
+        case 1:
+          return 'İnkassasiya prosesi gedir';
+        case 2:
+          return 'İnkassator terminala çatıb';
+        case 3:
+          return 'İnkassasiya prosesi gedir';
+        case 4:
+          return 'Tapşırıq tamamlanıb';
+        case 5:
+          return 'Tapşırıq ləğv olunub';
+        default:
+          return 'Naməlum status';
+      }
+    } else if (roleName === 'Technician') {
+      switch (status) {
+        case 0:
+          return 'Təmir prosesi başla';
+        case 1:
+          return 'Təmir prosesi gedir';
+        case 2:
+          return 'Təmir tamamlandı';
+        case 3:
+          return 'Tapşırıq ləğv olundu';
+        default:
+          return 'Naməlum status';
+      }
     }
+
+    return 'Naməlum status';
   };
 
   const navigation = useNavigation<NavigationProp>();
+  const formatDuration = (durationStr: string) => {
+    if (!durationStr) return 'Qeyd olunmayıb';
+
+    const [hours, minutes, seconds] = durationStr.split(':').map(Number);
+
+    const parts = [];
+    if (hours > 0) parts.push(`${hours} saat`);
+    if (minutes > 0) parts.push(`${minutes} dəqiqə`);
+    if (seconds > 0) parts.push(`${seconds} saniyə`);
+
+    return parts.length > 0 ? parts.join(' ') : '0 saniyə';
+  };
 
   return (
     <View style={styles.container}>
-      <TopHeader title="Terminal detalları" />
+      <TopHeader title="Tapşırıq detalları" />
 
       <View style={styles.terminalInfo}>
         <Text style={styles.terminalName}>
@@ -135,7 +161,7 @@ const TerminalDetailsScreen = ({route}: any) => {
             {taskData.terminal?.address
               ? taskData.terminal.address.charAt(0).toUpperCase() +
                 taskData.terminal.address.slice(1)
-              : ''}
+              : ''}{' '}
           </Text>
         </View>
       </View>
@@ -172,7 +198,7 @@ const TerminalDetailsScreen = ({route}: any) => {
           </View>
           <View style={styles.textWrapper}>
             <Text style={styles.detailText}>
-              {taskData.terminal?.workingHours
+              {taskData?.terminal?.workingHours
                 ? taskData.terminal.workingHours.charAt(0).toUpperCase() +
                   taskData.terminal.workingHours.slice(1)
                 : ''}
@@ -188,16 +214,34 @@ const TerminalDetailsScreen = ({route}: any) => {
           </View>
           <View style={styles.textWrapper}>
             <Text style={styles.detailText}>
-              {taskData.terminal.phone || 'Qeyd olunmayib'}
+              {taskData?.terminal?.responsiblePersonPhone || 'Qeyd olunmayib'}
             </Text>
           </View>
         </View>
+
+        {taskData.taskDuration && <View style={styles.verticalLine} />}
+
+        {taskData.taskDuration && (
+          <View style={styles.timelineItem}>
+            <View style={styles.iconWrapper}>
+              <Icon name="phone" size={15} color="white" />
+            </View>
+            <View style={styles.textWrapper}>
+              <Text style={styles.detailText}>
+                Tapşırığın tamamlanma müddəti:
+                {taskData.taskDuration
+                  ? formatDuration(taskData.taskDuration)
+                  : 'Qeyd olunmayıb'}
+              </Text>
+            </View>
+          </View>
+        )}
       </View>
 
       <CustomModal
         visible={confirmVisible}
         title="Tapşırığa başlamaq istəyirsiniz?"
-        description="Tapşırığa başladıqdan sonra onu yalnız tamamladıqdan sonra bitirə bilərsiniz."
+        description="Tapşırığa başladıqdan sonra onu yalnız tamamladıqda bitirə bilərsiniz."
         confirmText="Bəli"
         cancelText="İmtina"
         onConfirm={handleStartTask}
@@ -216,7 +260,7 @@ const TerminalDetailsScreen = ({route}: any) => {
         <TouchableOpacity
           style={styles.startButton}
           onPress={() => setConfirmVisible(true)}>
-          <Text style={styles.startButtonText}>Marşruta başla </Text>
+          <Text style={styles.startButtonText}>Marşruta başla</Text>
         </TouchableOpacity>
       ) : (
         <View
@@ -225,7 +269,7 @@ const TerminalDetailsScreen = ({route}: any) => {
             {backgroundColor: '#eee', borderColor: '#F5F5F5', borderWidth: 1},
           ]}>
           <Text style={[styles.startButtonText, {color: '#999999'}]}>
-            {statusText}
+            {getStatusText(taskData.status)}
           </Text>
         </View>
       )}

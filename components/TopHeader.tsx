@@ -13,17 +13,24 @@ type TopHeaderProps = {
   rightIconName?: string;
   onRightPress?: () => void;
   rightIconComponent?: React.ReactNode;
+  variant?: 'default' | 'tapsiriq';
 };
 
-const TopHeader = ({title, rightIconName, onRightPress,rightIconComponent}: TopHeaderProps) => {
+const TopHeader = ({
+  title,
+  rightIconName,
+  onRightPress,
+  rightIconComponent,
+  variant,
+}: TopHeaderProps) => {
   const navigation = useNavigation<NavigationProp>();
-
+  const computedHeight = variant === 'tapsiriq' ? 140 : 90;
   return (
     <LinearGradient
       colors={['#3C85C4', '#1269B5']}
       start={{x: 0, y: 0}}
       end={{x: 1, y: 0}}
-      style={styles.header}>
+      style={[styles.header, {height: computedHeight}]}>
       <TouchableOpacity onPress={() => navigation.goBack()}>
         <Icon name="chevron-left" size={24} color="#fff" />
       </TouchableOpacity>
@@ -50,7 +57,6 @@ export default TopHeader;
 const styles = StyleSheet.create({
   header: {
     backgroundColor: '#2D64AF',
-    height: 140,
     paddingHorizontal: 20,
     flexDirection: 'row',
     alignItems: 'center',
@@ -59,11 +65,11 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 16,
   },
   headerText: {
-    color: '#FFF', // Ağ rəng
-    fontFamily: 'DMSans-SemiBold', // Fontu təyin etmək
-    fontSize: 20, // Font ölçüsü
-    fontStyle: 'normal', // Font üslubu
-    fontWeight: '600', // Semibold (qalın)
-    lineHeight: 26, // Sətir hündürlüyü (130% bərabərdir 26px)
+    color: '#FFF',
+    fontFamily: 'DMSans-SemiBold',
+    fontSize: 20,
+    fontStyle: 'normal',
+    fontWeight: '600',
+    lineHeight: 26,
   },
 });

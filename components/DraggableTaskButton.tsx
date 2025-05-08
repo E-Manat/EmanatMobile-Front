@@ -78,8 +78,7 @@ const DraggableTaskButton = () => {
           Math.min(newY, height - BUTTON_SIZE - MARGIN - SAFE_AREA_BOTTOM),
         );
 
-        position.x.setValue(limitedX - position.x._offset);
-        position.y.setValue(limitedY - position.y._offset);
+        position.setValue({x: limitedX, y: limitedY});
       },
       onPanResponderRelease: () => {
         position.flattenOffset();

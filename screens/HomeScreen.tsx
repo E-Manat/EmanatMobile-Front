@@ -42,7 +42,9 @@ const HomeScreen = () => {
   }, []);
 
   return (
-    <ScrollView style={globalStyles.container}>
+    <ScrollView
+      style={globalStyles.container}
+      contentContainerStyle={{paddingBottom: 40}}>
       <HomeHeader />
       <Banner />
       <MenuCard
@@ -51,16 +53,12 @@ const HomeScreen = () => {
         screenName="Tapşırıqlar"
         iconName={<Image1 />}
       />
-      {roleName && roleName === 'Collector' ? (
-        <MenuCard
-          title="Terminallar"
-          description="Ərazi üzrə terminalların siyahısı"
-          screenName="Terminallar"
-          iconName={<Image2 />}
-        />
-      ) : (
-        ''
-      )}
+      <MenuCard
+        title="Terminallar"
+        description="Ərazi üzrə terminalların siyahısı"
+        screenName="Terminallar"
+        iconName={<Image2 />}
+      />
 
       <MenuCard
         title="Hesabatlar"

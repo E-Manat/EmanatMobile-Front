@@ -16,10 +16,9 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
-import {launchCamera} from 'react-native-image-picker';
+import Icon2 from 'react-native-vector-icons/Entypo';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Toast from 'react-native-toast-message';
-import {apiService} from '../services/apiService';
 import {RootStackParamList} from '../App';
 import {StackNavigationProp} from '@react-navigation/stack';
 import TopHeader from '../components/TopHeader';
@@ -175,7 +174,7 @@ const ProfileScreen = () => {
                 />
               </TouchableOpacity>
 
-              {/* <TouchableOpacity style={styles.itemContainer}>
+              <TouchableOpacity style={styles.itemContainer}>
                 <View style={styles.iconBox}>
                   <SecurityIcon color="#1269B5" />
                 </View>
@@ -186,7 +185,27 @@ const ProfileScreen = () => {
                   color="#98A2B3"
                   style={styles.arrowIcon}
                 />
-              </TouchableOpacity> */}
+              </TouchableOpacity>
+
+              <TouchableOpacity style={styles.itemContainer}>
+                <View style={styles.box}>
+                  <View style={styles.iconBox}>
+                    <Icon2 color="#1269B5" name="google-play" size={20} />
+                  </View>
+                  <View>
+                    <Text style={styles.text}>Proqram versiyası</Text>
+                    <Text style={styles.textVersion}>1.0.1</Text>
+                  </View>
+                </View>
+                <View>
+                  <Icon
+                    name="chevron-right"
+                    size={20}
+                    color="#98A2B3"
+                    style={styles.arrowIcon}
+                  />
+                </View>
+              </TouchableOpacity>
 
               <TouchableOpacity
                 style={styles.itemContainer}
@@ -250,6 +269,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     gap: 15,
     flexDirection: 'column',
+    fontFamily: 'DM Sans',
   },
   header: {
     backgroundColor: '#2D64AF',
@@ -393,6 +413,19 @@ const styles = StyleSheet.create({
     backgroundColor: '#F9FAFB',
     padding: 12,
     borderRadius: 12,
+    justifyContent: 'space-between',
     marginVertical: 8,
+  },
+  textVersion: {
+    color: '#9E9E9E',
+    fontFamily: 'DM Sans',
+    fontSize: 10,
+    fontStyle: 'normal',
+    fontWeight: '400',
+    lineHeight: 15,
+  },
+  box: {
+    display: 'flex',
+    flexDirection: 'row',
   },
 });

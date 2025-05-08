@@ -154,7 +154,6 @@ const NotificationsScreen = () => {
           .configureLogging(signalR.LogLevel.Information)
           .build();
 
-        // Eyni event-lərin təkrarlanmaması üçün əvvəlcə silirik
         connection.off('ReceiveNotification');
 
         connection.on('ReceiveNotification', (notification: any) => {
@@ -569,65 +568,68 @@ const NotificationsScreen = () => {
           style={{marginTop: 60}}
         />
       ) : (
-        <FlatList
-          data={filteredData}
-          keyExtractor={(item: any) => String(item.id)}
-          renderItem={renderItem}
-          ListHeaderComponent={() =>
-            filteredData.length ? (
-              <>
-                <View
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'row',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                  }}>
-                  <Text style={styles.sectionTitle}>
-                    {filteredData[0].date}
-                  </Text>
-                  <TouchableOpacity
-                    onPress={handleDeleteAll}
+        <View>
+          {' '}
+          <FlatList
+            data={filteredData}
+            keyExtractor={(item: any) => String(item.id)}
+            renderItem={renderItem}
+            ListHeaderComponent={() =>
+              filteredData.length ? (
+                <>
+                  <View
                     style={{
-                      padding: 10,
-                      borderRadius: 8,
-                      marginBottom: 10,
+                      display: 'flex',
+                      flexDirection: 'row',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
                     }}>
-                    <Text style={{color: '#000'}}>Hamısını Sil</Text>
-                  </TouchableOpacity>
-                </View>
-              </>
-            ) : null
-          }
-          ListEmptyComponent={() =>
-            data.length === 0 ? (
-              <View style={styles.noResult}>
-                <Image
-                  source={require('../assets/img/notification_empty.png')}
-                  style={styles.noContentImage}
-                />
-                <Text style={styles.noContentLabel}>
-                  Hazırda heç bir bildirişiniz yoxdur.
-                </Text>
-                <Text style={styles.noContentText}>
-                  Yeni bildirişlər burada görünəcək.
-                </Text>
-              </View>
-            ) : (
-              filter === 'unread' && (
+                    <Text style={styles.sectionTitle}>
+                      {filteredData[0].date}
+                    </Text>
+                    <TouchableOpacity
+                      onPress={handleDeleteAll}
+                      style={{
+                        padding: 10,
+                        borderRadius: 8,
+                        marginBottom: 10,
+                      }}>
+                      <Text style={styles.deleteAllText}>Hamısını Sil</Text>
+                    </TouchableOpacity>
+                  </View>
+                </>
+              ) : null
+            }
+            ListEmptyComponent={() =>
+              data.length === 0 ? (
                 <View style={styles.noResult}>
                   <Image
                     source={require('../assets/img/notification_empty.png')}
                     style={styles.noContentImage}
                   />
                   <Text style={styles.noContentLabel}>
-                    Oxunmamış bildiriş yoxdur.
+                    Hazırda heç bir bildirişiniz yoxdur.
+                  </Text>
+                  <Text style={styles.noContentText}>
+                    Yeni bildirişlər burada görünəcək.
                   </Text>
                 </View>
+              ) : (
+                filter === 'unread' && (
+                  <View style={styles.noResult}>
+                    <Image
+                      source={require('../assets/img/notification_empty.png')}
+                      style={styles.noContentImage}
+                    />
+                    <Text style={styles.noContentLabel}>
+                      Oxunmamış bildiriş yoxdur.
+                    </Text>
+                  </View>
+                )
               )
-            )
-          }
-        />
+            }
+          />
+        </View>
       )}
 
       <Modal visible={modalVisible} transparent animationType="fade">
@@ -689,6 +691,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingVertical: 15,
+    height: 80,
   },
   headerTitle: {
     fontSize: 18,
@@ -853,8 +856,8 @@ const styles = StyleSheet.create({
     gap: 5,
     width: '100%',
     height: '100%',
-    paddingTop: 80,
-    paddingHorizontal: 50,
+    textAlign: 'center',
+    paddingTop:"30%"
   },
   noContentImage: {
     width: 180,
@@ -877,5 +880,12 @@ const styles = StyleSheet.create({
     fontStyle: 'normal',
     fontWeight: '400',
     lineHeight: 21,
+  },
+  deleteAllText: {
+    color: 'var(--Neutral-700, #616161)',
+    fontFamily: 'DMSans-SemiBold',
+    fontSize: 12,
+    fontStyle: 'normal',
+    fontWeight: '400',
   },
 });

@@ -244,6 +244,7 @@ const App = () => {
             <Stack.Screen name="Hesabatlar" component={ReportsScreen} />
             <Stack.Screen name="YeniHesabat" component={NewReportScreen} />
             <Stack.Screen name="Terminallar" component={TerminalsScreen} />
+
             <Stack.Screen name="TaskProcess" component={TaskProcessScreen} />
             <Stack.Screen
               name="ProfileDetail"

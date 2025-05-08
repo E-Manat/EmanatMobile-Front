@@ -259,11 +259,12 @@ const NewReportScreen = () => {
 
           <Picker
             selectedValue={selectedTerminal}
+            style={[styles.customPicker, problemError && {borderColor: 'red'}]}
             onValueChange={itemValue => setSelectedTerminal(itemValue)}>
             <Picker.Item
               label="Terminal seçin"
               value=""
-              style={styles.customPicker}
+              style={styles.customPickerLabel}
             />
             {terminalList &&
               terminalList?.map((terminal: any) => (

@@ -91,10 +91,10 @@ const TasksScreen: React.FC = () => {
       setLoading(false);
     }
   };
-
   useFocusEffect(
     useCallback(() => {
-      fetchTasks(); // Default olaraq bütün dataları gətir
+      fetchTasks(1); // Default olaraq İcra olunan (1) statuslu dataları gətir
+      setSelectedFilter('İcra olunan'); // UI-də də uyğun button seçilsin
     }, []),
   );
 
@@ -128,9 +128,15 @@ const TasksScreen: React.FC = () => {
       onPress={async () => {
         try {
           setLoading(true);
-          const taskDetails = await apiService.get(
-            `/mobile/CollectorTask/GetById?id=${item.id}`,
-          );
+          const roleName = await AsyncStorage.getItem('roleName');
+          const isCollector = roleName === 'Collector';
+
+          const endpoint = isCollector
+            ? `/mobile/CollectorTask/GetById?id=${item.id}`
+            : `/mobile/TechnicianTask/GetById?id=${item.id}`;
+
+          const taskDetails = await apiService.get(endpoint);
+
           console.log(taskDetails, 'taskDetails');
           navigation.navigate('TerminalEtrafli', {taskData: taskDetails});
         } catch (err) {
@@ -146,7 +152,9 @@ const TasksScreen: React.FC = () => {
         ]}>
         <View style={styles.taskContent}>
           <Text style={styles.taskTitle}>Terminal ID : {item.code}</Text>
-          <Text style={styles.taskDistance}>Adress: {item.address}</Text>
+          <Text style={styles.taskDistance}>
+            Adress: {item.address || item.terminal.address}
+          </Text>
         </View>
         <View>
           <Dot
@@ -223,6 +231,7 @@ const TasksScreen: React.FC = () => {
     <View style={styles.container}>
       <TopHeader
         title="Tapşırıqlar"
+        variant="tapsiriq"
         onRightPress={() => fetchTasks()}
         rightIconComponent={<RefreshIcon color="#fff" />}
       />
@@ -351,8 +360,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     paddingVertical: 30,
     margin: 'auto',
-    transform: [{translateY: -50}],
-    width: '80%',
+    transform: [{translateY: -46}],
+    width: '89%',
     zIndex: 3,
     backgroundColor: '#fff',
     shadowColor: 'rgba(83, 121, 198, 0.95)',
@@ -425,6 +434,9 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     flexDirection: 'row',
     alignItems: 'center',
+    shadowColor: '#75ACDA',
+    shadowRadius: 5,
+    elevation: 6,
   },
   taskContent: {
     flex: 1,
@@ -453,7 +465,6 @@ const styles = StyleSheet.create({
   noResult: {
     color: '#A8A8A8',
     fontSize: 16,
-    marginTop: 20,
     display: 'flex',
     flexDirection: 'column',
     justifyContent: 'center',

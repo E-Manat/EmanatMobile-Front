@@ -22,6 +22,7 @@ import {
   UserIcon,
 } from '../assets/icons';
 import {apiService} from '../services/apiService';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const TerminallarScreen = () => {
   const [selectedTerminal, setSelectedTerminal] = useState<any>(null);
@@ -34,7 +35,7 @@ const TerminallarScreen = () => {
 
     try {
       const response = await apiService.get(
-        `/Terminal/GetById?id=${terminal.id}`,
+        `/mobile/Terminal/GetById?id=${terminal.id}`,
       );
       console.log(response, 'Terminal details');
       setSelectedTerminal(response);
@@ -51,20 +52,27 @@ const TerminallarScreen = () => {
   const [loading, setLoading] = useState<boolean>(false);
 
   useEffect(() => {
-    const fetchTasks = async () => {
+    const fetchTerminals = async () => {
       setLoading(true);
       try {
-        const response = await apiService.get('/mobile/Terminal/GetAll');
+        const roleName = await AsyncStorage.getItem('roleName');
+
+        const url =
+          roleName === 'Collector'
+            ? '/mobile/Terminal/GetCollectorAreaTerminals'
+            : '/mobile/Terminal/GetTechnicianAreaTerminals';
+
+        const response = await apiService.get(url);
         console.log(response, 'response');
         setTerminals(response);
       } catch (error) {
-        console.error('Reportlar alınarkən xəta:', error);
+        console.error('Terminals alınarkən xəta:', error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchTasks();
+    fetchTerminals();
   }, []);
 
   const TerminalCard = ({terminal}: any) => (
