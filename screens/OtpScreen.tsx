@@ -1,3 +1,4 @@
+import {StackNavigationProp} from '@react-navigation/stack';
 import React, {useState} from 'react';
 import {
   View,
@@ -6,17 +7,29 @@ import {
   TouchableOpacity,
   StyleSheet,
 } from 'react-native';
+import {RootStackParamList} from '../App';
+import {useNavigation} from '@react-navigation/native';
+import Icon from 'react-native-vector-icons/Feather';
 
 const OtpScreen = () => {
-  const [otp, setOtp] = useState(['', '', '', '', '', '']);
+  type NavigationProp = StackNavigationProp<RootStackParamList, 'Login'>;
 
+  const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const handleChange = (text: any, index: any) => {
     const newOtp = [...otp];
     newOtp[index] = text;
     setOtp(newOtp);
   };
+
+  const navigation = useNavigation<NavigationProp>();
+
   return (
     <View style={styles.container}>
+      <TouchableOpacity
+        style={styles.backButton}
+        onPress={() => navigation.goBack()}>
+        <Icon name="chevron-left" size={24} color="#2D64AF" />
+      </TouchableOpacity>
       <Text style={styles.title}>OTP təsdiqlə</Text>
       <Text style={styles.subtitle}>
         Zəhmət olmasa, Mail vasitəsilə ilə göndərilmiş 6 rəqəmli şifrəni daxil
@@ -53,7 +66,7 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 24,
     justifyContent: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: 'red',
   },
   title: {
     fontSize: 28,
@@ -99,6 +112,10 @@ const styles = StyleSheet.create({
   resendLink: {
     color: '#007aff',
     fontWeight: '500',
+  },
+  backButton: {
+    position: 'absolute',
+    left: 0,
   },
 });
 

@@ -103,9 +103,10 @@ const LoginScreen = () => {
           emailError && {borderColor: '#EF5350'},
         ]}>
         <TextInput
-          placeholder="Email"
+          placeholder="namesurname@gmail.com"
           style={styles.input}
           keyboardType="email-address"
+          placeholderTextColor="#9E9E9E"
           autoCapitalize="none"
           value={email}
           onChangeText={setEmail}
@@ -123,9 +124,10 @@ const LoginScreen = () => {
           passwordError && {borderColor: '#EF5350'},
         ]}>
         <TextInput
-          placeholder="Şifrə"
+          placeholder="********"
           style={styles.input}
           secureTextEntry={!showPassword}
+          placeholderTextColor="#9E9E9E"
           value={password}
           onChangeText={setPassword}
           onFocus={() => setFocusedInput('password')}
@@ -198,17 +200,23 @@ const styles = StyleSheet.create({
     backgroundColor: '#F6F6F6',
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#ddd',
     paddingHorizontal: 10,
     marginTop: 20,
     paddingVertical: 12,
+    borderColor: '#FEF5E7',
   },
   input: {
     flex: 1,
-    fontSize: 16,
+    fontSize: 14,
     color: '#9E9E9E',
     backgroundColor: '#F6F6F6',
     fontFamily: 'DMSans-Regular',
+    height: 52,
+    paddingTop: 14,
+    paddingRight: 12,
+    paddingBottom: 14,
+    alignItems: 'center',
+    alignSelf: 'stretch',
   },
   forgotPassword: {
     alignSelf: 'flex-end',
@@ -222,8 +230,9 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
     borderRadius: 8,
     alignItems: 'center',
+    height: 48,
   },
-  buttonText: {color: '#fff', fontSize: 16, fontFamily: 'DMSans-Regular'},
+  buttonText: {color: '#fff', fontSize: 14, fontFamily: 'DMSans-Regular'},
   errorText: {color: '#EF5350', fontSize: 12, marginVertical: 5},
   profileImage: {
     width: 70,

@@ -1,41 +1,68 @@
 import React, {useEffect, useState} from 'react';
-import {View, StyleSheet, Image, Alert, Linking, AppState} from 'react-native';
+import {
+  View,
+  StyleSheet,
+  Image,
+  Alert,
+  Linking,
+  AppState,
+  Button,
+  TouchableOpacity,
+} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {checkAndForceLocation} from '../utils/locationPermissionHandler';
 import CustomModal from '../components/Modal';
-import axios from 'axios';
-import Config from 'react-native-config';
-import {getVersion} from 'react-native-device-info';
+import {Text} from 'react-native-gesture-handler';
 
 const SplashScreen = ({navigation}: any) => {
   const [modalVisible, setModalVisible] = useState(false);
   const [newVersionCode, setNewVersionCode] = useState(0);
   const [downloadUrl, setDownloadUrl] = useState('');
 
-  useEffect(() => {
-    const init = async () => {
-      const gpsAllowed = await checkAndForceLocation();
-      console.log(gpsAllowed, 'gps');
-      if (!gpsAllowed) {
-        setModalVisible(true);
-        return;
-      }
+  // useEffect(() => {
+  //   const init = async () => {
+  //     const gpsAllowed = await checkAndForceLocation();
+  //     console.log(gpsAllowed, 'gps');
+  //     if (!gpsAllowed) {
+  //       setModalVisible(true);
+  //       return;
+  //     }
 
-      const userToken = await AsyncStorage.getItem('userToken');
-      const userPin = await AsyncStorage.getItem('userPin');
-      const isLoggedIn = await AsyncStorage.getItem('isLoggedIn');
+  //     const userToken = await AsyncStorage.getItem('userToken');
+  //     const userPin = await AsyncStorage.getItem('userPin');
+  //     const isLoggedIn = await AsyncStorage.getItem('isLoggedIn');
 
-      if (userToken && userPin && isLoggedIn) {
-        navigation.replace('Ana səhifə');
-      } else if (userToken) {
-        navigation.replace('PinSetup');
-      } else {
-        navigation.replace('Login');
-      }
-    };
+  //     if (userToken && userPin && isLoggedIn) {
+  //       navigation.replace('Ana səhifə');
+  //     } else if (userToken) {
+  //       navigation.replace('PinSetup');
+  //     } else {
+  //       navigation.replace('Login');
+  //     }
+  //   };
 
-    init();
-  }, []);
+  //   init();
+  // }, []);
+
+  const handleStart = async () => {
+    const gpsAllowed = await checkAndForceLocation();
+    if (!gpsAllowed) {
+      setModalVisible(true);
+      return;
+    }
+
+    const userToken = await AsyncStorage.getItem('userToken');
+    const userPin = await AsyncStorage.getItem('userPin');
+    const isLoggedIn = await AsyncStorage.getItem('isLoggedIn');
+
+    if (userToken && userPin && isLoggedIn) {
+      navigation.replace('Ana səhifə');
+    } else if (userToken) {
+      navigation.replace('PinSetup');
+    } else {
+      navigation.replace('Login');
+    }
+  };
 
   useEffect(() => {
     const subscription = AppState.addEventListener(
@@ -45,7 +72,7 @@ const SplashScreen = ({navigation}: any) => {
           const gpsAllowed = await checkAndForceLocation();
           if (gpsAllowed) {
             setModalVisible(false);
-            navigation.replace('SplashScreen'); // Eyni səhifəni yenidən yüklə
+            navigation.replace('SplashScreen');
           }
         }
       },
@@ -76,10 +103,26 @@ const SplashScreen = ({navigation}: any) => {
   return (
     <>
       <View style={styles.container}>
-        <Image
-          source={require('../assets/img/splashImage.png')}
-          style={styles.emanatImage}
-        />
+        <View style={styles.splashContainer}>
+          <Image
+            source={require('../assets/img/splashImage.png')}
+            style={styles.emanatImage}
+          />
+          <Image
+            source={require('../assets/img/inkassator.png')}
+            style={styles.splashImage}
+          />
+          <Text style={styles.title}>
+            İnkassasiya əməliyyatlarını asanlaşdırın
+          </Text>
+          <Text style={styles.description}>
+            Tapşırıqlarınızı idarə edin, terminalları izləyin və hesabatlara
+            nəzarət edin.
+          </Text>
+          <TouchableOpacity style={styles.button} onPress={handleStart}>
+            <Text style={styles.buttonText}>Başla</Text>
+          </TouchableOpacity>
+        </View>
       </View>{' '}
       <CustomModal
         visible={modalVisible}
@@ -95,14 +138,67 @@ const SplashScreen = ({navigation}: any) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
+    flexDirection: 'column',
     alignItems: 'center',
     backgroundColor: '#1269B5',
     width: '100%',
+    height: '100%',
+  },
+  splashContainer: {
+    width: '88%',
+    height: 'auto',
+    display: 'flex',
+    flexDirection: 'column',
   },
   emanatImage: {
-    width: '60%',
+    width: '50%',
+    height: 100,
     resizeMode: 'contain',
+    alignSelf: 'center',
+  },
+  splashImage: {
+    width: '75%',
+    height: 350,
+    resizeMode: 'contain',
+    alignSelf: 'center',
+  },
+  title: {
+    color: '#FFFFFF',
+    fontFamily: 'DMSans-SemiBold',
+    fontSize: 24,
+    fontStyle: 'normal',
+    fontWeight: '600',
+    lineHeight: 31.2,
+  },
+  description: {
+    color: '#FFFFFF',
+    fontFamily: 'DMSans-Regular',
+    fontSize: 14,
+    fontStyle: 'normal',
+    fontWeight: '400',
+    marginTop: 10,
+  },
+  button: {
+    display: 'flex',
+    height: 48,
+    minWidth: 128,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 12,
+    alignSelf: 'stretch',
+    borderRadius: 8,
+    marginTop: 15,
+    backgroundColor: '#F99D19',
+  },
+  buttonText: {
+    color: '#FFFFFF',
+    textAlign: 'center',
+    fontFamily: 'DMSans-Regular',
+    fontSize: 14,
+    fontStyle: 'normal',
+    fontWeight: '400',
+    lineHeight: 21,
   },
 });
 

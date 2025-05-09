@@ -163,10 +163,6 @@ const OtpSubmit = () => {
           />
         ))}
       </View>
-      <TouchableOpacity style={styles.verifyButton} onPress={handleSubmit}>
-        <Text style={styles.verifyButtonText}>Təsdiqlə</Text>
-      </TouchableOpacity>
-      <Text style={styles.resendText}>6-rəqəmli kod əldə etmisinizmi? </Text>{' '}
       {isLoading ? (
         <ActivityIndicator
           size="small"
@@ -178,6 +174,10 @@ const OtpSubmit = () => {
           Yenidən göndər
         </Text>
       )}
+      <TouchableOpacity style={styles.verifyButton} onPress={handleSubmit}>
+        <Text style={styles.verifyButtonText}>Təsdiqlə</Text>
+      </TouchableOpacity>
+      <Text style={styles.resendText}>6-rəqəmli kod əldə etmisinizmi? </Text>{' '}
       <CustomModal {...modalProps} visible={modalVisible} />
     </KeyboardAvoidingView>
   );
@@ -190,9 +190,12 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 24,
     backgroundColor: 'white',
+    position: 'relative',
   },
   backButton: {
-    marginTop: 20,
+    marginTop: 30,
+    position: 'absolute',
+    left: 15,
   },
   backText: {
     fontSize: 16,
@@ -252,5 +255,7 @@ const styles = StyleSheet.create({
     color: '#1269B5',
     fontWeight: '600',
     fontFamily: 'DMSans-SemiBold',
+    marginBottom: 15,
+    alignSelf: 'flex-end',
   },
 });

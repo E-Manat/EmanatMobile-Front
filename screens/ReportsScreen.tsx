@@ -10,10 +10,10 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
   ActivityIndicator,
-  Modal,
   Image,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
+import Modal from 'react-native-modal';
 
 import moment from 'moment';
 import {apiService} from '../services/apiService';
@@ -186,30 +186,27 @@ const ReportsScreen = () => {
         </View>
 
         <Modal
-          animationType="slide"
-          transparent={true}
-          visible={modalVisible}
-          onRequestClose={() => setModalVisible(false)}>
-          <TouchableWithoutFeedback onPress={() => setModalVisible(false)}>
-            <View style={styles.modalOverlay}>
-              <TouchableWithoutFeedback onPress={() => null}>
-                <View style={styles.modalContent}>
-                  {FILTER_OPTIONS.map(option => renderFilterOption(option))}
-
-                  <View style={{alignItems: 'center', marginVertical: 20}}>
-                    <TouchableOpacity
-                      style={styles.applyButton}
-                      onPress={() => {
-                        setModalVisible(false);
-                        fetchReports();
-                      }}>
-                      <Text style={styles.buttonText}>Tətbiq et</Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              </TouchableWithoutFeedback>
+          isVisible={modalVisible}
+          onBackdropPress={() => setModalVisible(false)}
+          onSwipeComplete={() => setModalVisible(false)}
+          swipeDirection="down"
+          style={{justifyContent: 'flex-end', margin: 0}}
+          backdropTransitionOutTiming={0}
+          animationOutTiming={700}>
+          <View style={styles.modalContent}>
+            <View style={styles.line}></View>
+            {FILTER_OPTIONS.map(option => renderFilterOption(option))}
+            <View style={{alignItems: 'center', marginVertical: 20}}>
+              <TouchableOpacity
+                style={styles.applyButton}
+                onPress={() => {
+                  setModalVisible(false);
+                  fetchReports();
+                }}>
+                <Text style={styles.buttonText}>Tətbiq et</Text>
+              </TouchableOpacity>
             </View>
-          </TouchableWithoutFeedback>
+          </View>
         </Modal>
 
         {loading ? (
@@ -367,11 +364,6 @@ const styles = StyleSheet.create({
     fontWeight: '400',
     lineHeight: 21,
   },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    justifyContent: 'flex-end',
-  },
 
   modalContent: {
     backgroundColor: '#fff',
@@ -386,7 +378,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#1269B5',
     flexDirection: 'column',
     width: '100%',
-    height: 50,
+    height: 48,
     textAlign: 'center',
     justifyContent: 'center',
     alignItems: 'center',
@@ -418,7 +410,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   filterOptionText: {
-    color: '#424242', // Fallback rəngi
+    color: '#424242',
     fontFamily: 'DMSans-Regular',
     fontSize: 16,
     fontStyle: 'normal',
@@ -435,5 +427,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: '#EFF8FF',
     marginRight: 10,
+  },
+  line: {
+    borderRadius: 108,
+    backgroundColor: '#B9C0C9',
+    width: 94,
+    height: 6,
+    flexShrink: 0,
+    alignSelf: 'center',
   },
 });

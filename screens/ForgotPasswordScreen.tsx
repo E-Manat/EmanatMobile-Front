@@ -110,6 +110,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
     gap: 10,
     height: '100%',
+    position: 'relative',
   },
   title: {
     color: '#063A66',
@@ -136,11 +137,13 @@ const styles = StyleSheet.create({
   input: {
     height: 52,
     backgroundColor: '#f4f4f4',
-    borderRadius: 10,
     paddingHorizontal: 16,
     fontSize: 16,
     fontFamily: 'DMSans-Regular',
     marginBottom: 32,
+    borderColor: '#FEF5E7',
+    borderRadius: 8,
+    borderWidth: 1,
   },
   button: {
     borderRadius: 8,
@@ -149,9 +152,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     gap: 12,
-    height: 52,
+    height: 48,
     minWidth: 128,
-    padding: 16,
   },
   buttonText: {
     color: '#FFFFFF',
@@ -163,7 +165,9 @@ const styles = StyleSheet.create({
     lineHeight: 21,
   },
   backButton: {
-    marginTop: 20,
+    marginTop: 30,
+    position: 'absolute',
+    left: 15,
   },
 });
 

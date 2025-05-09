@@ -18,6 +18,7 @@ import {useNavigation} from '@react-navigation/native';
 import TopHeader from '../components/TopHeader';
 import CustomModal from '../components/Modal';
 import Config from 'react-native-config';
+import {ScrollView} from 'react-native-gesture-handler';
 type NavigationProp = StackNavigationProp<RootStackParamList, 'Hesabatlar'>;
 
 const TerminalDetailsScreen = ({route}: any) => {
@@ -28,6 +29,7 @@ const TerminalDetailsScreen = ({route}: any) => {
   const [customModalVisible, setCustomModalVisible] = useState(false);
   const [roleName, setRoleName] = useState<string | null>(null);
 
+  console.log(taskData, 'dd');
   useEffect(() => {
     const loadRoleName = async () => {
       const storedRoleName = await AsyncStorage.getItem('roleName');
@@ -98,6 +100,7 @@ const TerminalDetailsScreen = ({route}: any) => {
   };
 
   const getStatusText = (status: number) => {
+    console.log(roleName, 'r');
     if (roleName === 'Collector') {
       switch (status) {
         case 0:
@@ -129,10 +132,9 @@ const TerminalDetailsScreen = ({route}: any) => {
           return 'Naməlum status';
       }
     }
-
-    return 'Naməlum status';
   };
 
+  console.log(getStatusText(taskData.status))
   const navigation = useNavigation<NavigationProp>();
   const formatDuration = (durationStr: string) => {
     if (!durationStr) return 'Qeyd olunmayıb';
@@ -147,134 +149,193 @@ const TerminalDetailsScreen = ({route}: any) => {
     return parts.length > 0 ? parts.join(' ') : '0 saniyə';
   };
 
+  const getStatusColor = (status: number) => {
+    switch (status) {
+      case 0:
+        return '#9E9E9E';
+      case 4:
+        return '#38C172';
+      case 1:
+      case 2:
+      case 3:
+        return '#FFB600';
+      case 5:
+        return '#F03E5C';
+      default:
+        return '#9E9E9E';
+    }
+  };
+
   return (
-    <View style={styles.container}>
-      <TopHeader title="Tapşırıq detalları" />
+    <ScrollView contentContainerStyle={{flexGrow: 1}}>
+      <View style={styles.container}>
+        <TopHeader title="Tapşırıq detalları" />
 
-      <View style={styles.terminalInfo}>
-        <View style={styles.terminalName}>
-          <Icon name="location-dot" size={20} color="#1976D2" />
-          <Text style={styles.terminalCode}> {taskData?.terminal?.code}</Text>
-        </View>
-        <View style={styles.statusContainer}>
-          <Text style={styles.location}>
-            {' '}
-            {taskData.terminal?.address
-              ? taskData.terminal.address.charAt(0).toUpperCase() +
-                taskData.terminal.address.slice(1)
-              : ''}{' '}
-          </Text>
-        </View>
-      </View>
-
-      <Image source={require('../assets/img/araz.png')} style={styles.image} />
-
-      <View style={styles.details}>
-        <Text style={styles.detailTitle}>
-          {taskData.terminal?.address
-            ? taskData.terminal.address.charAt(0).toUpperCase() +
-              taskData.terminal.address.slice(1)
-            : ''}
-        </Text>
-
-        <View style={styles.timelineItem}>
-          <View style={styles.iconWrapper}>
-            <Icon name="location-dot" size={15} color="white" />
+        <View style={styles.terminalInfo}>
+          <View style={styles.terminalName}>
+            <View
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                flexDirection: 'row',
+                alignItems: 'center',
+              }}>
+              <Icon name="location-dot" size={20} color="#1976D2" />{' '}
+              <Text style={styles.terminalCode}>
+                {' '}
+                {taskData?.terminal?.code}
+              </Text>
+            </View>
+            <View
+              style={[
+                styles.statusDot,
+                {backgroundColor: getStatusColor(taskData.status)},
+              ]}
+            />
           </View>
-          <View style={styles.textWrapper}>
-            <Text style={styles.detailText}>
+          <View style={styles.statusContainer}>
+            <Text style={styles.location}>
+              {' '}
               {taskData.terminal?.address
                 ? taskData.terminal.address.charAt(0).toUpperCase() +
                   taskData.terminal.address.slice(1)
-                : ''}
+                : ''}{' '}
             </Text>
           </View>
         </View>
 
-        <View style={styles.verticalLine} />
+        <Image
+          source={require('../assets/img/araz.png')}
+          style={styles.image}
+        />
 
-        <View style={styles.timelineItem}>
-          <View style={styles.iconWrapper}>
-            <Icon1 name="watch-later" size={15} color="white" />
-          </View>
-          <View style={styles.textWrapper}>
-            <Text style={styles.detailText}>
-              {taskData?.terminal?.workingHours
-                ? taskData.terminal.workingHours.charAt(0).toUpperCase() +
-                  taskData.terminal.workingHours.slice(1)
-                : ''}
-            </Text>
-          </View>
-        </View>
+        <View style={styles.details}>
+          <Text style={styles.detailTitle}>
+            {taskData.terminal?.address
+              ? taskData.terminal.address.charAt(0).toUpperCase() +
+                taskData.terminal.address.slice(1)
+              : ''}
+          </Text>
 
-        <View style={styles.verticalLine} />
-
-        <View style={styles.timelineItem}>
-          <View style={styles.iconWrapper}>
-            <Icon name="phone" size={15} color="white" />
-          </View>
-          <View style={styles.textWrapper}>
-            <Text style={styles.detailText}>
-              {taskData?.terminal?.responsiblePersonPhone || 'Qeyd olunmayib'}
-            </Text>
-          </View>
-        </View>
-
-        {taskData.taskDuration && <View style={styles.verticalLine} />}
-
-        {taskData.taskDuration && (
           <View style={styles.timelineItem}>
             <View style={styles.iconWrapper}>
-              <Icon2 name="check-circle-fill" size={15} color="white" />
+              <Icon name="location-dot" size={15} color="white" />
             </View>
             <View style={styles.textWrapper}>
               <Text style={styles.detailText}>
-                Tapşırığın tamamlanma müddəti:
-                {taskData.taskDuration
-                  ? formatDuration(taskData.taskDuration)
-                  : 'Qeyd olunmayıb'}
+                {taskData.terminal?.address
+                  ? taskData.terminal.address.charAt(0).toUpperCase() +
+                    taskData.terminal.address.slice(1)
+                  : ''}
               </Text>
             </View>
           </View>
+
+          <View style={styles.verticalLine} />
+
+          <View style={styles.timelineItem}>
+            <View style={styles.iconWrapper}>
+              <Icon1 name="watch-later" size={15} color="white" />
+            </View>
+            <View style={styles.textWrapper}>
+              <Text style={styles.detailText}>
+                {taskData?.terminal?.workingHours
+                  ? taskData.terminal.workingHours.charAt(0).toUpperCase() +
+                    taskData.terminal.workingHours.slice(1)
+                  : ''}
+              </Text>
+            </View>
+          </View>
+
+          <View style={styles.verticalLine} />
+
+          <View style={styles.timelineItem}>
+            <View style={styles.iconWrapper}>
+              <Icon name="phone" size={15} color="white" />
+            </View>
+            <View style={styles.textWrapper}>
+              <Text style={styles.detailText}>
+                {taskData?.terminal?.responsiblePersonPhone || 'Qeyd olunmayib'}
+              </Text>
+            </View>
+          </View>
+
+          {taskData.taskDuration && <View style={styles.verticalLine} />}
+
+          {taskData.taskDuration && (
+            <View style={styles.timelineItem}>
+              <View style={styles.iconWrapper}>
+                <Icon2 name="check-circle-fill" size={15} color="white" />
+              </View>
+              <View style={styles.textWrapper}>
+                <Text style={styles.detailText}>
+                  Tapşırığın tamamlanma müddəti:
+                  {taskData.taskDuration
+                    ? formatDuration(taskData.taskDuration)
+                    : 'Qeyd olunmayıb'}
+                </Text>
+              </View>
+            </View>
+          )}
+
+          {taskData.totalProcessDuration && (
+            <View style={styles.verticalLine} />
+          )}
+
+          {taskData.totalProcessDuration && (
+            <View style={styles.timelineItem}>
+              <View style={styles.iconWrapper}>
+                <Icon2 name="check-circle-fill" size={15} color="white" />
+              </View>
+              <View style={styles.textWrapper}>
+                <Text style={styles.detailText}>
+                  Müddət :
+                  {taskData.totalProcessDuration
+                    ? formatDuration(taskData.totalProcessDuration)
+                    : 'Qeyd olunmayıb'}
+                </Text>
+              </View>
+            </View>
+          )}
+        </View>
+
+        <CustomModal
+          visible={confirmVisible}
+          title="Tapşırığa başlamaq istəyirsiniz?"
+          description="Tapşırığa başladıqdan sonra onu yalnız tamamladıqda bitirə bilərsiniz."
+          confirmText="Bəli"
+          cancelText="İmtina"
+          onConfirm={handleStartTask}
+          onCancel={() => setConfirmVisible(false)}
+        />
+
+        <CustomModal
+          visible={customModalVisible}
+          title="Xəta!"
+          description="Hazırda yerinə yetirilən başqa bir tapşırıq mövcuddur. Başqa bir tapşırığa başlaya bilməzsiniz"
+          confirmText="Bağla"
+          onConfirm={() => setCustomModalVisible(false)}
+        />
+
+        {taskData.status === 0 ? (
+          <TouchableOpacity
+            style={styles.startButton}
+            onPress={() => setConfirmVisible(true)}>
+            <Text style={styles.startButtonText}>Marşruta başla</Text>
+          </TouchableOpacity>
+        ) : (
+          <View
+            style={[
+              styles.startButton,
+              {backgroundColor: '#eee', borderColor: '#F5F5F5', borderWidth: 1},
+            ]}>
+            <Text style={[styles.startButtonText, {color: '#999999'}]}>
+              {getStatusText(taskData.status)}
+            </Text>
+          </View>
         )}
       </View>
-
-      <CustomModal
-        visible={confirmVisible}
-        title="Tapşırığa başlamaq istəyirsiniz?"
-        description="Tapşırığa başladıqdan sonra onu yalnız tamamladıqda bitirə bilərsiniz."
-        confirmText="Bəli"
-        cancelText="İmtina"
-        onConfirm={handleStartTask}
-        onCancel={() => setConfirmVisible(false)}
-      />
-
-      <CustomModal
-        visible={customModalVisible}
-        title="Xəta!"
-        description="Hazırda yerinə yetirilən başqa bir tapşırıq mövcuddur. Başqa bir tapşırığa başlaya bilməzsiniz"
-        confirmText="Bağla"
-        onConfirm={() => setCustomModalVisible(false)}
-      />
-
-      {taskData.status === 0 ? (
-        <TouchableOpacity
-          style={styles.startButton}
-          onPress={() => setConfirmVisible(true)}>
-          <Text style={styles.startButtonText}>Marşruta başla</Text>
-        </TouchableOpacity>
-      ) : (
-        <View
-          style={[
-            styles.startButton,
-            {backgroundColor: '#eee', borderColor: '#F5F5F5', borderWidth: 1},
-          ]}>
-          <Text style={[styles.startButtonText, {color: '#999999'}]}>
-            {getStatusText(taskData.status)}
-          </Text>
-        </View>
-      )}
-    </View>
+    </ScrollView>
   );
 };
 
@@ -284,6 +345,14 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
+    position: 'relative',
+    width: '100%',
+  },
+  statusDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    marginLeft: 5,
   },
   header: {
     backgroundColor: '#2D64AF',
@@ -312,7 +381,7 @@ const styles = StyleSheet.create({
     width: '100%',
     gap: 3,
     display: 'flex',
-    justifyContent: 'flex-start',
+    justifyContent: 'space-between',
     alignItems: 'center',
     flexDirection: 'row',
   },
@@ -343,6 +412,7 @@ const styles = StyleSheet.create({
   timelineItem: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginLeft: 7,
   },
   iconWrapper: {
     backgroundColor: '#1976D2',
@@ -361,7 +431,7 @@ const styles = StyleSheet.create({
     height: 26,
     width: 2,
     backgroundColor: '#99A7B6',
-    marginLeft: 13, // aligns with center of the icon
+    marginLeft: 20, // aligns with center of the icon
     zIndex: 1,
   },
   detailTitle: {
@@ -369,7 +439,7 @@ const styles = StyleSheet.create({
     fontFamily: 'DMSans-Bold',
     fontSize: 18,
     lineHeight: 19.2,
-    marginBottom: 10,
+    marginBottom: 20,
   },
   detailRow: {
     flexDirection: 'row',
@@ -387,8 +457,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#ECF5FD',
     padding: 15,
     borderRadius: 10,
-    marginHorizontal: 20,
     alignItems: 'center',
+    position: 'absolute',
+    bottom: 0,
+    left: 20,
+    width: '91%',
+    alignSelf: 'center',
   },
   startButtonText: {
     color: '#2D64AF', // var(--Button-primary, #2D64AF)

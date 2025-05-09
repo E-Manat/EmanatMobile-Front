@@ -234,7 +234,9 @@ const NewReportScreen = () => {
   return (
     <>
       <TopHeader title="Yeni hesabat" />
-      <ScrollView style={{backgroundColor: '#fff'}}>
+      <ScrollView
+        style={{backgroundColor: '#fff'}}
+        contentContainerStyle={{flexGrow: 1}}>
         <View style={styles.container}>
           <Text style={styles.selectLabel}>Problem növünü seçin</Text>
           <Picker
@@ -354,6 +356,8 @@ const NewReportScreen = () => {
             style={styles.noteInput}
             value={comment}
             onChangeText={setComment}
+            multiline
+            textAlignVertical="top"
           />
 
           <View style={styles.buttonContainer}>
@@ -432,11 +436,12 @@ export default NewReportScreen;
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
     backgroundColor: '#fff',
     paddingHorizontal: 20,
-    height: '100%',
     gap: 10,
     paddingTop: 25,
+    position: 'relative',
   },
   header: {
     backgroundColor: '#2D64AF',
@@ -461,7 +466,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#F5F5F5',
     fontFamily: 'DMSans-Regular',
-    height: 68,
+    height: 90,
+    padding: 12,
+    textAlignVertical: 'top',
   },
   videoContent: {
     display: 'flex',
@@ -552,6 +559,10 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     flexDirection: 'row',
     gap: 10,
+    position: 'absolute',
+    left: 20,
+    bottom: 0,
+    marginTop: 10,
   },
   primaryButton: {
     backgroundColor: '#1269B5',
@@ -560,6 +571,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 12,
     width: '49%',
+    height: 48,
   },
   primaryButtonText: {
     color: '#fff',
@@ -573,6 +585,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#1269B5',
     width: '49%',
+    height: 48,
   },
   secondaryButtonLabel: {
     color: '#1269B5',

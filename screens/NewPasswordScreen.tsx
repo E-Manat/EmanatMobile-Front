@@ -201,11 +201,12 @@ const styles = StyleSheet.create({
   },
   button: {
     backgroundColor: '#1269B5',
-    paddingVertical: 15,
+    // paddingVertical: 15,
     borderRadius: 8,
     alignItems: 'center',
+    height: 48,
   },
-  buttonText: {color: '#fff', fontSize: 16, fontFamily: 'DMSans-Regular'},
+  buttonText: {color: '#fff', fontSize: 14, fontFamily: 'DMSans-Regular'},
 });
 
 export default NewPasswordScreen;
