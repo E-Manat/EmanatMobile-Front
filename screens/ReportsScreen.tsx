@@ -306,14 +306,14 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontStyle: 'normal',
     fontWeight: '600',
-    lineHeight: 18, // 150% of 12px},
+    lineHeight: 18,
   },
   date: {
     color: '#616161',
     fontFamily: 'DMSans-Regular',
     fontSize: 12,
     fontStyle: 'normal',
-    lineHeight: 18, // 150% of 12px},
+    lineHeight: 18,
   },
   time: {
     fontSize: 12,
@@ -331,7 +331,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: 5,
   },
-  highlight: {backgroundColor: '#FFC107'},
+  highlight: {backgroundColor: '#D5E8F9'},
   noResult: {
     color: '#A8A8A8',
     fontSize: 16,

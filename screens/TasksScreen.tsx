@@ -364,7 +364,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginTop: 10,
     paddingHorizontal: 15,
-    paddingVertical: 30,
+    paddingVertical: 20,
     margin: 'auto',
     transform: [{translateY: -46}],
     width: '89%',

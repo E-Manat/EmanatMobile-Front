@@ -180,7 +180,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F7F9FB',
-    paddingTop: StatusBar.currentHeight || 0,
   },
   card: {
     flexDirection: 'row',

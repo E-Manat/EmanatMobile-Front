@@ -5,6 +5,7 @@ import {useNavigation} from '@react-navigation/native';
 import {RootStackParamList} from '../App';
 import {StackNavigationProp} from '@react-navigation/stack';
 import CustomModal from '../components/Modal';
+import {LockIcon} from '../assets/icons';
 
 type NavigationProp = StackNavigationProp<RootStackParamList, 'PinSetup'>;
 
@@ -131,7 +132,17 @@ const PinSetupScreen = () => {
       </View>
 
       <TouchableOpacity onPress={handleForgotPin}>
-        <Text style={styles.titlePin}>PIN kodu unutmusunuz?</Text>
+        <View
+          style={{
+            display: 'flex',
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 5,
+            marginTop: 10,
+          }}>
+          <LockIcon color="#989898" />
+          <Text style={styles.titlePin}>PIN kodu unutmusunuz?</Text>
+        </View>
       </TouchableOpacity>
 
       <CustomModal
@@ -155,13 +166,11 @@ const styles = StyleSheet.create({
   },
   title: {fontSize: 20, fontWeight: 'bold', marginBottom: 20, color: '#5D5D5D'},
   titlePin: {
-    fontSize: 15,
+    fontSize: 12,
     fontWeight: '500',
-    marginBottom: 20,
     color: '#5D5D5D',
-    marginTop: 20,
   },
-  pinDisplay: {flexDirection: 'row', marginBottom: 20},
+  pinDisplay: {flexDirection: 'row', marginBottom: 10},
   circle: {
     width: 20,
     height: 20,
@@ -176,11 +185,11 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     width: '60%',
     justifyContent: 'center',
-    gap: 15,
+    gap: 5,
   },
   numButton: {
-    width: 60,
-    height: 60,
+    width: 62,
+    height: 62,
     justifyContent: 'center',
     alignItems: 'center',
     margin: 5,

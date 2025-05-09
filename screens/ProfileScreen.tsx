@@ -197,14 +197,14 @@ const ProfileScreen = () => {
                     <Text style={styles.textVersion}>1.0.1</Text>
                   </View>
                 </View>
-                <View>
+                {/* <View>
                   <Icon
                     name="chevron-right"
                     size={20}
                     color="#98A2B3"
                     style={styles.arrowIcon}
                   />
-                </View>
+                </View> */}
               </TouchableOpacity>
 
               <TouchableOpacity
