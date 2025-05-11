@@ -25,20 +25,21 @@ const HomeScreen = () => {
 
     logAllAsyncStorage();
   }, []);
-
-  const [roleName, setRoleName] = useState<string | null>(null);
+  const [taskData, setTaskData] = useState<any>(null); 
 
   useEffect(() => {
-    const getRoleFromAsyncStorage = async () => {
+    const fetchTaskData = async () => {
       try {
-        const role = await AsyncStorage.getItem('roleName');
-        setRoleName(role);
+        const task = await AsyncStorage.getItem('currentTask');
+        if (task) {
+          setTaskData(JSON.parse(task)); 
+        }
       } catch (error) {
-        console.error('Error reading roleName from AsyncStorage:', error);
+        console.error('Error reading task from AsyncStorage:', error);
       }
     };
 
-    getRoleFromAsyncStorage();
+    fetchTaskData();
   }, []);
 
   return (
@@ -47,6 +48,13 @@ const HomeScreen = () => {
       contentContainerStyle={{paddingBottom: 40}}>
       <HomeHeader />
       <Banner />
+      <MenuCard
+        title="Cari Tapşırıq"
+        description="Hal hazırda davam edən tapşırıq"
+        screenName="TaskProcess"
+        iconName={<Image3 />}
+        taskData={taskData}
+      />
       <MenuCard
         title="Tapşırıqlar"
         description="Cari tapşırıqların siyahısı"
@@ -59,7 +67,6 @@ const HomeScreen = () => {
         screenName="Terminallar"
         iconName={<Image2 />}
       />
-
       <MenuCard
         title="Hesabatlar"
         description="Yerinə yetirilmiş tapşırıqlar üzrə hesabat"

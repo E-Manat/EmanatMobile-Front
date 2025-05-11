@@ -20,6 +20,7 @@ import TopHeader from '../components/TopHeader';
 import CustomModal from '../components/Modal';
 import Config from 'react-native-config';
 import Geolocation from '@react-native-community/geolocation';
+import {HomeIcon} from '../assets/icons';
 
 type NavigationProp = StackNavigationProp<RootStackParamList, 'Hesabatlar'>;
 
@@ -342,7 +343,11 @@ const TaskProcessScreen = ({route}: any) => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.container}>
-        <TopHeader title="Tapşırıq" />
+        <TopHeader
+          title="Tapşırıq"
+          onRightPress={() => navigation.navigate('Ana səhifə')}
+          rightIconComponent={<HomeIcon color="#fff" />}
+        />
 
         <View style={styles.card}>
           <View style={{flexDirection: 'row', gap: 10}}>
@@ -384,7 +389,9 @@ const TaskProcessScreen = ({route}: any) => {
               <View style={styles.stepContent}>
                 <Text
                   style={step >= 1 ? styles.stepTitleActive : styles.stepTitle}>
-                  {roleName === 'Collector' ? 'İnkassasiyaya başla' : 'Texniki işə başla'}
+                  {roleName === 'Collector'
+                    ? 'İnkassasiyaya başla'
+                    : 'Texniki işə başla'}
                 </Text>
                 <Text style={styles.stepTime}>
                   {formatTime(collectionTimer)}
@@ -528,6 +535,7 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     alignItems: 'center',
     marginBottom: 12,
+    height: 48,
   },
   primaryButtonText: {
     color: '#fff',
@@ -543,6 +551,7 @@ const styles = StyleSheet.create({
     display: 'flex',
     justifyContent: 'center',
     flexDirection: 'row',
+    height: 48,
     gap: 6,
   },
   secondaryButtonText: {

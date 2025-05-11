@@ -12,6 +12,7 @@ export type RootStackParamList = {
   splash: undefined;
   notifications: undefined;
   Tapşırıqlar: undefined;
+  TaskProcess: {taskData: any};
   Terminallar: undefined;
 };
 
@@ -22,6 +23,7 @@ type Props = {
   description: string;
   screenName: keyof RootStackParamList;
   iconName: any;
+  taskData?: any;
 };
 
 const MenuCard: React.FC<Props> = ({
@@ -29,13 +31,20 @@ const MenuCard: React.FC<Props> = ({
   description,
   screenName,
   iconName,
+  taskData,
 }) => {
   const navigation = useNavigation<NavigationProp>();
 
+  const handlePress = () => {
+    if (screenName === 'TaskProcess' && taskData) {
+      navigation.navigate(screenName, {taskData});
+    } else {
+      navigation.navigate(screenName);
+    }
+  };
+
   return (
-    <TouchableOpacity
-      style={styles.card}
-      onPress={() => navigation.navigate(screenName)}>
+    <TouchableOpacity style={styles.card} onPress={handlePress}>
       <View style={styles.iconContainer}>{iconName}</View>
 
       <View style={styles.textContainer}>
@@ -76,20 +85,20 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   title: {
-    color: '#1269B5', // Primary color
-    fontFamily: 'DMSans-SemiBold', // Font family
-    fontSize: 16, // Font size
-    fontStyle: 'normal', // Font style
-    fontWeight: '600', // Semibold weight
-    lineHeight: 24, // Line height equivalent to 150% of 16px
+    color: '#1269B5',
+    fontFamily: 'DMSans-SemiBold',
+    fontSize: 16,
+    fontStyle: 'normal',
+    fontWeight: '600',
+    lineHeight: 24,
   },
   description: {
-    color: '#767676', // Grey color
-    fontFamily: 'DMSans-Regular', // Font family
-    fontSize: 12, // Font size
-    fontStyle: 'normal', // Font style
-    fontWeight: '500', // Medium weight
-    lineHeight: 18, // Line height equivalent to 150% of 12px
+    color: '#767676',
+    fontFamily: 'DMSans-Regular',
+    fontSize: 12,
+    fontStyle: 'normal',
+    fontWeight: '500',
+    lineHeight: 18,
   },
   fixedIcon: {
     position: 'absolute',

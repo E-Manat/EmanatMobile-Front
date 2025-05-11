@@ -19,6 +19,7 @@ import TopHeader from '../components/TopHeader';
 import CustomModal from '../components/Modal';
 import Config from 'react-native-config';
 import {ScrollView} from 'react-native-gesture-handler';
+import { HomeIcon } from '../assets/icons';
 type NavigationProp = StackNavigationProp<RootStackParamList, 'Hesabatlar'>;
 
 const TerminalDetailsScreen = ({route}: any) => {
@@ -169,7 +170,11 @@ const TerminalDetailsScreen = ({route}: any) => {
   return (
     <ScrollView contentContainerStyle={{flexGrow: 1}}>
       <View style={styles.container}>
-        <TopHeader title="Tapşırıq detalları" />
+        <TopHeader
+          title="Tapşırıq detalları"
+          onRightPress={() => navigation.navigate('Ana səhifə')}
+          rightIconComponent={<HomeIcon color="#fff" />}
+        />
 
         <View style={styles.terminalInfo}>
           <View style={styles.terminalName}>

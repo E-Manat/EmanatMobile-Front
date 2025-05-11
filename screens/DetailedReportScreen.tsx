@@ -129,6 +129,7 @@ const DetailedReportScreen = () => {
           {
             color: detailedReport?.status === 0 ? 'red' : '#29C0B9',
             fontWeight: 'bold',
+            fontFamily: 'DMSans-Regular',
           },
         )}
         {renderDetail(

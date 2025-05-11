@@ -21,7 +21,7 @@ import {RootStackParamList} from '../App';
 import {StackNavigationProp} from '@react-navigation/stack';
 import TopHeader from '../components/TopHeader';
 import {DownloadIcon} from '../assets/icons';
-type NavigationProp = StackNavigationProp<RootStackParamList, 'Hesabatlar'>;
+type NavigationProp = StackNavigationProp<RootStackParamList, 'YeniHesabat'>;
 
 const ReportsScreen = () => {
   const navigation = useNavigation<NavigationProp>();

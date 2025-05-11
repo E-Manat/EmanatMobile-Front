@@ -240,7 +240,7 @@ const TasksScreen: React.FC = () => {
         title="Tapşırıqlar"
         variant="tapsiriq"
         onRightPress={() => fetchTasks()}
-        rightIconComponent={<RefreshIcon color="#fff" />}
+        rightIconComponent={<RefreshIcon color="#fff" width={30} />}
       />
       <View style={styles.statusContainer}>
         <View style={styles.statusItem}>

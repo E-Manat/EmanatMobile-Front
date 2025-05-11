@@ -24,15 +24,26 @@ const HomeHeader = () => {
       if (storedData) {
         const parsedData = JSON.parse(storedData);
         setProfileImage(parsedData.profileImage);
+        setFirstName(parsedData.firstName || '');
+        setLastName(parsedData.lastName || '');
       }
     } catch (error) {
       console.log('Məlumat oxuma xətası:', error);
     }
   };
 
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+
   useEffect(() => {
     loadProfileData();
   }, []);
+
+  const getInitials = (firstName: string, lastName: string) => {
+    const first = firstName?.trim()?.[0]?.toUpperCase() || 'A';
+    const last = lastName?.trim()?.[0]?.toUpperCase() || 'B';
+    return `${first}${last}`;
+  };
 
   return (
     <View style={styles.container}>
@@ -56,14 +67,15 @@ const HomeHeader = () => {
 
       <View style={styles.box}>
         <TouchableOpacity onPress={() => navigation.navigate('Profil')}>
-          <Image
-            source={
-              profileImage
-                ? {uri: profileImage}
-                : require('../assets/img/default.jpg')
-            }
-            style={styles.avatar}
-          />
+          {profileImage ? (
+            <Image source={{uri: profileImage}} style={styles.avatar} />
+          ) : (
+            <View style={styles.initialsPlaceholder}>
+              <Text style={styles.initialsText}>
+                {getInitials(firstName, lastName)}
+              </Text>
+            </View>
+          )}
         </TouchableOpacity>
       </View>
     </View>
@@ -138,5 +150,18 @@ const styles = StyleSheet.create({
     width: 110,
     height: '100%',
     objectFit: 'cover',
+  },
+  initialsPlaceholder: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#1269B5',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  initialsText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });

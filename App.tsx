@@ -1,4 +1,4 @@
-import {Button, Linking, StatusBar} from 'react-native';
+import {Button, Linking, StatusBar, View} from 'react-native';
 import React, {useEffect, useRef, useState} from 'react';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {NavigationContainer} from '@react-navigation/native';
@@ -55,14 +55,17 @@ export type RootStackParamList = {
   ForgotPassword: undefined;
   OtpSubmit: {email?: any};
   NewPassword: {email: any};
+  SplashScreen: any;
 };
 
 const App = () => {
   const navigationRef = React.useRef<any>(null);
 
-  React.useEffect(() => {
+  useEffect(() => {
     setNavigation(navigationRef.current);
   }, []);
+
+  const [currentRouteName, setCurrentRouteName] = useState('');
 
   const [modalVisible, setModalVisible] = useState(false);
   const [newVersionCode, setNewVersionCode] = useState(0);
@@ -209,15 +212,35 @@ const App = () => {
     checkForUpdate();
   }, []);
 
+  const [hasCurrentTask, setHasCurrentTask] = useState(false);
+
+  useEffect(() => {
+    const checkCurrentTask = async () => {
+      const task = await AsyncStorage.getItem('currentTask');
+      setHasCurrentTask(!!task);
+    };
+
+    const interval = setInterval(checkCurrentTask, 1000);
+    checkCurrentTask();
+
+    return () => clearInterval(interval);
+  }, []);
   return (
     <GestureHandlerRootView style={{flex: 1}}>
       <NavigationContainer
         ref={nav => {
           navigationRef.current = nav;
           setNavigation(navigationRef);
+        }}
+        onReady={() => {
+          const route = navigationRef.current?.getCurrentRoute();
+          setCurrentRouteName(route?.name);
+        }}
+        onStateChange={() => {
+          const route = navigationRef.current?.getCurrentRoute();
+          setCurrentRouteName(route?.name);
         }}>
         <StatusBar />{' '}
-        {/* <Button title="Versiyanı Göndər" onPress={uploadNewVersion} /> */}
         {newVersionCode > 0 && (
           <CustomModal
             visible={true}
@@ -268,7 +291,9 @@ const App = () => {
             <Stack.Screen name="PinSetup" component={PinSetupScreen} />
           </Stack.Group>
         </Stack.Navigator>
-        <DraggableTaskButton />
+        {!['Splash', 'Login'].includes(currentRouteName) && hasCurrentTask && (
+          <DraggableTaskButton />
+        )}
       </NavigationContainer>
       <Toast />
     </GestureHandlerRootView>

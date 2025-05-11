@@ -32,7 +32,7 @@ const TopHeader = ({
       end={{x: 1, y: 0}}
       style={[styles.header, {height: computedHeight}]}>
       <TouchableOpacity onPress={() => navigation.goBack()}>
-        <Icon name="chevron-left" size={24} color="#fff" />
+        <Icon name="chevron-left" size={30} color="#fff" />
       </TouchableOpacity>
 
       <Text style={styles.headerText}>{title}</Text>
@@ -43,7 +43,7 @@ const TopHeader = ({
         </TouchableOpacity>
       ) : rightIconName ? (
         <TouchableOpacity onPress={onRightPress}>
-          <Icon name={rightIconName} size={24} color="#fff" />
+          <Icon name={rightIconName} size={30} color="#fff" />
         </TouchableOpacity>
       ) : (
         <View style={{width: 24}} />

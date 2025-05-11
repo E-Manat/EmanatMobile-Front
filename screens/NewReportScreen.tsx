@@ -25,6 +25,8 @@ import VideoPickerModal from '../components/VideoPickerModal';
 import FilePickerModal from '../components/FilePickerModal';
 import CustomModal from '../components/Modal';
 import {RouteProp} from '@react-navigation/native';
+import UniversalSelectModal from '../components/UniversalSelectModal';
+import CustomSelectBox from '../components/CustomSelectBox';
 
 type RouteProps = RouteProp<RootStackParamList, 'YeniHesabat'>;
 type NavigationProp = StackNavigationProp<RootStackParamList, 'Login'>;
@@ -35,8 +37,6 @@ const NewReportScreen = () => {
 
   console.log(terminalIdFromRoute, 'terminalIdFromRoute');
 
-  const [selectedTerminal, setSelectedTerminal] = useState('');
-  const [selectedProblem, setSelectedProblem] = useState('');
   const [selectedImages, setSelectedImages] = useState<any>([]);
   const [selectedVideos, setSelectedVideos] = useState<string[]>([]);
 
@@ -57,9 +57,36 @@ const NewReportScreen = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [modalMessage, setModalMessage] = useState('');
 
+  const [selectModalVisible, setSelectModalVisible] = useState(false);
+  const [modalData, setModalData] = useState<
+    {id: number | string; name: string}[]
+  >([]);
+  const [modalTitle, setModalTitle] = useState('');
+  const [selectedItem, setSelectedItem] = useState<{
+    id: number | string;
+    name: string;
+  } | null>(null);
+  const [selectedTerminalId, setSelectedTerminalId] = useState<string | null>(
+    null,
+  );
+  const [selectedTerminalObj, setSelectedTerminalObj] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
+  const [selectedProblemId, setSelectedProblemId] = useState<number | null>(
+    null,
+  );
+  const [selectedProblemObj, setSelectedProblemObj] = useState<{
+    id: number;
+    name: string;
+  } | null>(null);
+  const [modalType, setModalType] = useState<'problem' | 'terminal' | null>(
+    null,
+  );
+
   useEffect(() => {
     if (terminalIdFromRoute) {
-      setSelectedTerminal(terminalIdFromRoute);
+      setSelectedTerminalId(terminalIdFromRoute);
     }
   }, [terminalIdFromRoute]);
 
@@ -178,8 +205,8 @@ const NewReportScreen = () => {
   }, []);
 
   const handleSubmit = async () => {
-    if (!selectedProblem || !selectedTerminal) {
-      setModalMessage('Zəhmət olmasa  problem növünü və  terminal  seçin.');
+    if (!selectedProblemId || !selectedProblemObj) {
+      setModalMessage('Zəhmət olmasa problem növünü və uyğun terminalı seçin.');
       setIsModalVisible(true);
       return;
     }
@@ -187,10 +214,10 @@ const NewReportScreen = () => {
       setLoading(true);
 
       const formData = new FormData();
-      const terminalId = selectedTerminal;
+      const terminalId = selectedTerminalId;
 
       formData.append('TerminalId', terminalId);
-      formData.append('ProblemId', selectedProblem);
+      formData.append('ProblemId', selectedProblemId);
       formData.append('Description', comment);
 
       selectedImages.forEach((uri: any, index: any) => {
@@ -226,7 +253,7 @@ const NewReportScreen = () => {
       );
 
       if (matchedTerminal) {
-        setSelectedTerminal(matchedTerminal.id);
+        setSelectedTerminalId(matchedTerminal.id);
       }
     }
   }, [terminalList, terminalIdFromRoute]);
@@ -238,48 +265,60 @@ const NewReportScreen = () => {
         style={{backgroundColor: '#fff'}}
         contentContainerStyle={{flexGrow: 1}}>
         <View style={styles.container}>
-          <Text style={styles.selectLabel}>Problem növünü seçin</Text>
-          <Picker
-            selectedValue={selectedProblem}
-            onValueChange={itemValue => setSelectedProblem(itemValue)}
-            style={[styles.customPicker, problemError && {borderColor: 'red'}]}>
-            <Picker.Item
-              label="Texniki problem"
-              value=""
-              style={styles.customPickerLabel}
-            />
-            {problemList &&
-              problemList?.map((problem: any) => (
-                <Picker.Item
-                  key={problem.id}
-                  label={problem.description}
-                  value={problem.id}
-                  style={styles.customPickerLabel}
-                />
-              ))}
-          </Picker>
+          <CustomSelectBox
+            label="Problem növü"
+            placeholder="Problem"
+            value={selectedProblemObj?.name}
+            onPress={() => {
+              const mapped = problemList?.map(p => ({
+                id: p.id,
+                name: p.description,
+              }));
+              setModalData(mapped);
+              setModalTitle('Problem növü');
+              setModalType('problem');
+              setSelectModalVisible(true);
+            }}
+            // error={!selectedProblemId}
+          />
 
-          <Text style={styles.selectLabel}> Terminal seçin</Text>
+          <CustomSelectBox
+            label="Terminali seçin"
+            placeholder="Terminal ID"
+            value={selectedTerminalObj?.name}
+            onPress={() => {
+              const mapped = terminalList?.map(t => ({
+                id: t.id,
+                name: t.code,
+              }));
+              setModalData(mapped);
+              setModalTitle('Terminal seçin');
+              setModalType('terminal');
+              setSelectModalVisible(true);
+            }}
+            // error={!selectedTerminalId}
+          />
 
-          <Picker
-            selectedValue={selectedTerminal}
-            style={[styles.customPicker, problemError && {borderColor: 'red'}]}
-            onValueChange={itemValue => setSelectedTerminal(itemValue)}>
-            <Picker.Item
-              label="Terminal seçin"
-              value=""
-              style={styles.customPickerLabel}
-            />
-            {terminalList &&
-              terminalList?.map((terminal: any) => (
-                <Picker.Item
-                  key={terminal.id}
-                  label={terminal.code}
-                  value={terminal.id}
-                  style={styles.customPickerLabel}
-                />
-              ))}
-          </Picker>
+          <UniversalSelectModal
+            visible={selectModalVisible}
+            data={modalData}
+            title={modalTitle}
+            onClose={() => {
+              setSelectModalVisible(false);
+              setModalType(null);
+            }}
+            onSelect={(item: any) => {
+              if (modalType === 'problem') {
+                setSelectedProblemId(item.id);
+                setSelectedProblemObj(item);
+              } else if (modalType === 'terminal') {
+                setSelectedTerminalId(item.id);
+                setSelectedTerminalObj(item);
+              }
+              setSelectModalVisible(false);
+              setModalType(null);
+            }}
+          />
 
           <Text style={styles.imageContentLabel}>
             Terminalın şəklini yükləyin *
@@ -364,7 +403,7 @@ const NewReportScreen = () => {
             <TouchableOpacity
               style={styles.secondaryButton}
               onPress={() => navigation.replace('Ana səhifə')}>
-              <Text style={styles.secondaryButtonLabel}>Çıxış et</Text>
+              <Text style={styles.secondaryButtonLabel}>Keç </Text>
             </TouchableOpacity>
             <TouchableOpacity
               onPress={handleSubmit}
