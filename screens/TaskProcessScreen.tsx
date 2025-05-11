@@ -195,7 +195,7 @@ const TaskProcessScreen = ({route}: any) => {
       const url =
         roleName === 'Collector'
           ? `${Config.API_URL}/mobile/CollectorTask/CompleteTask?taskId=${taskData.id}&latitude=${latitude}&longitude=${longitude}`
-          : `${Config.API_URL}/mobile/TechnicianTask/CompleteTask?taskId=${taskData.id}&latitude=${latitude}&longitude=${longitude}`;
+          : `${Config.API_URL}/mobile/TechnicianTask/CompleteTask?taskId=${taskData.id}`;
 
       const response = await fetch(url, {
         method: 'POST',
@@ -308,7 +308,7 @@ const TaskProcessScreen = ({route}: any) => {
             ) : roleName === 'Collector' ? (
               'İnkassasiyaya başla'
             ) : (
-              'Tətbiqə başla'
+              'Texniki işə başla'
             )}
           </Text>
         </TouchableOpacity>
@@ -384,7 +384,7 @@ const TaskProcessScreen = ({route}: any) => {
               <View style={styles.stepContent}>
                 <Text
                   style={step >= 1 ? styles.stepTitleActive : styles.stepTitle}>
-                  {roleName === 'Collector' ? 'İnkassasiya' : 'Tətbiqə başla'}
+                  {roleName === 'Collector' ? 'İnkassasiyaya başla' : 'Texniki işə başla'}
                 </Text>
                 <Text style={styles.stepTime}>
                   {formatTime(collectionTimer)}

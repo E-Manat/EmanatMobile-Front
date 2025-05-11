@@ -34,7 +34,8 @@ interface Task {
   phone?: string;
 }
 const TasksScreen: React.FC = () => {
-  const [selectedFilter, setSelectedFilter] = useState<string>('İcra olunan');
+  const [selectedFilter, setSelectedFilter] =
+    useState<string>('İcra olunmamış');
 
   const getStatusColor = (status: number) => {
     switch (status) {
@@ -93,8 +94,8 @@ const TasksScreen: React.FC = () => {
   };
   useFocusEffect(
     useCallback(() => {
-      fetchTasks(1); // Default olaraq İcra olunan (1) statuslu dataları gətir
-      setSelectedFilter('İcra olunan'); // UI-də də uyğun button seçilsin
+      fetchTasks(0); // Default olaraq İcra olunan (1) statuslu dataları gətir
+      setSelectedFilter('İcra olunmamış'); // UI-də də uyğun button seçilsin
     }, []),
   );
 
@@ -196,8 +197,8 @@ const TasksScreen: React.FC = () => {
           const alreadyExists = tasksRef.current.some(
             t => t.id === notification.taskId,
           );
-          if (alreadyExists) return;
-
+          // if (alreadyExists) return;
+          console.log(connection, notification, 'txnk');
           const newTask: any = {
             id: notification.taskId,
             status: notification.status,

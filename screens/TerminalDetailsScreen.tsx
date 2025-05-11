@@ -104,11 +104,9 @@ const TerminalDetailsScreen = ({route}: any) => {
     if (roleName === 'Collector') {
       switch (status) {
         case 0:
-          return 'Tapşırığa başla';
+          return 'Marşruta başla';
         case 1:
-          return 'İnkassasiya prosesi gedir';
-        case 2:
-          return 'İnkassator terminala çatıb';
+          return 'Yoldadır';
         case 3:
           return 'İnkassasiya prosesi gedir';
         case 4:
@@ -121,20 +119,22 @@ const TerminalDetailsScreen = ({route}: any) => {
     } else if (roleName === 'Technician') {
       switch (status) {
         case 0:
-          return 'Təmir prosesi başla';
+          return 'Marşruta başla';
         case 1:
-          return 'Təmir prosesi gedir';
+          return 'Yoldadır';
         case 2:
-          return 'Təmir tamamlandı';
-        case 3:
-          return 'Tapşırıq ləğv olundu';
+          return 'Texniki iş prosesi gedir';
+        case 4:
+          return 'Texniki iş prosesi tamamlandı';
+        case 5:
+          return 'Tapşırıq ləğv olunub';
         default:
           return 'Naməlum status';
       }
     }
   };
 
-  console.log(getStatusText(taskData.status))
+  console.log(getStatusText(taskData.status));
   const navigation = useNavigation<NavigationProp>();
   const formatDuration = (durationStr: string) => {
     if (!durationStr) return 'Qeyd olunmayıb';
