@@ -28,7 +28,7 @@ const OtpScreen = () => {
       <TouchableOpacity
         style={styles.backButton}
         onPress={() => navigation.goBack()}>
-        <Icon name="chevron-left" size={24} color="#2D64AF" />
+        <Icon name="chevron-left" size={24} color="red" />
       </TouchableOpacity>
       <Text style={styles.title}>OTP təsdiqlə</Text>
       <Text style={styles.subtitle}>
@@ -67,6 +67,9 @@ const styles = StyleSheet.create({
     padding: 24,
     justifyContent: 'center',
     backgroundColor: 'red',
+    position: 'relative',
+    width: '100%',
+    height: '100%',
   },
   title: {
     fontSize: 28,
@@ -114,8 +117,9 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   backButton: {
+    marginTop: 30,
     position: 'absolute',
-    left: 0,
+    left: 15,
   },
 });
 

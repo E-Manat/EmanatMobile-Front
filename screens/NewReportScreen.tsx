@@ -258,6 +258,7 @@ const NewReportScreen = () => {
     }
   }, [terminalList, terminalIdFromRoute]);
 
+  console.log(terminalList, 'tmrnl');
   return (
     <>
       <TopHeader title="Yeni hesabat" />
@@ -270,11 +271,13 @@ const NewReportScreen = () => {
             placeholder="Problem"
             value={selectedProblemObj?.name}
             onPress={() => {
-              const mapped = problemList?.map(p => ({
-                id: p.id,
-                name: p.description,
-              }));
-              setModalData(mapped);
+              const mapped =
+                problemList &&
+                problemList?.map(p => ({
+                  id: p?.id,
+                  name: p?.description,
+                }));
+              setModalData(mapped || []);
               setModalTitle('Problem növü');
               setModalType('problem');
               setSelectModalVisible(true);
@@ -287,11 +290,13 @@ const NewReportScreen = () => {
             placeholder="Terminal ID"
             value={selectedTerminalObj?.name}
             onPress={() => {
-              const mapped = terminalList?.map(t => ({
-                id: t.id,
-                name: t.code,
-              }));
-              setModalData(mapped);
+              const mapped =
+                terminalList &&
+                terminalList?.map(t => ({
+                  id: t?.id,
+                  name: t?.code,
+                }));
+              setModalData(mapped || []);
               setModalTitle('Terminal seçin');
               setModalType('terminal');
               setSelectModalVisible(true);

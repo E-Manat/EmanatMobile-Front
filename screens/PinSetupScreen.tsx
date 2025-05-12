@@ -6,7 +6,7 @@ import {RootStackParamList} from '../App';
 import {StackNavigationProp} from '@react-navigation/stack';
 import CustomModal from '../components/Modal';
 import {LockIcon} from '../assets/icons';
-
+import Icon from 'react-native-vector-icons/Feather';
 type NavigationProp = StackNavigationProp<RootStackParamList, 'PinSetup'>;
 
 const PinSetupScreen = () => {
@@ -74,6 +74,11 @@ const PinSetupScreen = () => {
 
   return (
     <View style={styles.container}>
+      <TouchableOpacity
+        style={styles.backButton}
+        onPress={() => navigation.goBack()}>
+        <Icon name="chevron-left" size={24} color="#2D64AF" />
+      </TouchableOpacity>
       <Image source={require('../assets/img/tick.png')} style={styles.image} />
       <Text style={styles.title}>
         {storedPin ? 'PIN daxil edin' : '4 rəqəmli PIN təyin edin'}
@@ -125,7 +130,9 @@ const PinSetupScreen = () => {
             onPress={() => handlePress('0')}>
             <Text style={styles.numText}>0</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.numButton} onPress={handleDelete}>
+          <TouchableOpacity
+            style={[styles.numButton, {borderWidth: 0}]}
+            onPress={handleDelete}>
             <Text style={styles.numText}>⌫</Text>
           </TouchableOpacity>
         </View>
@@ -159,15 +166,24 @@ const PinSetupScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'flex-start',
+    justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#fff',
     width: '100%',
+    position: 'relative',
   },
-  title: {fontSize: 20, fontWeight: 'bold', marginBottom: 20, color: '#5D5D5D'},
+  title: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 15,
+    marginTop: 15,
+    color: '#5D5D5D',
+    fontFamily: 'DMSans-Regular',
+  },
   titlePin: {
     fontSize: 12,
     fontWeight: '500',
+    fontFamily: 'DMSans-Regular',
     color: '#5D5D5D',
   },
   pinDisplay: {flexDirection: 'row', marginBottom: 10},
@@ -186,6 +202,7 @@ const styles = StyleSheet.create({
     width: '60%',
     justifyContent: 'center',
     gap: 5,
+    marginTop: 10,
   },
   numButton: {
     width: 62,
@@ -199,10 +216,10 @@ const styles = StyleSheet.create({
   },
   numText: {fontSize: 24, color: '#5D5D5D'},
   image: {
-    height: '25%',
-    width: '25%',
-    objectFit: 'contain',
+    height: 100,
+    width: 100,
     margin: 0,
+    objectFit: 'cover',
   },
 
   row: {
@@ -215,6 +232,11 @@ const styles = StyleSheet.create({
   numButtonPlaceholder: {
     width: 60,
     height: 60,
+  },
+  backButton: {
+    position: 'absolute',
+    left: 15,
+    top: 30,
   },
 });
 

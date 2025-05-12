@@ -863,7 +863,7 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     textAlign: 'center',
-    paddingTop: '30%',
+    paddingTop: '40%',
   },
   noContentImage: {
     width: 180,

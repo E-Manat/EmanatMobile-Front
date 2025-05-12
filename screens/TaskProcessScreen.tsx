@@ -21,7 +21,7 @@ import CustomModal from '../components/Modal';
 import Config from 'react-native-config';
 import Geolocation from '@react-native-community/geolocation';
 import {HomeIcon} from '../assets/icons';
-
+import Icon2 from 'react-native-vector-icons/Octicons';
 type NavigationProp = StackNavigationProp<RootStackParamList, 'Hesabatlar'>;
 
 const TaskProcessScreen = ({route}: any) => {
@@ -196,7 +196,7 @@ const TaskProcessScreen = ({route}: any) => {
       const url =
         roleName === 'Collector'
           ? `${Config.API_URL}/mobile/CollectorTask/CompleteTask?taskId=${taskData.id}&latitude=${latitude}&longitude=${longitude}`
-          : `${Config.API_URL}/mobile/TechnicianTask/CompleteTask?taskId=${taskData.id}`;
+          : `${Config.API_URL}/mobile/TechnicianTask/CompleteTask?taskId=${taskData.id}&latitude=${latitude}&longitude=${longitude}`;
 
       const response = await fetch(url, {
         method: 'POST',
@@ -350,7 +350,7 @@ const TaskProcessScreen = ({route}: any) => {
         />
 
         <View style={styles.card}>
-          <View style={{flexDirection: 'row', gap: 10}}>
+          <View style={styles.row}>
             <Image
               source={require('../assets/img/img2.png')}
               style={styles.image}
@@ -369,7 +369,11 @@ const TaskProcessScreen = ({route}: any) => {
           <View style={styles.timeline}>
             <View style={styles.step}>
               <View style={step >= 0 ? styles.circleActive : styles.circle}>
-                <Text style={styles.stepNum}>01</Text>
+                {step >= 0 ? (
+                  <Icon2 name="check" size={20} color="#fff" />
+                ) : (
+                  <Text style={styles.stepNum}>01</Text>
+                )}
               </View>
               <View style={styles.stepContent}>
                 <Text
@@ -384,7 +388,11 @@ const TaskProcessScreen = ({route}: any) => {
 
             <View style={styles.step}>
               <View style={step >= 1 ? styles.circleActive : styles.circle}>
-                <Text style={styles.stepNum}>02</Text>
+                {step >= 1 ? (
+                  <Icon2 name="check" size={20} color="#fff" />
+                ) : (
+                  <Text style={styles.stepNum}>02</Text>
+                )}
               </View>
               <View style={styles.stepContent}>
                 <Text
@@ -439,12 +447,21 @@ const TaskProcessScreen = ({route}: any) => {
   );
 };
 
-const CIRCLE_SIZE = 32;
+const CIRCLE_SIZE = 34;
 export default TaskProcessScreen;
 
 const styles = StyleSheet.create({
   container: {flex: 1, backgroundColor: '#fff'},
-  card: {borderRadius: 16, padding: 16, marginHorizontal: 20, paddingTop: 40},
+  card: {
+    borderRadius: 16,
+    padding: 16,
+    marginHorizontal: 20,
+    paddingTop: 40,
+    backgroundColor: '#fff',
+    shadowColor: '#D2EAFF',
+    elevation: 5,
+    marginTop: 30,
+  },
   terminalTitle: {
     fontFamily: 'DMSans-SemiBold',
     fontSize: 16,
@@ -455,6 +472,14 @@ const styles = StyleSheet.create({
     color: '#9E9E9E',
     fontFamily: 'DMSans-SemiBold',
     marginTop: 5,
+  },
+  row: {
+    display: 'flex',
+    flexDirection: 'row',
+    gap: 10,
+    borderColor: '#E0E0E0',
+    borderBottomWidth: 1,
+    paddingBottom: 20,
   },
   distance: {color: '#1269B5', fontFamily: 'DMSans-SemiBold', marginLeft: 5},
   timeline: {

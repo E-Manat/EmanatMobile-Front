@@ -94,7 +94,7 @@ const styles = StyleSheet.create({
   },
   description: {
     color: '#767676',
-    fontFamily: 'DMSans-Regular',
+    fontFamily: 'DMSans-SemiBold',
     fontSize: 12,
     fontStyle: 'normal',
     fontWeight: '500',

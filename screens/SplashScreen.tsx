@@ -72,7 +72,7 @@ const SplashScreen = ({navigation}: any) => {
           const gpsAllowed = await checkAndForceLocation();
           if (gpsAllowed) {
             setModalVisible(false);
-            navigation.replace('SplashScreen');
+            // navigation.replace('SplashScreen');
           }
         }
       },
@@ -112,16 +112,18 @@ const SplashScreen = ({navigation}: any) => {
             source={require('../assets/img/inkassator.png')}
             style={styles.splashImage}
           />
-          <Text style={styles.title}>
-            İnkassasiya əməliyyatlarını asanlaşdırın
-          </Text>
-          <Text style={styles.description}>
-            Tapşırıqlarınızı idarə edin, terminalları izləyin və hesabatlara
-            nəzarət edin.
-          </Text>
-          <TouchableOpacity style={styles.button} onPress={handleStart}>
-            <Text style={styles.buttonText}>Başla</Text>
-          </TouchableOpacity>
+          <View style={styles.textBox}>
+            <Text style={styles.title}>
+              İnkassasiya əməliyyatlarını asanlaşdırın
+            </Text>
+            <Text style={styles.description}>
+              Tapşırıqlarınızı idarə edin, terminalları izləyin və hesabatlara
+              nəzarət edin.
+            </Text>
+            <TouchableOpacity style={styles.button} onPress={handleStart}>
+              <Text style={styles.buttonText}>Başla</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </View>{' '}
       <CustomModal
@@ -144,24 +146,29 @@ const styles = StyleSheet.create({
     backgroundColor: '#1269B5',
     width: '100%',
     height: '100%',
+    position: 'relative',
   },
   splashContainer: {
     width: '88%',
-    height: 'auto',
     display: 'flex',
-    flexDirection: 'column',
+    height: '100%',
+    paddingTop: 40,
+    position: 'relative',
   },
   emanatImage: {
     width: '50%',
     height: 100,
     resizeMode: 'contain',
     alignSelf: 'center',
+    position: 'absolute',
+    top: 20,
   },
   splashImage: {
-    width: '75%',
-    height: 350,
+    width: '94%',
+    height: 450,
     resizeMode: 'contain',
     alignSelf: 'center',
+    marginTop: 80,
   },
   title: {
     color: '#FFFFFF',
@@ -179,13 +186,18 @@ const styles = StyleSheet.create({
     fontWeight: '400',
     marginTop: 10,
   },
+  textBox: {
+    position: 'absolute',
+    bottom: 30,
+    left: 0,
+  },
   button: {
     display: 'flex',
     height: 48,
-    minWidth: 128,
     justifyContent: 'center',
     alignItems: 'center',
     gap: 12,
+    width: '100%',
     alignSelf: 'stretch',
     borderRadius: 8,
     marginTop: 15,

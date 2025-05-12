@@ -111,6 +111,7 @@ const styles = StyleSheet.create({
     gap: 10,
     height: '100%',
     position: 'relative',
+    paddingTop:120
   },
   title: {
     color: '#063A66',
@@ -140,7 +141,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     fontSize: 16,
     fontFamily: 'DMSans-Regular',
-    marginBottom: 32,
+    marginBottom: 22,
     borderColor: '#FEF5E7',
     borderRadius: 8,
     borderWidth: 1,
@@ -168,6 +169,7 @@ const styles = StyleSheet.create({
     marginTop: 30,
     position: 'absolute',
     left: 15,
+    top:20
   },
 });
 

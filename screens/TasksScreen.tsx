@@ -94,7 +94,7 @@ const TasksScreen: React.FC = () => {
   };
   useFocusEffect(
     useCallback(() => {
-      fetchTasks(0); 
+      fetchTasks(0);
       setSelectedFilter('İcra olunmamış');
     }, []),
   );
@@ -104,7 +104,7 @@ const TasksScreen: React.FC = () => {
 
     switch (filter) {
       case 'İcra olunmamış':
-        fetchTasks(0); 
+        fetchTasks(0);
         break;
       case 'İcra olunan':
         fetchTasks(1); // Backdə 1, 2, 3 ümumiyyətlə 1-lə gələcək kimi qəbul edirik
@@ -270,7 +270,7 @@ const TasksScreen: React.FC = () => {
           <Text style={styles.statusText}>
             {tasksData?.inProgressTaskCount || 0}
           </Text>
-          <Text style={styles.statusLabel}>Icra olunan</Text>
+          <Text style={styles.statusLabel}>İcra olunan</Text>
         </View>
         <View style={styles.statusItem}>
           <Text style={styles.statusText}>
@@ -491,6 +491,7 @@ const styles = StyleSheet.create({
     gap: 5,
     width: '100%',
     height: '100%',
+    paddingTop: 60,
   },
   noContentImage: {
     width: 150,

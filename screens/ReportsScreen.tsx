@@ -339,7 +339,7 @@ const styles = StyleSheet.create({
     gap: 5,
     width: '100%',
     height: '100%',
-    paddingTop: 60,
+    paddingTop: 85,
     paddingHorizontal: 50,
   },
   noContentImage: {
@@ -368,6 +368,7 @@ const styles = StyleSheet.create({
   modalContent: {
     backgroundColor: '#fff',
     padding: 20,
+    paddingTop: 20,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     width: '100%',
