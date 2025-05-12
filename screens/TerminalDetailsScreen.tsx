@@ -202,8 +202,8 @@ const TerminalDetailsScreen = ({route}: any) => {
             <Text style={styles.location}>
               {' '}
               {taskData.terminal?.address
-                ? taskData.terminal.address.charAt(0).toUpperCase() +
-                  taskData.terminal.address.slice(1)
+                ? taskData?.terminal?.address?.charAt(0)?.toUpperCase() +
+                  taskData?.terminal?.address?.slice(1)
                 : ''}{' '}
             </Text>
           </View>

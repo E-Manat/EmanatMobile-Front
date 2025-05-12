@@ -242,20 +242,23 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: 'center',
     marginTop: 10,
+    height: 48,
   },
   closeButtonText: {
     color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 14,
+    fontFamily: 'DMSans-Regula',
   },
   modalContent: {
     backgroundColor: '#fff',
     borderRadius: 10,
     padding: 20,
+    width: '80%',
   },
   modalImage: {
-    width: 200,
+    width: '100%',
     height: 200,
     borderRadius: 10,
+    marginBottom: 10,
   },
 });

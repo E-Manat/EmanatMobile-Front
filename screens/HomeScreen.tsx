@@ -25,14 +25,14 @@ const HomeScreen = () => {
 
     logAllAsyncStorage();
   }, []);
-  const [taskData, setTaskData] = useState<any>(null); 
+  const [taskData, setTaskData] = useState<any>(null);
 
   useEffect(() => {
     const fetchTaskData = async () => {
       try {
         const task = await AsyncStorage.getItem('currentTask');
         if (task) {
-          setTaskData(JSON.parse(task)); 
+          setTaskData(JSON.parse(task));
         }
       } catch (error) {
         console.error('Error reading task from AsyncStorage:', error);
@@ -48,13 +48,16 @@ const HomeScreen = () => {
       contentContainerStyle={{paddingBottom: 40}}>
       <HomeHeader />
       <Banner />
-      <MenuCard
-        title="Cari Tapşırıq"
-        description="Hal hazırda davam edən tapşırıq"
-        screenName="TaskProcess"
-        iconName={<Image3 />}
-        taskData={taskData}
-      />
+      {taskData !== null && (
+        <MenuCard
+          title="Cari Tapşırıq"
+          description="Hal hazırda davam edən tapşırıq"
+          screenName="TaskProcess"
+          iconName={<Image3 />}
+          taskData={taskData}
+        />
+      )}
+
       <MenuCard
         title="Tapşırıqlar"
         description="Cari tapşırıqların siyahısı"
