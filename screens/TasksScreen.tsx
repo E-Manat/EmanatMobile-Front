@@ -94,8 +94,8 @@ const TasksScreen: React.FC = () => {
   };
   useFocusEffect(
     useCallback(() => {
-      fetchTasks(0); // Default olaraq İcra olunan (1) statuslu dataları gətir
-      setSelectedFilter('İcra olunmamış'); // UI-də də uyğun button seçilsin
+      fetchTasks(0); 
+      setSelectedFilter('İcra olunmamış');
     }, []),
   );
 
@@ -104,7 +104,7 @@ const TasksScreen: React.FC = () => {
 
     switch (filter) {
       case 'İcra olunmamış':
-        fetchTasks(0); // Not started
+        fetchTasks(0); 
         break;
       case 'İcra olunan':
         fetchTasks(1); // Backdə 1, 2, 3 ümumiyyətlə 1-lə gələcək kimi qəbul edirik
@@ -250,6 +250,7 @@ const TasksScreen: React.FC = () => {
       }
     };
   }, []);
+
   return (
     <View style={styles.container}>
       <TopHeader
