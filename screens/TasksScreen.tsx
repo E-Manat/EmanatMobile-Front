@@ -122,6 +122,22 @@ const TasksScreen: React.FC = () => {
     }
   };
 
+  const getStatusFromFilter = (filter: string): number | undefined => {
+    switch (filter) {
+      case 'İcra olunmamış':
+        return 0;
+      case 'İcra olunan':
+        return 1;
+      case 'Tamamlanıb':
+        return 4;
+      case 'Ləğv edilmiş':
+        return 5;
+      case 'Hamısı':
+      default:
+        return undefined;
+    }
+  };
+
   console.log(tasksData, 'tasksData');
 
   const renderTask = ({item}: any) => (
@@ -197,7 +213,7 @@ const TasksScreen: React.FC = () => {
           const alreadyExists = tasksRef.current.some(
             t => t.id === notification.taskId,
           );
-          // if (alreadyExists) return;
+          if (alreadyExists) return;
           console.log(connection, notification, 'txnk');
           const newTask: any = {
             id: notification.taskId,
@@ -239,7 +255,7 @@ const TasksScreen: React.FC = () => {
       <TopHeader
         title="Tapşırıqlar"
         variant="tapsiriq"
-        onRightPress={() => fetchTasks()}
+        onRightPress={() => fetchTasks(getStatusFromFilter(selectedFilter))}
         rightIconComponent={<RefreshIcon color="#fff" width={30} />}
       />
       <View style={styles.statusContainer}>

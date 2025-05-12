@@ -59,7 +59,7 @@ const styles = StyleSheet.create({
   value: {
     fontSize: 14,
     fontFamily: 'DMSans-Regular',
-    color: '#9E9E9E',
+    color: '#424242',
   },
   placeholder: {
     color: '#9E9E9E',
