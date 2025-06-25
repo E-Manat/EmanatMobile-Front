@@ -340,6 +340,8 @@ const TaskProcessScreen = ({route}: any) => {
     );
   };
 
+  console.log(step, 'step');
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.container}>
@@ -368,11 +370,13 @@ const TaskProcessScreen = ({route}: any) => {
 
           <View style={styles.timeline}>
             <View style={styles.step}>
-              <View style={step >= 0 ? styles.circleActive : styles.circle}>
-                {step >= 0 ? (
-                  <Icon2 name="check" size={20} color="#fff" />
+              <View style={step === 0 ? styles.circleActive : styles.circle}>
+                {step === 1 ? (
+                  <Icon2 name="check" size={20} color="#fff" /> // Completed step
+                ) : step === 0 ? (
+                  <Icon2 name="dot-fill" size={20} color="#1269B5" /> // Active step
                 ) : (
-                  <Text style={styles.stepNum}>01</Text>
+                  <Text style={styles.stepNum}>01</Text> // Default step number
                 )}
               </View>
               <View style={styles.stepContent}>
@@ -387,13 +391,16 @@ const TaskProcessScreen = ({route}: any) => {
             <View style={styles.verticalLine} />
 
             <View style={styles.step}>
-              <View style={step >= 1 ? styles.circleActive : styles.circle}>
-                {step >= 1 ? (
-                  <Icon2 name="check" size={20} color="#fff" />
+              <View style={step === 1 ? styles.circleActive1 : styles.circle1}>
+                {step === 1 ? (
+                  <Icon2 name="dot-fill" size={20} color="#1269B5" /> // Aktiv addım
+                ) : step === 0 ? (
+                  <Text style={styles.stepNum1}>02</Text> // İlk addımda 02 göstər
                 ) : (
-                  <Text style={styles.stepNum}>02</Text>
+                  <Icon2 name="check" size={20} color="#fff" /> // Tamamlanmış addım
                 )}
               </View>
+
               <View style={styles.stepContent}>
                 <Text
                   style={step >= 1 ? styles.stepTitleActive : styles.stepTitle}>
@@ -495,18 +502,42 @@ const styles = StyleSheet.create({
     height: CIRCLE_SIZE,
     borderRadius: CIRCLE_SIZE / 2,
     borderWidth: 2,
-    borderColor: '#D0D0D0',
+    borderColor: '#1269B5',
+    backgroundColor: '#1269B5',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#fff',
   },
   circleActive: {
     width: CIRCLE_SIZE,
     height: CIRCLE_SIZE,
-    borderRadius: CIRCLE_SIZE / 2,
-    backgroundColor: '#1269B5',
+    borderRadius: 17,
+    borderWidth: 2,
+    borderColor: '#1269B5',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  circleActive1: {
+    width: CIRCLE_SIZE,
+    height: CIRCLE_SIZE,
+    borderRadius: 17,
+    borderWidth: 2,
+    borderColor: '#1269B5',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  circle1: {
+    width: CIRCLE_SIZE,
+    height: CIRCLE_SIZE,
+    borderRadius: CIRCLE_SIZE / 2,
+    borderWidth: 2,
+    borderColor: '#D0D0D0',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stepNum1: {
+    fontSize: 12,
+    fontFamily: 'DMSans-SemiBold',
+    color: '#242E39',
   },
   stepNum: {
     fontSize: 12,

@@ -1,4 +1,4 @@
-import {Button, Linking, StatusBar, View} from 'react-native';
+import {Alert, Button, Linking, StatusBar, View} from 'react-native';
 import React, {useEffect, useRef, useState} from 'react';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {NavigationContainer} from '@react-navigation/native';
@@ -68,10 +68,10 @@ const App = () => {
   const [currentRouteName, setCurrentRouteName] = useState('');
 
   const [modalVisible, setModalVisible] = useState(false);
-  const [newVersionCode, setNewVersionCode] = useState(0);
   const [downloadUrl, setDownloadUrl] = useState(
     'https://drive.google.com/drive/folders/1ndnxNUn1Bn1LZM28RBzxhiT1MccvGoRp?usp=drive_link',
   );
+  const version =10 ;
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -125,24 +125,11 @@ const App = () => {
 
   const checkForUpdate = async () => {
     try {
-      const currentVersionCode = await getVersion();
-      console.log(currentVersionCode, 'currentVersion');
-
-      const versionCode = parseInt(currentVersionCode, 10);
-      console.log(versionCode, 'versioncode');
-      if (isNaN(versionCode)) {
-        console.error('Yanlış versionCode:', currentVersionCode);
-        return;
-      }
-
       const userToken = await AsyncStorage.getItem('userToken');
-      console.log('User Token:', userToken);
 
       const requestPayload = {
-        versionCode: versionCode,
+        versionCode: version,
       };
-
-      console.log(requestPayload, 'payload');
 
       const response = await axios.post(
         `${Config.API_URL}/mobile/Version/Check`,
@@ -156,10 +143,7 @@ const App = () => {
       );
 
       console.log(response, 'Version/Check');
-
-      if (response.data.versionCode > versionCode) {
-        setNewVersionCode(response.data.versionCode);
-        setDownloadUrl(response.data.downloadUrl);
+      if (response.data.isUpdateAvailable) {
         setModalVisible(true);
       }
     } catch (error: any) {
@@ -170,41 +154,10 @@ const App = () => {
     }
   };
 
-  const uploadNewVersion = async () => {
-    try {
-      const response = await axios.post(
-        `${Config.API_URL}/mobile/Version/Upload`,
-        {
-          versionCode: newVersionCode + 1,
-          versionName: '1.1.0',
-          downloadUrl: downloadUrl,
-        },
-      );
-      console.log('Yeni versiya serverə yükləndi:', response.data);
-    } catch (error) {
-      console.error('Yeni versiya yüklənərkən xəta:', error);
-    }
-  };
-
   const handleUpdate = async () => {
     if (downloadUrl) {
-      Linking.openURL(downloadUrl);
+      await Linking.openURL(downloadUrl);
     }
-
-    try {
-      await axios.post(`${Config.API_URL}/mobile/Version/Update`, {
-        newVersionCode: newVersionCode,
-      });
-      console.log('Yeni versiya serverə göndərildi');
-
-      await uploadNewVersion();
-    } catch (error) {
-      console.error(
-        'Yeniləmə məlumatı serverə göndərilərkən xəta baş verdi:',
-        error,
-      );
-    }
-
     setModalVisible(false);
   };
 
@@ -226,7 +179,6 @@ const App = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // AsyncStorage.clear();
   return (
     <GestureHandlerRootView style={{flex: 1}}>
       <NavigationContainer
@@ -242,16 +194,14 @@ const App = () => {
           const route = navigationRef.current?.getCurrentRoute();
           setCurrentRouteName(route?.name);
         }}>
-        <StatusBar />{' '}
-        {newVersionCode > 0 && (
-          <CustomModal
-            visible={true}
-            title="Yeniləmə Mövcuddur"
-            description="Yeni versiya mövcuddur. Tətbiqi yeniləmək istəyirsiniz?"
-            confirmText="Yenilə"
-            onConfirm={handleUpdate}
-          />
-        )}
+        <StatusBar />
+        <CustomModal
+          visible={modalVisible}
+          title="Yeniləmə Mövcuddur"
+          description="Yeni versiya mövcuddur. Tətbiqi yeniləmək istəyirsiniz?"
+          confirmText="Yenilə"
+          onConfirm={handleUpdate}
+        />
         <Stack.Navigator
           initialRouteName="Splash"
           screenOptions={{

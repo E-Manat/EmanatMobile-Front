@@ -109,6 +109,20 @@ const TerminallarScreen = () => {
         keyExtractor={(_, index) => index.toString()}
         renderItem={({item}) => <TerminalCard terminal={item} />}
         contentContainerStyle={{paddingBottom: 20}}
+        ListEmptyComponent={
+          <View style={styles.noResult}>
+            <Image
+              source={require('../assets/img/tasks_empty.png')}
+              style={styles.noContentImage}
+            />
+            <Text style={styles.noContentLabel}>
+              Heç bir terminal tapılmadı
+            </Text>
+            <Text style={styles.noContentText}>
+              Bütün terminallar burada görünəcək.
+            </Text>
+          </View>
+        }
       />
 
       <Modal visible={modalVisible} transparent animationType="fade">
@@ -258,6 +272,40 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 20,
     maxHeight: '90%',
+  },
+  noResult: {
+    color: '#A8A8A8',
+    fontSize: 16,
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 5,
+    width: '100%',
+    height: '100%',
+    paddingTop: 60,
+  },
+  noContentImage: {
+    width: 150,
+    height: 150,
+  },
+  noContentLabel: {
+    color: '#063A66',
+    textAlign: 'center',
+    fontFamily: 'DMSans-Bold',
+    fontSize: 16,
+    fontStyle: 'normal',
+    fontWeight: '600',
+    lineHeight: 24,
+  },
+  noContentText: {
+    color: '#616161',
+    textAlign: 'center',
+    fontFamily: 'DMSans-SemiBold',
+    fontSize: 14,
+    fontStyle: 'normal',
+    fontWeight: '400',
+    lineHeight: 21,
   },
   modalHeader: {
     flexDirection: 'row',
