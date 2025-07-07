@@ -34,7 +34,7 @@ const DetailedReportScreen = () => {
     const fetchReportById = async () => {
       try {
         const data = await apiService.get(
-          `/mobile/Report/GetById?id=${report.id}`,
+          `/Report/GetById?id=${report.id}`,
         );
         setDetailedReport(data);
         console.log(data, 'detailedReport');
@@ -110,7 +110,7 @@ const DetailedReportScreen = () => {
         {renderDetail(
           <TabletIcon color="#1269B5" />,
           'Terminal ID',
-          detailedReport?.terminal?.code,
+          detailedReport?.terminal?.pointId,
         )}
         {renderDetail(
           <BriefCaseIcon color="#1269B5" />,

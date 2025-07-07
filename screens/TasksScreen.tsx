@@ -72,10 +72,11 @@ const TasksScreen: React.FC = () => {
     try {
       setLoading(true);
       const userRole = await AsyncStorage.getItem('roleName');
+      // deployda /mobile unutma
       const endpointBase =
         userRole === 'Collector'
-          ? '/mobile/CollectorTask/GetAll'
-          : '/mobile/TechnicianTask/GetAll';
+          ? '/CollectorTask/GetAll'
+          : '/TechnicianTask/GetAll';
 
       const url =
         statusFilter !== undefined
@@ -139,6 +140,7 @@ const TasksScreen: React.FC = () => {
   };
 
   console.log(tasksData, 'tasksData');
+  console.log(filteredTasks, 'filteredTasks');
 
   const renderTask = ({item}: any) => (
     <TouchableOpacity
@@ -148,9 +150,10 @@ const TasksScreen: React.FC = () => {
           const roleName = await AsyncStorage.getItem('roleName');
           const isCollector = roleName === 'Collector';
 
+          // /mobile
           const endpoint = isCollector
-            ? `/mobile/CollectorTask/GetById?id=${item.id}`
-            : `/mobile/TechnicianTask/GetById?id=${item.id}`;
+            ? `/CollectorTask/GetById?id=${item.id}`
+            : `/TechnicianTask/GetById?id=${item.id}`;
 
           const taskDetails = await apiService.get(endpoint);
 
@@ -168,7 +171,7 @@ const TasksScreen: React.FC = () => {
           {borderLeftWidth: 4, borderLeftColor: getStatusColor(item.status)},
         ]}>
         <View style={styles.taskContent}>
-          <Text style={styles.taskTitle}>Terminal ID : {item.code}</Text>
+          <Text style={styles.taskTitle}>Terminal ID : {item.pointId}</Text>
           <Text style={styles.taskDistance}>
             Adress: {item.address || item.terminal.address}
           </Text>
@@ -194,19 +197,16 @@ const TasksScreen: React.FC = () => {
         if (!token || connectionRef.current) return;
 
         const connection = new signalR.HubConnectionBuilder()
-          .withUrl(
-            `https://emanat-api.siesco.studio/notification/hubs/mobile`,
-            {
-              accessTokenFactory: () => token,
-            },
-          )
+          .withUrl(`http://192.168.10.104:5009/hubs/mobile`, {
+            accessTokenFactory: () => token,
+          })
           .withAutomaticReconnect()
           .configureLogging(signalR.LogLevel.Information)
           .build();
 
         const eventName =
           roleName === 'Collector'
-            ? 'CollectorTaskCreated'
+            ? 'TaskCreated'
             : 'TechnicianTaskCreated';
 
         connection.on(eventName, (notification: any) => {
@@ -218,16 +218,16 @@ const TasksScreen: React.FC = () => {
           const newTask: any = {
             id: notification.taskId,
             status: notification.status,
-            address: notification.terminalAddress,
-            code: notification.terminalCode,
+            address: notification.pointName,
+            code: notification.pointId,
           };
 
           setFilteredTasks((prev: any) => [...prev, newTask]);
 
           Toast.show({
             type: 'success',
-            text1: `Yeni Task: ${notification.terminalCode}`,
-            text2: notification.terminalAddress,
+            text1: `Yeni Task: ${notification.pointId}`,
+            text2: notification.pointName,
             position: 'top',
             visibilityTime: 4000,
             autoHide: true,

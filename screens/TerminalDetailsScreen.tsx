@@ -19,7 +19,7 @@ import TopHeader from '../components/TopHeader';
 import CustomModal from '../components/Modal';
 import Config from 'react-native-config';
 import {ScrollView} from 'react-native-gesture-handler';
-import { HomeIcon } from '../assets/icons';
+import {HomeIcon} from '../assets/icons';
 type NavigationProp = StackNavigationProp<RootStackParamList, 'Hesabatlar'>;
 
 const TerminalDetailsScreen = ({route}: any) => {
@@ -52,10 +52,11 @@ const TerminalDetailsScreen = ({route}: any) => {
       setTaskInProgress(true);
 
       const token = await AsyncStorage.getItem('userToken');
+      // mobile
       const url =
         roleName === 'Collector'
-          ? `${Config.API_URL}/mobile/CollectorTask/StartTask?taskId=${taskData.id}`
-          : `${Config.API_URL}/mobile/TechnicianTask/StartRoute?taskId=${taskData.id}`;
+          ? `${Config.API_URL}/CollectorTask/StartTask?taskId=${taskData.id}`
+          : `${Config.API_URL}/TechnicianTask/StartRoute?taskId=${taskData.id}`;
 
       const response = await fetch(url, {
         method: 'POST',
@@ -188,7 +189,7 @@ const TerminalDetailsScreen = ({route}: any) => {
               <Icon name="location-dot" size={20} color="#1976D2" />{' '}
               <Text style={styles.terminalCode}>
                 {' '}
-                {taskData?.terminal?.code}
+                Terminal ID: {taskData?.terminal?.pointId}
               </Text>
             </View>
             <View
@@ -215,12 +216,12 @@ const TerminalDetailsScreen = ({route}: any) => {
         />
 
         <View style={styles.details}>
-          <Text style={styles.detailTitle}>
+          {/* <Text style={styles.detailTitle}>
             {taskData.terminal?.address
               ? taskData.terminal.address.charAt(0).toUpperCase() +
                 taskData.terminal.address.slice(1)
               : ''}
-          </Text>
+          </Text> */}
 
           <View style={styles.timelineItem}>
             <View style={styles.iconWrapper}>
@@ -244,10 +245,11 @@ const TerminalDetailsScreen = ({route}: any) => {
             </View>
             <View style={styles.textWrapper}>
               <Text style={styles.detailText}>
-                {taskData?.terminal?.workingHours
+                {/* {taskData?.terminal?.workingHours
                   ? taskData.terminal.workingHours.charAt(0).toUpperCase() +
                     taskData.terminal.workingHours.slice(1)
-                  : ''}
+                  : ''} */}
+                08:00 - 00:00
               </Text>
             </View>
           </View>
@@ -260,12 +262,12 @@ const TerminalDetailsScreen = ({route}: any) => {
             </View>
             <View style={styles.textWrapper}>
               <Text style={styles.detailText}>
-                {taskData?.terminal?.responsiblePersonPhone || 'Qeyd olunmayib'}
+                {taskData?.terminal?.responsiblePersonPhone || '012 404 48 88'}
               </Text>
             </View>
           </View>
 
-          {taskData.taskDuration && <View style={styles.verticalLine} />}
+          {/* {taskData.taskDuration && <View style={styles.verticalLine} />}
 
           {taskData.taskDuration && (
             <View style={styles.timelineItem}>
@@ -281,7 +283,7 @@ const TerminalDetailsScreen = ({route}: any) => {
                 </Text>
               </View>
             </View>
-          )}
+          )} */}
 
           {taskData.totalProcessDuration && (
             <View style={styles.verticalLine} />

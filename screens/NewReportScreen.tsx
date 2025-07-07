@@ -178,7 +178,7 @@ const NewReportScreen = () => {
   useEffect(() => {
     const fetchTerminals = async () => {
       try {
-        const data = await apiService.get('/mobile/Terminal/GetAll');
+        const data = await apiService.get('/Terminal/GetAll');
         console.log(data, 'data');
         setTerminalList(data);
       } catch (error) {
@@ -193,7 +193,7 @@ const NewReportScreen = () => {
   useEffect(() => {
     const fetchProblems = async () => {
       try {
-        const data = await apiService.get('/mobile/Problem/GetAll');
+        const data = await apiService.get('/Problem/GetAll');
         console.log(data);
         setProblemList(data);
       } catch (error) {
@@ -216,7 +216,7 @@ const NewReportScreen = () => {
       const formData = new FormData();
       const terminalId = selectedTerminalId;
 
-      formData.append('TerminalId', terminalId);
+      formData.append('PointId', terminalId);
       formData.append('ProblemId', selectedProblemId);
       formData.append('Description', comment);
 
@@ -236,7 +236,7 @@ const NewReportScreen = () => {
         } as any);
       }
 
-      await apiService.postMultipart('/mobile/Report/CreateReport', formData);
+      await apiService.postMultipart('/Report/CreateReport', formData);
       setSuccessModalVisible(true);
     } catch (error) {
       setModalMessage('Hesabat yaradılarkən xəta baş verdi.');
@@ -293,8 +293,8 @@ const NewReportScreen = () => {
               const mapped =
                 terminalList &&
                 terminalList?.map(t => ({
-                  id: t?.id,
-                  name: t?.code,
+                  id: t?.pointId,
+                  name: t?.pointId,
                 }));
               setModalData(mapped || []);
               setModalTitle('Terminal seçin');

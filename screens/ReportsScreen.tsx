@@ -21,6 +21,7 @@ import {RootStackParamList} from '../App';
 import {StackNavigationProp} from '@react-navigation/stack';
 import TopHeader from '../components/TopHeader';
 import {DownloadIcon} from '../assets/icons';
+
 type NavigationProp = StackNavigationProp<RootStackParamList, 'YeniHesabat'>;
 
 const ReportsScreen = () => {
@@ -29,12 +30,19 @@ const ReportsScreen = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState('Cari ay');
 
-  const highlightText = (text: any, highlight: any) => {
-    if (!highlight.trim()) return text;
-    const parts = text.split(new RegExp(`(${highlight})`, 'gi'));
-    return parts.map((part: any, index: any) =>
-      part.toLowerCase() === highlight.toLowerCase() ? (
-        <Text key={index} style={styles.highlight}>
+  const highlightText = (
+    text: string | number = '',
+    highlight: string = '',
+  ) => {
+    const textString = String(text);
+    const searchTerm = highlight.replace(/\D/g, '');
+    if (!searchTerm) return textString;
+
+    const parts = textString.split(new RegExp(`(${searchTerm})`, 'g'));
+
+    return parts.map((part, idx) =>
+      part === searchTerm ? (
+        <Text key={idx} style={styles.highlight}>
           {part}
         </Text>
       ) : (
@@ -58,7 +66,7 @@ const ReportsScreen = () => {
           <DownloadIcon color="#1269B5" />
           <View style={styles.textContainer}>
             <Text style={styles.title}>
-              {highlightText(item.code, searchText)}
+              {highlightText(item.pointId, searchText)}
             </Text>
             <Text style={styles.date}>
               {highlightText(formattedDate, searchText)}
@@ -110,7 +118,7 @@ const ReportsScreen = () => {
       const dateFilterParam = getDateFilterParam(selectedFilter);
 
       const data = await apiService.get(
-        `/mobile/Report/GetAll?Search=${searchText}&DateFilter=${dateFilterParam}`,
+        `/Report/GetAll?Search=${searchText}&DateFilter=${dateFilterParam}`,
       );
 
       setReports(data);

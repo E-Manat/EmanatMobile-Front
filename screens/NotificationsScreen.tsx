@@ -145,7 +145,7 @@ const NotificationsScreen = () => {
 
         const connection = new signalR.HubConnectionBuilder()
           .withUrl(
-            'https://emanat-api.siesco.studio/notification/hubs/mobile',
+            'http://192.168.10.104:5009/hubs/mobile',
             {
               accessTokenFactory: () => token,
             },

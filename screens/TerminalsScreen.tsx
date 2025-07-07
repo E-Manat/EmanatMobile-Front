@@ -35,7 +35,7 @@ const TerminallarScreen = () => {
 
     try {
       const response = await apiService.get(
-        `/mobile/Terminal/GetById?id=${terminal.id}`,
+        `/Terminal/GetById?id=${terminal.id}`,
       );
       console.log(response, 'Terminal details');
       setSelectedTerminal(response);
@@ -59,8 +59,8 @@ const TerminallarScreen = () => {
 
         const url =
           roleName === 'Collector'
-            ? '/mobile/Terminal/GetCollectorAreaTerminals'
-            : '/mobile/Terminal/GetTechnicianAreaTerminals';
+            ? '/Terminal/GetCollectorAreaTerminals'
+            : '/Terminal/GetTechnicianAreaTerminals';
 
         const response = await apiService.get(url);
         console.log(response, 'response');
@@ -84,7 +84,7 @@ const TerminallarScreen = () => {
             <View style={styles.dot} />
           </View>
           <View>
-            <Text style={styles.terminalId}>Terminal ID – {terminal.code}</Text>
+            <Text style={styles.terminalId}>Terminal ID – {terminal.pointId}</Text>
             <Text style={styles.infoText}>
               {/* Əsginas sayı: {terminal.passengerCount} */}
             </Text>
@@ -139,17 +139,17 @@ const TerminallarScreen = () => {
               <View style={styles.imageContainer}>
                 <Image
                   source={{
-                    uri: 'https://via.placeholder.com/100x100.png?text=photoname.jpg',
+                    uri: 'https://www.emanat.az/assets/images/923b2a79-2fc0-4e72-a668-3767bf309966.webp?w=1200&q=75?fm=webp',
                   }}
                   style={styles.image}
                 />
-                <Text style={styles.imageText}>photoname.jpg</Text>
+                <Text style={styles.imageText}>terminal.jpg</Text>
                 <Text style={styles.imageSize}>22.5 KB</Text>
               </View>
               <InfoItem
                 icon={<TabletIcon color="#1269B5" />}
                 label="Terminal ID"
-                value={selectedTerminal?.code}
+                value={selectedTerminal?.pointId}
               />
               {/* <InfoItem icon={<AvatarIcon />} label="Şirkət" value="E-manat" /> */}
               <InfoItem
@@ -167,11 +167,11 @@ const TerminallarScreen = () => {
                 label="Ünvan"
                 value={selectedTerminal?.address}
               />
-              <InfoItem
+              {/* <InfoItem
                 icon={<UserIcon color="#1269B5" />}
                 label="Məsul şəxs"
                 value={selectedTerminal?.responsiblePersonPhone}
-              />
+              /> */}
             </ScrollView>
           </View>
         </View>
@@ -330,7 +330,7 @@ const styles = StyleSheet.create({
   },
   image: {
     width: 80,
-    height: 80,
+    height: 85,
     borderRadius: 8,
     marginBottom: 6,
   },
