@@ -31,7 +31,9 @@ const TopHeader = ({
       start={{x: 0, y: 0}}
       end={{x: 1, y: 0}}
       style={[styles.header, {height: computedHeight}]}>
-      <TouchableOpacity onPress={() => navigation.goBack()}>
+      <TouchableOpacity
+        onPress={() => navigation.goBack()}
+        hitSlop={{top: 30, bottom: 30, left: 30, right: 30}}>
         <Icon name="chevron-left" size={30} color="#fff" />
       </TouchableOpacity>
 

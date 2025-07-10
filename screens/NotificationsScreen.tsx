@@ -145,7 +145,7 @@ const NotificationsScreen = () => {
 
         const connection = new signalR.HubConnectionBuilder()
           .withUrl(
-            'http://192.168.10.104:5009/hubs/mobile',
+            'http://192.168.1.106:5009/hubs/mobile',
             {
               accessTokenFactory: () => token,
             },

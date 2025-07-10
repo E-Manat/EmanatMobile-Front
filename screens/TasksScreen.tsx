@@ -21,7 +21,16 @@ import Toast from 'react-native-toast-message';
 import * as signalR from '@microsoft/signalr';
 import {RefreshIcon} from '../assets/icons';
 type NavigationProp = StackNavigationProp<RootStackParamList, 'PinSetup'>;
-import Config from 'react-native-config';
+import {API_ENDPOINTS} from '../services/api_endpoint';
+
+export enum TaskStatus {
+  NotStarted = 'NotStarted',
+  InTransit = 'InTransit',
+  TechnicalWorkInProgress = 'TechnicalWorkInProgress',
+  CollectionInProgress = 'CollectionInProgress',
+  Completed = 'Completed',
+  Canceled = 'Canceled',
+}
 interface Task {
   id: string;
   date: string;
@@ -32,6 +41,13 @@ interface Task {
   address?: string;
   hours?: string;
   phone?: string;
+}
+
+interface TasksPayload {
+  tasks: Task[];
+  pendingTaskCount: number;
+  inProgressTaskCount: number;
+  completedTaskCount: number;
 }
 const TasksScreen: React.FC = () => {
   const [selectedFilter, setSelectedFilter] =
@@ -56,7 +72,12 @@ const TasksScreen: React.FC = () => {
 
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [tasksData, setTasksData] = useState<any>([]);
+  const [tasksData, setTasksData] = useState<TasksPayload>({
+    tasks: [],
+    pendingTaskCount: 0,
+    inProgressTaskCount: 0,
+    completedTaskCount: 0,
+  });
 
   const navigation = useNavigation<NavigationProp>();
   const [filteredTasks, setFilteredTasks] = useState<any>([]);
@@ -69,30 +90,29 @@ const TasksScreen: React.FC = () => {
   }, [filteredTasks]);
 
   const fetchTasks = async (statusFilter?: number) => {
+    setLoading(true);
     try {
-      setLoading(true);
       const userRole = await AsyncStorage.getItem('roleName');
-      // deployda /mobile unutma
       const endpointBase =
         userRole === 'Collector'
-          ? '/CollectorTask/GetAll'
-          : '/TechnicianTask/GetAll';
-
+          ? API_ENDPOINTS.mobile.collector.getAll
+          : API_ENDPOINTS.mobile.technician.getAll;
       const url =
-        statusFilter !== undefined
+        statusFilter != null
           ? `${endpointBase}?status=${statusFilter}`
           : endpointBase;
+      const response: TasksPayload = await apiService.get(url);
 
-      console.log(url, 'url');
-      const response = await apiService.get(url);
       setTasksData(response);
+
       setFilteredTasks(response.tasks);
-    } catch (error) {
-      console.error('Reportlar alınarkən xəta:', error);
+    } catch (err) {
+      console.error(err);
     } finally {
       setLoading(false);
     }
   };
+
   useFocusEffect(
     useCallback(() => {
       fetchTasks(0);
@@ -152,8 +172,8 @@ const TasksScreen: React.FC = () => {
 
           // /mobile
           const endpoint = isCollector
-            ? `/CollectorTask/GetById?id=${item.id}`
-            : `/TechnicianTask/GetById?id=${item.id}`;
+            ? API_ENDPOINTS.mobile.collector.getById(item.id)
+            : API_ENDPOINTS.mobile.technician.getById(item.id);
 
           const taskDetails = await apiService.get(endpoint);
 
@@ -171,9 +191,9 @@ const TasksScreen: React.FC = () => {
           {borderLeftWidth: 4, borderLeftColor: getStatusColor(item.status)},
         ]}>
         <View style={styles.taskContent}>
-          <Text style={styles.taskTitle}>Terminal ID : {item.pointId}</Text>
+          <Text style={styles.taskTitle}>Terminal ID : {item?.pointId}</Text>
           <Text style={styles.taskDistance}>
-            Adress: {item.address || item.terminal.address}
+            Adress: {item?.address || item?.terminal?.address}
           </Text>
         </View>
         <View>
@@ -200,14 +220,12 @@ const TasksScreen: React.FC = () => {
           .withUrl(`http://192.168.10.104:5009/hubs/mobile`, {
             accessTokenFactory: () => token,
           })
-          .withAutomaticReconnect()
+          .withAutomaticReconnect() 
           .configureLogging(signalR.LogLevel.Information)
           .build();
 
         const eventName =
-          roleName === 'Collector'
-            ? 'TaskCreated'
-            : 'TechnicianTaskCreated';
+          roleName === 'Collector' ? 'TaskCreated' : 'TechnicianTaskCreated';
 
         connection.on(eventName, (notification: any) => {
           const alreadyExists = tasksRef.current.some(
@@ -219,14 +237,31 @@ const TasksScreen: React.FC = () => {
             id: notification.taskId,
             status: notification.status,
             address: notification.pointName,
-            code: notification.pointId,
+            pointId: notification.pointId,
           };
 
           setFilteredTasks((prev: any) => [...prev, newTask]);
 
+          setTasksData(prev => ({
+            tasks: [...prev.tasks, newTask],
+            pendingTaskCount:
+              prev.pendingTaskCount +
+              (notification.status === TaskStatus.NotStarted ? 1 : 0),
+            inProgressTaskCount:
+              prev.inProgressTaskCount +
+              (notification.status === TaskStatus.InTransit ||
+              notification.status === TaskStatus.TechnicalWorkInProgress ||
+              notification.status === TaskStatus.CollectionInProgress
+                ? 1
+                : 0),
+            completedTaskCount:
+              prev.completedTaskCount +
+              (notification.status === TaskStatus.Completed ? 1 : 0),
+          }));
+
           Toast.show({
             type: 'success',
-            text1: `Yeni Task: ${notification.pointId}`,
+            text1: `Bildiriş: Terminal ${notification.pointId}`,
             text2: notification.pointName,
             position: 'top',
             visibilityTime: 4000,
@@ -250,6 +285,8 @@ const TasksScreen: React.FC = () => {
       }
     };
   }, []);
+
+  console.log(tasksData, 'taskdata');
 
   return (
     <View style={styles.container}>

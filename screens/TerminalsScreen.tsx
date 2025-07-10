@@ -23,6 +23,7 @@ import {
 } from '../assets/icons';
 import {apiService} from '../services/apiService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {API_ENDPOINTS} from '../services/api_endpoint';
 
 const TerminallarScreen = () => {
   const [selectedTerminal, setSelectedTerminal] = useState<any>(null);
@@ -59,8 +60,8 @@ const TerminallarScreen = () => {
 
         const url =
           roleName === 'Collector'
-            ? '/Terminal/GetCollectorAreaTerminals'
-            : '/Terminal/GetTechnicianAreaTerminals';
+            ? API_ENDPOINTS.mobile.terminal.getCollectorAreaTerminals
+            : API_ENDPOINTS.mobile.terminal.getTechnicianAreaTerminals;
 
         const response = await apiService.get(url);
         console.log(response, 'response');
@@ -84,7 +85,9 @@ const TerminallarScreen = () => {
             <View style={styles.dot} />
           </View>
           <View>
-            <Text style={styles.terminalId}>Terminal ID – {terminal.pointId}</Text>
+            <Text style={styles.terminalId}>
+              Terminal ID – {terminal.pointId}
+            </Text>
             <Text style={styles.infoText}>
               {/* Əsginas sayı: {terminal.passengerCount} */}
             </Text>

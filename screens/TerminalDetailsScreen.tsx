@@ -211,7 +211,7 @@ const TerminalDetailsScreen = ({route}: any) => {
         </View>
 
         <Image
-          source={require('../assets/img/araz.png')}
+          source={require('../assets/img/task_detail.png')}
           style={styles.image}
         />
 

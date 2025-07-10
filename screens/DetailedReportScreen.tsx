@@ -21,6 +21,7 @@ import {
   NoteIcon,
   TabletIcon,
 } from '../assets/icons';
+import {API_ENDPOINTS} from '../services/api_endpoint';
 
 const DetailedReportScreen = () => {
   const navigation = useNavigation();
@@ -34,7 +35,7 @@ const DetailedReportScreen = () => {
     const fetchReportById = async () => {
       try {
         const data = await apiService.get(
-          `/Report/GetById?id=${report.id}`,
+          API_ENDPOINTS.mobile.report.getById(report.id),
         );
         setDetailedReport(data);
         console.log(data, 'detailedReport');

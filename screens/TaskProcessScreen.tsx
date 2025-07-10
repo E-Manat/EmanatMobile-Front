@@ -363,7 +363,7 @@ const TaskProcessScreen = ({route}: any) => {
               </Text>
               <Text style={styles.terminalSubtitle}>
                 {taskData?.terminal?.address}
-                {/* <Text style={styles.distance}>2.7 km</Text> */}
+               
               </Text>
             </View>
           </View>
@@ -372,11 +372,11 @@ const TaskProcessScreen = ({route}: any) => {
             <View style={styles.step}>
               <View style={step === 0 ? styles.circleActive : styles.circle}>
                 {step === 1 ? (
-                  <Icon2 name="check" size={20} color="#fff" /> // Completed step
+                  <Icon2 name="check" size={20} color="#fff" /> 
                 ) : step === 0 ? (
-                  <Icon2 name="dot-fill" size={20} color="#1269B5" /> // Active step
+                  <Icon2 name="dot-fill" size={20} color="#1269B5" />
                 ) : (
-                  <Text style={styles.stepNum}>01</Text> // Default step number
+                  <Text style={styles.stepNum}>01</Text>
                 )}
               </View>
               <View style={styles.stepContent}>

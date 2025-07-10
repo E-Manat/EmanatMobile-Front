@@ -21,6 +21,7 @@ import {RootStackParamList} from '../App';
 import {StackNavigationProp} from '@react-navigation/stack';
 import TopHeader from '../components/TopHeader';
 import {DownloadIcon} from '../assets/icons';
+import {API_ENDPOINTS} from '../services/api_endpoint';
 
 type NavigationProp = StackNavigationProp<RootStackParamList, 'YeniHesabat'>;
 
@@ -118,7 +119,7 @@ const ReportsScreen = () => {
       const dateFilterParam = getDateFilterParam(selectedFilter);
 
       const data = await apiService.get(
-        `/Report/GetAll?Search=${searchText}&DateFilter=${dateFilterParam}`,
+        API_ENDPOINTS.mobile.report.getAll(searchText, dateFilterParam),
       );
 
       setReports(data);
