@@ -10,48 +10,48 @@ export const API_ENDPOINTS = {
   },
   mobile: {
     collector: {
-      getAll: `/CollectorTask/GetAll`,
-      getById: (id: string) => `/CollectorTask/GetById?id=${id}`,
+      getAll: `${MOBILE_BASE}/CollectorTask/GetAll`,
+      getById: (id: string) => `${MOBILE_BASE}/CollectorTask/GetById?id=${id}`,
       start: (taskId: string) =>
-        `/CollectorTask/StartCollection?taskId=${taskId}`,
+        `${MOBILE_BASE}/CollectorTask/StartCollection?taskId=${taskId}`,
       complete: (taskId: string, lat: number, lon: number) =>
-        `/CollectorTask/CompleteTask?taskId=${taskId}&latitude=${lat}&longitude=${lon}`,
+        `${MOBILE_BASE}/CollectorTask/CompleteTask?taskId=${taskId}&latitude=${lat}&longitude=${lon}`,
       startTask: (taskId: string) =>
-        `/CollectorTask/StartTask?taskId=${taskId}`,
+        `${MOBILE_BASE}/CollectorTask/StartTask?taskId=${taskId}`,
     },
     technician: {
-      getAll: `/TechnicianTask/GetAll`,
-      getById: (id: string) => `/TechnicianTask/GetById?id=${id}`,
+      getAll: `${MOBILE_BASE}/TechnicianTask/GetAll`,
+      getById: (id: string) => `${MOBILE_BASE}/TechnicianTask/GetById?id=${id}`,
       start: (taskId: string) =>
-        `/TechnicianTask/StartTechnicalWork?taskId=${taskId}`,
+        `${MOBILE_BASE}/TechnicianTask/StartTechnicalWork?taskId=${taskId}`,
       complete: (taskId: string, lat: number, lon: number) =>
-        `/TechnicianTask/CompleteTask?taskId=${taskId}&latitude=${lat}&longitude=${lon}`,
+        `${MOBILE_BASE}/TechnicianTask/CompleteTask?taskId=${taskId}&latitude=${lat}&longitude=${lon}`,
       startRoute: (taskId: string) =>
-        `/TechnicianTask/StartRoute?taskId=${taskId}`,
+        `${MOBILE_BASE}/TechnicianTask/StartRoute?taskId=${taskId}`,
     },
     terminal: {
-      getAll: `/Terminal/GetAll`,
-      getById: (id: string) => `/Terminal/GetById?id=${id}`,
-      getCollectorAreaTerminals: `/Terminal/GetCollectorAreaTerminals`,
-      getTechnicianAreaTerminals: `/Terminal/GetTechnicianAreaTerminals`,
+      getAll: `${MOBILE_BASE}/Terminal/GetAll`,
+      getById: (id: string) => `${MOBILE_BASE}/Terminal/GetById?id=${id}`,
+      getCollectorAreaTerminals: `${MOBILE_BASE}/Terminal/GetCollectorAreaTerminals`,
+      getTechnicianAreaTerminals: `${MOBILE_BASE}/Terminal/GetTechnicianAreaTerminals`,
     },
     report: {
       getAll: (search: string = '', dateFilter: number = 0) =>
-        `/Report/GetAll?Search=${search}&DateFilter=${dateFilter}`,
-      getById: (id: string) => `/Report/GetById?id=${id}`,
-      create: `/Report/CreateReport`,
+        `${MOBILE_BASE}/Report/GetAll?Search=${search}&DateFilter=${dateFilter}`,
+      getById: (id: string) => `${MOBILE_BASE}/Report/GetById?id=${id}`,
+      create: `${MOBILE_BASE}/Report/CreateReport`,
     },
     problem: {
-      getAll: `/Problem/GetAll`,
+      getAll: `${MOBILE_BASE}/Problem/GetAll`,
     },
     notification: {
-      get: `/Notification/Get`,
-      getUnreads: `/Notification/GetUnreads`,
-      markAllAsRead: `/Notification/MarkAllAsRead`,
-      markAsRead: `/Notification/MarkAsRead`,
-      delete: `/Notification/Delete`,
-      deleteSelected: `/Notification/DeleteSelectedIds`,
-      deleteAll: `/Notification/DeleteAll`,
+      get: `${NOTİFİCATİON_BASE}/Notification/Get`,
+      getUnreads: `${NOTİFİCATİON_BASE}/Notification/GetUnreads`,
+      markAllAsRead: `${NOTİFİCATİON_BASE}/Notification/MarkAllAsRead`,
+      markAsRead: `${NOTİFİCATİON_BASE}/Notification/MarkAsRead`,
+      delete: `${NOTİFİCATİON_BASE}/Notification/Delete`,
+      deleteSelected: `${NOTİFİCATİON_BASE}/Notification/DeleteSelectedIds`,
+      deleteAll: `${NOTİFİCATİON_BASE}/Notification/DeleteAll`,
     },
   },
 };

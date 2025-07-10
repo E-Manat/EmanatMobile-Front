@@ -17,7 +17,7 @@ import CustomModal from '../components/Modal';
 import {Image} from 'react-native';
 import Config from 'react-native-config';
 
-console.log(Config.API_URL, 'jdfnS');
+console.log(Config.API_URL, 'api url');
 type NavigationProp = StackNavigationProp<RootStackParamList, 'Login'>;
 
 const LoginScreen = () => {
@@ -35,7 +35,7 @@ const LoginScreen = () => {
   const [focusedInput, setFocusedInput] = useState<any>(null);
   const [loading, setLoading] = useState(false);
 
-  const API_URL = `https://emanat-api.siesco.studio/auth/Auth/Login`;
+  const API_URL = `http://172.23.0.78:5000/auth/Auth/Login`;
 
   const handleLogin = async () => {
     setEmailError('');
