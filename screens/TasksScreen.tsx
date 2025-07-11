@@ -41,6 +41,8 @@ interface Task {
   address?: string;
   hours?: string;
   phone?: string;
+  pointId?: string;
+  order: number;
 }
 
 interface TasksPayload {
@@ -66,7 +68,7 @@ const TasksScreen: React.FC = () => {
       case 0:
         return '#9E9E9E'; // Not started (Başlanmayıb)
       default:
-        return '#CCC';
+        return '#9E9E9E';
     }
   };
 
@@ -213,26 +215,26 @@ const TasksScreen: React.FC = () => {
       try {
         const token = await AsyncStorage.getItem('userToken');
         const roleName = await AsyncStorage.getItem('roleName');
-
         if (!token || connectionRef.current) return;
 
         const connection = new signalR.HubConnectionBuilder()
           .withUrl(`http://192.168.10.104:5009/hubs/mobile`, {
             accessTokenFactory: () => token,
           })
-          .withAutomaticReconnect() 
+          .withAutomaticReconnect()
           .configureLogging(signalR.LogLevel.Information)
           .build();
 
-        const eventName =
+        const createdEvent =
           roleName === 'Collector' ? 'TaskCreated' : 'TechnicianTaskCreated';
+        const deletedEvent =
+          roleName === 'Collector' ? 'TaskDeleted' : 'TechnicianTaskDeleted';
 
-        connection.on(eventName, (notification: any) => {
-          const alreadyExists = tasksRef.current.some(
-            t => t.id === notification.taskId,
-          );
-          if (alreadyExists) return;
-          console.log(connection, notification, 'txnk');
+        console.log(connection, 'connection');
+
+        connection.on('TaskCreated', (notification: any) => {
+          if (tasksRef.current.some(t => t.id === notification.taskId)) return;
+
           const newTask: any = {
             id: notification.taskId,
             status: notification.status,
@@ -240,8 +242,8 @@ const TasksScreen: React.FC = () => {
             pointId: notification.pointId,
           };
 
-          setFilteredTasks((prev: any) => [...prev, newTask]);
-
+          tasksRef.current.push(newTask);
+          // setFilteredTasks((prev: any) => [...prev, newTask]);
           setTasksData(prev => ({
             tasks: [...prev.tasks, newTask],
             pendingTaskCount:
@@ -249,9 +251,11 @@ const TasksScreen: React.FC = () => {
               (notification.status === TaskStatus.NotStarted ? 1 : 0),
             inProgressTaskCount:
               prev.inProgressTaskCount +
-              (notification.status === TaskStatus.InTransit ||
-              notification.status === TaskStatus.TechnicalWorkInProgress ||
-              notification.status === TaskStatus.CollectionInProgress
+              ([
+                TaskStatus.InTransit,
+                TaskStatus.TechnicalWorkInProgress,
+                TaskStatus.CollectionInProgress,
+              ].includes(notification.status)
                 ? 1
                 : 0),
             completedTaskCount:
@@ -261,18 +265,72 @@ const TasksScreen: React.FC = () => {
 
           Toast.show({
             type: 'success',
-            text1: `Bildiriş: Terminal ${notification.pointId}`,
-            text2: notification.pointName,
+            text1: `Yeni tapşırıq: ${notification.pointName}`,
             position: 'top',
             visibilityTime: 4000,
             autoHide: true,
           });
+          // fetchTasks(getStatusFromFilter(selectedFilter));
+        });
+
+        connection.on('TaskDeleted', (notification: any) => {
+          console.log(notification, 'ntt', deletedEvent);
+          tasksRef.current = tasksRef.current.filter(
+            t => t.id !== notification.taskId,
+          );
+          setFilteredTasks((prev: any) =>
+            prev.filter((t: any) => t.id !== notification.taskId),
+          );
+          setTasksData(prev => ({
+            ...prev,
+            pendingTaskCount: prev.pendingTaskCount - 1,
+          }));
+
+          Toast.show({
+            type: 'info',
+            text1: `Tapşırıq silindi: ${notification.pointId}`,
+            position: 'top',
+            visibilityTime: 3000,
+          });
+          // fetchTasks(getStatusFromFilter(selectedFilter));
+        });
+
+        connection.on('TaskOrderUpdated', (notification: any) => {
+          console.log(notification, 'TaskOrderUpdated');
+          const {taskId, order} = notification;
+
+          setTasksData(prev => {
+            const updatedTasks = prev.tasks
+              .map(task => (task.id === taskId ? {...task, order} : task))
+              .sort((a, b) => a.order - b.order);
+
+            return {
+              ...prev,
+              tasks: updatedTasks,
+            };
+          });
+
+          setFilteredTasks((prev: any) =>
+            prev
+              .map((task: any) =>
+                task.id === taskId ? {...task, order} : task,
+              )
+              .sort((a: any, b: any) => a.order - b.order),
+          );
+
+          Toast.show({
+            type: 'info',
+            text1: 'Tapşırıqların sıralaması yeniləndi',
+            position: 'top',
+            visibilityTime: 3000,
+          });
+          // fetchTasks(getStatusFromFilter(selectedFilter));
         });
 
         await connection.start();
         connectionRef.current = connection;
       } catch (err) {
-        console.error('❌ SignalR bağlantı xətası:', err);
+        console.error('❌ SignalR connection error:', err);
       }
     };
 
