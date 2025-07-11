@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
-import React, {useCallback, useEffect, useRef, useState} from 'react';
+import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {
   View,
   Text,
@@ -84,7 +84,7 @@ const TasksScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp>();
   const [filteredTasks, setFilteredTasks] = useState<any>([]);
 
-  const tasksRef = useRef<Task[]>([]);
+  const tasksRef = useRef<any>([]);
   const connectionRef = useRef<signalR.HubConnection | null>(null);
 
   useEffect(() => {
@@ -161,8 +161,8 @@ const TasksScreen: React.FC = () => {
     }
   };
 
-  console.log(tasksData, 'tasksData');
-  console.log(filteredTasks, 'filteredTasks');
+  // console.log(tasksData, 'tasksData');
+  // console.log(filteredTasks, 'filteredTasks');
 
   const renderTask = ({item}: any) => (
     <TouchableOpacity
@@ -225,58 +225,66 @@ const TasksScreen: React.FC = () => {
           .configureLogging(signalR.LogLevel.Information)
           .build();
 
+        console.log(connection, 'connection');
+
         const createdEvent =
           roleName === 'Collector' ? 'TaskCreated' : 'TechnicianTaskCreated';
         const deletedEvent =
           roleName === 'Collector' ? 'TaskDeleted' : 'TechnicianTaskDeleted';
 
-        console.log(connection, 'connection');
+        connection.on(createdEvent, (notification: any) => {
+          console.log(notification, 'TaskCreated');
+          const {taskId, status, pointName, pointId, order} = notification;
 
-        connection.on('TaskCreated', (notification: any) => {
-          if (tasksRef.current.some(t => t.id === notification.taskId)) return;
+          if (
+            status === TaskStatus.InTransit ||
+            status === TaskStatus.TechnicalWorkInProgress ||
+            status === TaskStatus.CollectionInProgress
+          ) {
+            return;
+          }
 
-          const newTask: any = {
-            id: notification.taskId,
-            status: notification.status,
-            address: notification.pointName,
-            pointId: notification.pointId,
-          };
+          tasksRef.current = [
+            ...tasksRef.current.filter((t: any) => t.id !== taskId),
+            {id: taskId, status, address: pointName, pointId, order},
+          ].sort((a, b) => a.order - b.order);
 
-          tasksRef.current.push(newTask);
-          // setFilteredTasks((prev: any) => [...prev, newTask]);
-          setTasksData(prev => ({
-            tasks: [...prev.tasks, newTask],
-            pendingTaskCount:
-              prev.pendingTaskCount +
-              (notification.status === TaskStatus.NotStarted ? 1 : 0),
-            inProgressTaskCount:
-              prev.inProgressTaskCount +
-              ([
-                TaskStatus.InTransit,
-                TaskStatus.TechnicalWorkInProgress,
-                TaskStatus.CollectionInProgress,
-              ].includes(notification.status)
-                ? 1
-                : 0),
-            completedTaskCount:
-              prev.completedTaskCount +
-              (notification.status === TaskStatus.Completed ? 1 : 0),
-          }));
+          setFilteredTasks(tasksRef.current);
+
+          const pending = tasksRef.current.filter(
+            (t: any) => t.status === TaskStatus.NotStarted,
+          ).length;
+          const inProg = tasksRef.current.filter(
+            (t: any) =>
+              t.status === TaskStatus.InTransit ||
+              t.status === TaskStatus.TechnicalWorkInProgress ||
+              t.status === TaskStatus.CollectionInProgress,
+          ).length;
+          const completed = tasksRef.current.filter(
+            (t: any) => t.status === TaskStatus.Completed,
+          ).length;
+
+          setTasksData({
+            tasks: tasksRef.current,
+            pendingTaskCount: pending,
+            inProgressTaskCount: inProg,
+            completedTaskCount: completed,
+          });
 
           Toast.show({
-            type: 'success',
-            text1: `Yeni tapşırıq: ${notification.pointName}`,
+            type: 'info',
+            text1: `Yeni bildiriş`,
             position: 'top',
             visibilityTime: 4000,
             autoHide: true,
           });
-          // fetchTasks(getStatusFromFilter(selectedFilter));
         });
 
         connection.on('TaskDeleted', (notification: any) => {
+          console.log('TaskDeleted', notification);
           console.log(notification, 'ntt', deletedEvent);
           tasksRef.current = tasksRef.current.filter(
-            t => t.id !== notification.taskId,
+            (t: any) => t.id !== notification.taskId,
           );
           setFilteredTasks((prev: any) =>
             prev.filter((t: any) => t.id !== notification.taskId),
@@ -287,40 +295,8 @@ const TasksScreen: React.FC = () => {
           }));
 
           Toast.show({
-            type: 'info',
-            text1: `Tapşırıq silindi: ${notification.pointId}`,
-            position: 'top',
-            visibilityTime: 3000,
-          });
-          // fetchTasks(getStatusFromFilter(selectedFilter));
-        });
-
-        connection.on('TaskOrderUpdated', (notification: any) => {
-          console.log(notification, 'TaskOrderUpdated');
-          const {taskId, order} = notification;
-
-          setTasksData(prev => {
-            const updatedTasks = prev.tasks
-              .map(task => (task.id === taskId ? {...task, order} : task))
-              .sort((a, b) => a.order - b.order);
-
-            return {
-              ...prev,
-              tasks: updatedTasks,
-            };
-          });
-
-          setFilteredTasks((prev: any) =>
-            prev
-              .map((task: any) =>
-                task.id === taskId ? {...task, order} : task,
-              )
-              .sort((a: any, b: any) => a.order - b.order),
-          );
-
-          Toast.show({
-            type: 'info',
-            text1: 'Tapşırıqların sıralaması yeniləndi',
+            type: 'error',
+            text1: `Tapşırıq silindi: Terminal ID ${notification.pointId}`,
             position: 'top',
             visibilityTime: 3000,
           });
@@ -344,7 +320,7 @@ const TasksScreen: React.FC = () => {
     };
   }, []);
 
-  console.log(tasksData, 'taskdata');
+  const sortedTasks = [...filteredTasks].sort((a, b) => a.order - b.order);
 
   return (
     <View style={styles.container}>
@@ -416,9 +392,7 @@ const TasksScreen: React.FC = () => {
         </ScrollView>
       </View>
 
-      {filteredTasks?.length > 0 && (
-        <Text style={styles.currentDay}>Bu gün</Text>
-      )}
+      {sortedTasks?.length > 0 && <Text style={styles.currentDay}>Bu gün</Text>}
 
       <ScrollView contentContainerStyle={styles.mainContainer}>
         {loading ? (
@@ -426,9 +400,9 @@ const TasksScreen: React.FC = () => {
             style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
             <ActivityIndicator size="large" color="#2D64AF" />
           </View>
-        ) : filteredTasks?.length > 0 ? (
+        ) : sortedTasks?.length > 0 ? (
           <FlatList
-            data={filteredTasks}
+            data={[...filteredTasks].sort((a, b) => a.order - b.order)}
             keyExtractor={item => item.id}
             renderItem={renderTask}
             ListFooterComponent={<View style={{height: 20}} />}
