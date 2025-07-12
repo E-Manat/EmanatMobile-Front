@@ -130,7 +130,8 @@ const TasksScreen: React.FC = () => {
         fetchTasks(0);
         break;
       case 'İcra olunan':
-        fetchTasks(1); // Backdə 1, 2, 3 ümumiyyətlə 1-lə gələcək kimi qəbul edirik
+        fetchTasks(1);
+        fetchTasks(3);
         break;
       case 'Tamamlanıb':
         fetchTasks(4); // Completed
