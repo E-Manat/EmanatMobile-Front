@@ -1,4 +1,5 @@
 // http://192.168.10.104:5045
+// http://172.23.0.78:5000
 const MOBILE_BASE = '/mobile';
 const AUTH_BASE = '/auth';
 const NOTİFİCATİON_BASE = '/notification';
@@ -7,6 +8,9 @@ export const API_ENDPOINTS = {
   auth: {
     login: `${AUTH_BASE}/Auth/Login`,
     getProfile: `${AUTH_BASE}/User/GetProfile`,
+    sendEmail: `${AUTH_BASE}/Auth/SendEmail`,
+    confirmPassword: `${AUTH_BASE}/Auth/ConfirmPassword`,
+    confirmOtp: `${AUTH_BASE}/Auth/ConfirmOtp`,
   },
   mobile: {
     collector: {
@@ -44,14 +48,14 @@ export const API_ENDPOINTS = {
     problem: {
       getAll: `${MOBILE_BASE}/Problem/GetAll`,
     },
-    notification: {
-      get: `${NOTİFİCATİON_BASE}/Notification/Get`,
-      getUnreads: `${NOTİFİCATİON_BASE}/Notification/GetUnreads`,
-      markAllAsRead: `${NOTİFİCATİON_BASE}/Notification/MarkAllAsRead`,
-      markAsRead: `${NOTİFİCATİON_BASE}/Notification/MarkAsRead`,
-      delete: `${NOTİFİCATİON_BASE}/Notification/Delete`,
-      deleteSelected: `${NOTİFİCATİON_BASE}/Notification/DeleteSelectedIds`,
-      deleteAll: `${NOTİFİCATİON_BASE}/Notification/DeleteAll`,
-    },
+  },
+  notification: {
+    get: `${NOTİFİCATİON_BASE}/Notification/Get`,
+    getUnreads: `${NOTİFİCATİON_BASE}/Notification/GetUnreads`,
+    markAllAsRead: `${NOTİFİCATİON_BASE}/Notification/MarkAllAsRead`,
+    markAsRead: `${NOTİFİCATİON_BASE}/Notification/MarkAsRead`,
+    delete: `${NOTİFİCATİON_BASE}/Notification/Delete`,
+    deleteSelected: `${NOTİFİCATİON_BASE}/Notification/DeleteSelectedIds`,
+    deleteAll: `${NOTİFİCATİON_BASE}/Notification/DeleteAll`,
   },
 };

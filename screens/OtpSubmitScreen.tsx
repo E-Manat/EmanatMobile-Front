@@ -19,6 +19,8 @@ import {StackNavigationProp} from '@react-navigation/stack';
 import {RootStackParamList} from '../App';
 
 import Config from 'react-native-config';
+import {apiService} from '../services/apiService';
+import {API_ENDPOINTS} from '../services/api_endpoint';
 type NavigationProp = StackNavigationProp<RootStackParamList, 'Login'>;
 const OtpSubmit = () => {
   const navigation = useNavigation<NavigationProp>();
@@ -50,44 +52,24 @@ const OtpSubmit = () => {
     const finalOtp = otp.join('');
     setIsLoading(true);
     try {
-      const userToken = await AsyncStorage.getItem('userToken');
-      const response = await axios.post(
-        `${Config.API_URL}/auth/Auth/ConfirmOtp`,
-        {email, otp: finalOtp},
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${userToken}`,
-          },
-        },
-      );
-      console.log(response);
-
-      if (response?.status === 200) {
-        setModalProps({
-          visible: true,
-          title: 'Uğurlu',
-          description: 'OTP təsdiqləndi.',
-          confirmText: 'Bağla',
-          onConfirm: () => {
-            setModalVisible(false);
-            navigation.navigate('NewPassword', {email: email});
-          },
-        });
-      } else {
-        setModalProps({
-          visible: true,
-          title: 'Xəta',
-          description: 'OTP doğru deyil.',
-          confirmText: 'Bağla',
-          onConfirm: () => setModalVisible(false),
-        });
-      }
-    } catch (error) {
+      // Confirm OTP via service
+      await apiService.post(API_ENDPOINTS.auth.confirmOtp, {
+        email,
+        otp: finalOtp,
+      });
       setModalProps({
-        visible: true,
+        title: 'Uğurlu',
+        description: 'OTP təsdiqləndi.',
+        confirmText: 'Davam et',
+        onConfirm: () => {
+          setModalVisible(false);
+          navigation.navigate('NewPassword', {email});
+        },
+      });
+    } catch {
+      setModalProps({
         title: 'Xəta',
-        description: 'Bir xəta baş verdi, zəhmət olmasa yenidən cəhd edin.',
+        description: 'OTP doğru deyil.',
         confirmText: 'Bağla',
         onConfirm: () => setModalVisible(false),
       });
@@ -100,37 +82,22 @@ const OtpSubmit = () => {
   const handleResendOtp = async () => {
     setIsLoading(true);
     try {
-      const userToken = await AsyncStorage.getItem('userToken');
-      const response = await axios.post(
-        `${Config.API_URL}/auth/Auth/SendEmail`,
-        {email},
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${userToken}`,
-          },
-        },
-      );
-
-      if (response) {
-        setModalProps({
-          visible: true,
-          title: 'OTP göndərildi',
-          description: `${email} ünvanına OTP göndərildi.`,
-          confirmText: 'Bağla',
-          onConfirm: () => setModalVisible(false),
-        });
-      }
-    } catch (error) {
+      await apiService.post(API_ENDPOINTS.auth.sendEmail, {email});
       setModalProps({
-        visible: true,
+        title: 'Göndərildi',
+        description: `${email} ünvanına yeni OTP göndərildi.`,
+        confirmText: 'Bağla',
+        onConfirm: () => setModalVisible(false),
+      });
+    } catch {
+      setModalProps({
         title: 'Xəta',
         description: 'OTP göndərilə bilmədi.',
         confirmText: 'Bağla',
         onConfirm: () => setModalVisible(false),
       });
     } finally {
-      setIsLoading(false); // end loading
+      setIsLoading(false);
       setModalVisible(true);
     }
   };

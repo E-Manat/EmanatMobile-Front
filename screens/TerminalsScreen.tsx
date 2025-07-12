@@ -24,6 +24,7 @@ import {
 import {apiService} from '../services/apiService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {API_ENDPOINTS} from '../services/api_endpoint';
+import axios from 'axios';
 
 const TerminallarScreen = () => {
   const [selectedTerminal, setSelectedTerminal] = useState<any>(null);
@@ -35,11 +36,11 @@ const TerminallarScreen = () => {
     setModalVisible(true);
 
     try {
-      const response = await apiService.get(
-        `/Terminal/GetById?id=${terminal.id}`,
+      const details: any = await apiService.get(
+        API_ENDPOINTS.mobile.terminal.getById(terminal.id),
       );
-      console.log(response, 'Terminal details');
-      setSelectedTerminal(response);
+      console.log(details, 'Terminal details');
+      setSelectedTerminal(details);
     } catch (error) {
       console.error('Terminal details alınarkən xəta:', error);
     }
@@ -57,15 +58,13 @@ const TerminallarScreen = () => {
       setLoading(true);
       try {
         const roleName = await AsyncStorage.getItem('roleName');
+        const token = await AsyncStorage.getItem('userToken');
 
-        const url =
-          roleName === 'Collector'
-            ? API_ENDPOINTS.mobile.terminal.getCollectorAreaTerminals
-            : API_ENDPOINTS.mobile.terminal.getTechnicianAreaTerminals;
+        const data = await apiService.get(
+          API_ENDPOINTS.mobile.terminal.getCollectorAreaTerminals,
+        );
 
-        const response = await apiService.get(url);
-        console.log(response, 'response');
-        setTerminals(response);
+        setTerminals(data);
       } catch (error) {
         console.error('Terminals alınarkən xəta:', error);
       } finally {

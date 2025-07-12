@@ -195,8 +195,8 @@ const TaskProcessScreen = ({route}: any) => {
 
       const url =
         roleName === 'Collector'
-          ? `${Config.API_URL}/CollectorTask/CompleteTask?taskId=${taskData.id}&latitude=${latitude}&longitude=${longitude}`
-          : `${Config.API_URL}/TechnicianTask/CompleteTask?taskId=${taskData.id}&latitude=${latitude}&longitude=${longitude}`;
+          ? `${Config.API_URL}/mobile/CollectorTask/CompleteTask?taskId=${taskData.id}&latitude=${latitude}&longitude=${longitude}`
+          : `${Config.API_URL}/mobile/TechnicianTask/CompleteTask?taskId=${taskData.id}&latitude=${latitude}&longitude=${longitude}`;
 
       const response = await fetch(url, {
         method: 'POST',
@@ -237,8 +237,8 @@ const TaskProcessScreen = ({route}: any) => {
     const token = await AsyncStorage.getItem('userToken');
     const url =
       roleName === 'Collector'
-        ? `${Config.API_URL}/CollectorTask/StartCollection?taskId=${taskData.id}`
-        : `${Config.API_URL}/TechnicianTask/StartTechnicalWork?taskId=${taskData.id}`;
+        ? `${Config.API_URL}/mobile/CollectorTask/StartCollection?taskId=${taskData.id}`
+        : `${Config.API_URL}/mobile/TechnicianTask/StartTechnicalWork?taskId=${taskData.id}`;
 
     try {
       const response = await fetch(url, {
@@ -363,7 +363,6 @@ const TaskProcessScreen = ({route}: any) => {
               </Text>
               <Text style={styles.terminalSubtitle}>
                 {taskData?.terminal?.address}
-               
               </Text>
             </View>
           </View>
@@ -372,7 +371,7 @@ const TaskProcessScreen = ({route}: any) => {
             <View style={styles.step}>
               <View style={step === 0 ? styles.circleActive : styles.circle}>
                 {step === 1 ? (
-                  <Icon2 name="check" size={20} color="#fff" /> 
+                  <Icon2 name="check" size={20} color="#fff" />
                 ) : step === 0 ? (
                   <Icon2 name="dot-fill" size={20} color="#1269B5" />
                 ) : (

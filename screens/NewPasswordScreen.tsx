@@ -16,6 +16,8 @@ import CustomModal from '../components/Modal';
 
 type NavigationProp = StackNavigationProp<RootStackParamList, 'Login'>;
 import Config from 'react-native-config';
+import {apiService} from '../services/apiService';
+import {API_ENDPOINTS} from '../services/api_endpoint';
 
 console.log(Config.API_URL, 'jdfnS');
 const NewPasswordScreen = () => {
@@ -65,42 +67,21 @@ const NewPasswordScreen = () => {
     }
 
     setLoading(true);
-
     try {
-      const token = await AsyncStorage.getItem('userToken');
+      await apiService.post(API_ENDPOINTS.auth.confirmPassword, {
+        email,
+        newPassword: password,
+        confirmNewPassword: confirmPassword,
+      });
 
-      const response = await axios.post(
-        `${Config.API_URL}/auth/Auth/ConfirmPassword`,
-        {
-          email: email,
-          newPassword: password,
-          confirmNewPassword: confirmPassword,
-        },
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-        },
-      );
-
-      if (response.status === 200) {
-        showModal('Uğurlu', 'Şifrə yeniləndi', 'Davam et', () => {
-          setModalVisible(false);
-          navigation.navigate('Login');
-        });
-      } else {
-        showModal(
-          'Xəta',
-          'Şifrə yenilənmədi. Zəhmət olmasa, yenidən cəhd edin.',
-          'Bağla',
-          () => setModalVisible(false),
-        );
-      }
-    } catch (error) {
+      showModal('Uğurlu', 'Şifrə yeniləndi', 'Davam et', () => {
+        setModalVisible(false);
+        navigation.navigate('Login');
+      });
+    } catch {
       showModal(
         'Xəta',
-        'Bir xəta baş verdi. Zəhmət olmasa, yenidən cəhd edin.',
+        'Şifrə yenilənmədi. Zəhmət olmasa, yenidən cəhd edin.',
         'Bağla',
         () => setModalVisible(false),
       );

@@ -13,6 +13,7 @@ import {apiService} from '../services/apiService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {RootStackParamList} from '../App';
+import {API_ENDPOINTS} from '../services/api_endpoint';
 
 type NavigationProp = StackNavigationProp<RootStackParamList, 'Profil'>;
 const ProfileDetailScreen = () => {
@@ -36,7 +37,7 @@ const ProfileDetailScreen = () => {
     try {
       setLoading(true);
 
-      const result: any = await apiService.get('/auth/User/GetProfile');
+      const result: any = await apiService.get(API_ENDPOINTS.auth.getProfile);
       console.log('Profil məlumatları:', result);
 
       if (result) {

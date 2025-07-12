@@ -16,9 +16,12 @@ import {StackNavigationProp} from '@react-navigation/stack';
 import CustomModal from '../components/Modal';
 import {Image} from 'react-native';
 import Config from 'react-native-config';
+import {apiService} from '../services/apiService';
+import {API_ENDPOINTS} from '../services/api_endpoint';
 
-console.log(Config.API_URL, 'api url');
 type NavigationProp = StackNavigationProp<RootStackParamList, 'Login'>;
+
+// https://emanat-api.siesco.studio/auth/Auth/Login
 
 const LoginScreen = () => {
   const navigation = useNavigation<NavigationProp>();
@@ -35,8 +38,6 @@ const LoginScreen = () => {
   const [focusedInput, setFocusedInput] = useState<any>(null);
   const [loading, setLoading] = useState(false);
 
-  const API_URL = `http://172.23.0.78:5000/auth/Auth/Login`;
-
   const handleLogin = async () => {
     setEmailError('');
     setPasswordError('');
@@ -49,37 +50,29 @@ const LoginScreen = () => {
     }
 
     setLoading(true);
-
     try {
-      const response = await axios.post(
-        API_URL,
-        {email, password},
-        {headers: {'Content-Type': 'application/json'}},
-      );
-      console.log(response);
+      const result: any = await apiService.post(API_ENDPOINTS.auth.login, {
+        email,
+        password,
+      });
 
-      if (response) {
-        console.log(response, 'response login');
-        await AsyncStorage.multiSet([
-          ['userToken', response.data.accessToken],
-          ['userId', response.data.userId],
-          ['expiresAt', response.data.expires],
-          ['isLoggedIn', 'true'],
-        ]);
-        await AsyncStorage.setItem('roleName', response.data.roleName);
-        navigation.navigate('PinSetup');
-      } else {
-        console.log('Xəta', 'Gözlənilməz bir problem baş verdi!');
-      }
+      await AsyncStorage.multiSet([
+        ['userToken', result.accessToken],
+        ['userId', result.userId],
+        ['expiresAt', result.expires],
+        ['isLoggedIn', 'true'],
+      ]);
+      await AsyncStorage.setItem('roleName', result.roleName);
+
+      navigation.navigate('PinSetup');
     } catch (error: any) {
-      if (error.response || error.response.status === 401) {
-        console.log(error, 'error');
-        setModalTitle('Xəta');
-        setModalDescription('Daxil edilən məlumatlarda səhv var!');
-        setModalVisible(true);
-      } else {
-        console.log('sebeke xetasi');
-      }
+      setModalTitle('Xəta');
+      setModalDescription(
+        error.response?.status === 401
+          ? 'Daxil edilən məlumatlarda səhv var!'
+          : 'Şəbəkə xətası baş verdi.',
+      );
+      setModalVisible(true);
     } finally {
       setLoading(false);
     }
@@ -187,8 +180,8 @@ const styles = StyleSheet.create({
     lineHeight: 46.8,
   },
   subtitle: {
-    color: '#424242', // var(--Neutral-800)
-    fontFamily: 'DMSans-Regular', // Make sure it's loaded
+    color: '#424242',
+    fontFamily: 'DMSans-Regular',
     fontSize: 12,
     fontStyle: 'normal',
     fontWeight: '400',

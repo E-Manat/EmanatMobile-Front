@@ -15,6 +15,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import Icon from 'react-native-vector-icons/Feather';
 import Config from 'react-native-config';
+import {apiService} from '../services/apiService';
+import {API_ENDPOINTS} from '../services/api_endpoint';
 type NavigationProp = StackNavigationProp<RootStackParamList, 'Login'>;
 const ForgotPasswordScreen = () => {
   const [email, setEmail] = useState('');
@@ -22,6 +24,7 @@ const ForgotPasswordScreen = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   const navigation = useNavigation<NavigationProp>();
+
   const handleSendOtp = async () => {
     if (!email) {
       setModalVisible(true);
@@ -29,34 +32,15 @@ const ForgotPasswordScreen = () => {
     }
 
     setIsLoading(true);
-
     try {
-      const userToken = await AsyncStorage.getItem('userToken');
-
-      const response = await axios.post(
-        `${Config.API_URL}/auth/Auth/SendEmail`,
-        {email},
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${userToken}`,
-          },
-        },
-      );
-
-      if (response) {
-        console.log('OTP göndərildi:', email);
-        navigation.navigate('OtpSubmit', {email});
-      } else {
-        console.log('Error', 'OTP göndərilmədi.');
-      }
+      await apiService.post(API_ENDPOINTS.auth.sendEmail, {email});
+      navigation.navigate('OtpSubmit', {email});
     } catch (error) {
       console.error('Error sending OTP:', error);
     } finally {
-      setIsLoading(false); // loading end
+      setIsLoading(false);
     }
   };
-
   return (
     <View style={styles.container}>
       <TouchableOpacity
@@ -111,7 +95,7 @@ const styles = StyleSheet.create({
     gap: 10,
     height: '100%',
     position: 'relative',
-    paddingTop:120
+    paddingTop: 120,
   },
   title: {
     color: '#063A66',
@@ -169,7 +153,7 @@ const styles = StyleSheet.create({
     marginTop: 30,
     position: 'absolute',
     left: 15,
-    top:20
+    top: 20,
   },
 });
 

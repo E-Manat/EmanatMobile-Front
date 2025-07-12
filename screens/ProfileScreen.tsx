@@ -27,6 +27,8 @@ import CustomModal from '../components/Modal';
 
 type NavigationProp = StackNavigationProp<RootStackParamList, 'Profil'>;
 import Config from 'react-native-config';
+import {apiService} from '../services/apiService';
+import {API_ENDPOINTS} from '../services/api_endpoint';
 
 console.log(Config.API_URL, 'jdfnS');
 
@@ -58,20 +60,8 @@ const ProfileScreen = () => {
         return;
       }
 
-      const response = await fetch(`${Config.API_URL}/auth/User/GetProfile`, {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
+      const result: any = await apiService.get(API_ENDPOINTS.auth.getProfile);
 
-      if (!response.ok) {
-        console.warn('❌ API cavabı uğursuz:', response.status);
-        return;
-      }
-
-      const result = await response.json();
       console.log('Profil məlumatları:', result);
 
       if (result) {

@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
-import React, {useCallback, useEffect, useRef, useState} from 'react';
+import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {
   View,
   Text,
@@ -41,6 +41,8 @@ interface Task {
   address?: string;
   hours?: string;
   phone?: string;
+  pointId?: string;
+  order: number;
 }
 
 interface TasksPayload {
@@ -66,7 +68,7 @@ const TasksScreen: React.FC = () => {
       case 0:
         return '#9E9E9E'; // Not started (Başlanmayıb)
       default:
-        return '#CCC';
+        return '#9E9E9E';
     }
   };
 
@@ -82,7 +84,7 @@ const TasksScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp>();
   const [filteredTasks, setFilteredTasks] = useState<any>([]);
 
-  const tasksRef = useRef<Task[]>([]);
+  const tasksRef = useRef<any>([]);
   const connectionRef = useRef<signalR.HubConnection | null>(null);
 
   useEffect(() => {
@@ -128,7 +130,8 @@ const TasksScreen: React.FC = () => {
         fetchTasks(0);
         break;
       case 'İcra olunan':
-        fetchTasks(1); // Backdə 1, 2, 3 ümumiyyətlə 1-lə gələcək kimi qəbul edirik
+        fetchTasks(1);
+        fetchTasks(3);
         break;
       case 'Tamamlanıb':
         fetchTasks(4); // Completed
@@ -159,8 +162,8 @@ const TasksScreen: React.FC = () => {
     }
   };
 
-  console.log(tasksData, 'tasksData');
-  console.log(filteredTasks, 'filteredTasks');
+  // console.log(tasksData, 'tasksData');
+  // console.log(filteredTasks, 'filteredTasks');
 
   const renderTask = ({item}: any) => (
     <TouchableOpacity
@@ -213,66 +216,98 @@ const TasksScreen: React.FC = () => {
       try {
         const token = await AsyncStorage.getItem('userToken');
         const roleName = await AsyncStorage.getItem('roleName');
-
         if (!token || connectionRef.current) return;
 
         const connection = new signalR.HubConnectionBuilder()
-          .withUrl(`http://192.168.10.104:5009/hubs/mobile`, {
+          .withUrl(`http://172.23.0.78:5000/hubs/mobile`, {
             accessTokenFactory: () => token,
           })
-          .withAutomaticReconnect() 
+          .withAutomaticReconnect()
           .configureLogging(signalR.LogLevel.Information)
           .build();
 
-        const eventName =
+        console.log(connection, 'connection');
+
+        const createdEvent =
           roleName === 'Collector' ? 'TaskCreated' : 'TechnicianTaskCreated';
+        const deletedEvent =
+          roleName === 'Collector' ? 'TaskDeleted' : 'TechnicianTaskDeleted';
 
-        connection.on(eventName, (notification: any) => {
-          const alreadyExists = tasksRef.current.some(
-            t => t.id === notification.taskId,
-          );
-          if (alreadyExists) return;
-          console.log(connection, notification, 'txnk');
-          const newTask: any = {
-            id: notification.taskId,
-            status: notification.status,
-            address: notification.pointName,
-            pointId: notification.pointId,
-          };
+        connection.on(createdEvent, (notification: any) => {
+          console.log(notification, 'TaskCreated');
+          const {taskId, status, pointName, pointId, order} = notification;
 
-          setFilteredTasks((prev: any) => [...prev, newTask]);
+          if (
+            status === TaskStatus.InTransit ||
+            status === TaskStatus.TechnicalWorkInProgress ||
+            status === TaskStatus.CollectionInProgress
+          ) {
+            return;
+          }
 
-          setTasksData(prev => ({
-            tasks: [...prev.tasks, newTask],
-            pendingTaskCount:
-              prev.pendingTaskCount +
-              (notification.status === TaskStatus.NotStarted ? 1 : 0),
-            inProgressTaskCount:
-              prev.inProgressTaskCount +
-              (notification.status === TaskStatus.InTransit ||
-              notification.status === TaskStatus.TechnicalWorkInProgress ||
-              notification.status === TaskStatus.CollectionInProgress
-                ? 1
-                : 0),
-            completedTaskCount:
-              prev.completedTaskCount +
-              (notification.status === TaskStatus.Completed ? 1 : 0),
-          }));
+          tasksRef.current = [
+            ...tasksRef.current.filter((t: any) => t.id !== taskId),
+            {id: taskId, status, address: pointName, pointId, order},
+          ].sort((a, b) => a.order - b.order);
+
+          setFilteredTasks(tasksRef.current);
+
+          const pending = tasksRef.current.filter(
+            (t: any) => t.status === TaskStatus.NotStarted,
+          ).length;
+          const inProg = tasksRef.current.filter(
+            (t: any) =>
+              t.status === TaskStatus.InTransit ||
+              t.status === TaskStatus.TechnicalWorkInProgress ||
+              t.status === TaskStatus.CollectionInProgress,
+          ).length;
+          const completed = tasksRef.current.filter(
+            (t: any) => t.status === TaskStatus.Completed,
+          ).length;
+
+          setTasksData({
+            tasks: tasksRef.current,
+            pendingTaskCount: pending,
+            inProgressTaskCount: inProg,
+            completedTaskCount: completed,
+          });
 
           Toast.show({
-            type: 'success',
-            text1: `Bildiriş: Terminal ${notification.pointId}`,
-            text2: notification.pointName,
+            type: 'info',
+            text1: `Yeni bildiriş`,
             position: 'top',
             visibilityTime: 4000,
             autoHide: true,
           });
         });
 
+        connection.on('TaskDeleted', (notification: any) => {
+          console.log('TaskDeleted', notification);
+          console.log(notification, 'ntt', deletedEvent);
+          tasksRef.current = tasksRef.current.filter(
+            (t: any) => t.id !== notification.taskId,
+          );
+          setFilteredTasks((prev: any) =>
+            prev.filter((t: any) => t.id !== notification.taskId),
+          );
+          setTasksData(prev => ({
+            ...prev,
+            pendingTaskCount: prev.pendingTaskCount - 1,
+          }));
+
+          Toast.show({
+            type: 'error',
+            text1: `Tapşırıq silindi: Terminal ID ${notification.pointId}`,
+            position: 'top',
+            visibilityTime: 3000,
+          });
+          // fetchTasks(getStatusFromFilter(selectedFilter));
+        });
+
         await connection.start();
         connectionRef.current = connection;
       } catch (err) {
-        console.error('❌ SignalR bağlantı xətası:', err);
+        console.error('❌ SignalR connection error:', err);
       }
     };
 
@@ -286,7 +321,7 @@ const TasksScreen: React.FC = () => {
     };
   }, []);
 
-  console.log(tasksData, 'taskdata');
+  const sortedTasks = [...filteredTasks].sort((a, b) => a.order - b.order);
 
   return (
     <View style={styles.container}>
@@ -358,9 +393,7 @@ const TasksScreen: React.FC = () => {
         </ScrollView>
       </View>
 
-      {filteredTasks?.length > 0 && (
-        <Text style={styles.currentDay}>Bu gün</Text>
-      )}
+      {sortedTasks?.length > 0 && <Text style={styles.currentDay}>Bu gün</Text>}
 
       <ScrollView contentContainerStyle={styles.mainContainer}>
         {loading ? (
@@ -368,9 +401,9 @@ const TasksScreen: React.FC = () => {
             style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
             <ActivityIndicator size="large" color="#2D64AF" />
           </View>
-        ) : filteredTasks?.length > 0 ? (
+        ) : sortedTasks?.length > 0 ? (
           <FlatList
-            data={filteredTasks}
+            data={[...filteredTasks].sort((a, b) => a.order - b.order)}
             keyExtractor={item => item.id}
             renderItem={renderTask}
             ListFooterComponent={<View style={{height: 20}} />}

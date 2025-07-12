@@ -55,8 +55,8 @@ const TerminalDetailsScreen = ({route}: any) => {
       // mobile
       const url =
         roleName === 'Collector'
-          ? `${Config.API_URL}/CollectorTask/StartTask?taskId=${taskData.id}`
-          : `${Config.API_URL}/TechnicianTask/StartRoute?taskId=${taskData.id}`;
+          ? `${Config.API_URL}/mobile/CollectorTask/StartTask?taskId=${taskData.id}`
+          : `${Config.API_URL}/mobile/TechnicianTask/StartRoute?taskId=${taskData.id}`;
 
       const response = await fetch(url, {
         method: 'POST',

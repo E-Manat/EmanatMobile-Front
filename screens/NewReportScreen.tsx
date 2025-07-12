@@ -27,6 +27,7 @@ import CustomModal from '../components/Modal';
 import {RouteProp} from '@react-navigation/native';
 import UniversalSelectModal from '../components/UniversalSelectModal';
 import CustomSelectBox from '../components/CustomSelectBox';
+import {API_ENDPOINTS} from '../services/api_endpoint';
 
 type RouteProps = RouteProp<RootStackParamList, 'YeniHesabat'>;
 type NavigationProp = StackNavigationProp<RootStackParamList, 'Login'>;
@@ -178,7 +179,7 @@ const NewReportScreen = () => {
   useEffect(() => {
     const fetchTerminals = async () => {
       try {
-        const data = await apiService.get('/Terminal/GetAll');
+        const data = await apiService.get(API_ENDPOINTS.mobile.terminal.getAll);
         console.log(data, 'data');
         setTerminalList(data);
       } catch (error) {
@@ -193,7 +194,7 @@ const NewReportScreen = () => {
   useEffect(() => {
     const fetchProblems = async () => {
       try {
-        const data = await apiService.get('/Problem/GetAll');
+        const data = await apiService.get(API_ENDPOINTS.mobile.problem.getAll);
         console.log(data);
         setProblemList(data);
       } catch (error) {
@@ -236,7 +237,10 @@ const NewReportScreen = () => {
         } as any);
       }
 
-      await apiService.postMultipart('/Report/CreateReport', formData);
+      await apiService.postMultipart(
+        API_ENDPOINTS.mobile.report.create,
+        formData,
+      );
       setSuccessModalVisible(true);
     } catch (error) {
       setModalMessage('Hesabat yaradılarkən xəta baş verdi.');
