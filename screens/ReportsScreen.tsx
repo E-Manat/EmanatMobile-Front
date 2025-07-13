@@ -156,7 +156,7 @@ const ReportsScreen = () => {
         <TopHeader
           title="Hesabatlar"
           rightIconName="plus"
-          onRightPress={() => navigation.navigate('YeniHesabat')}
+          onRightPress={() => navigation.navigate('YeniHesabat', {})}
         />
 
         <View style={styles.searchContainer}>
@@ -244,7 +244,7 @@ const ReportsScreen = () => {
             </Text>
             <TouchableOpacity
               style={styles.button}
-              onPress={() => navigation.navigate('YeniHesabat')}>
+              onPress={() => navigation.navigate('YeniHesabat', {})}>
               <Icon name="plus" size={24} color="#fff" />
               <Text style={styles.buttonText}>Yeni hesabat</Text>
             </TouchableOpacity>

@@ -49,23 +49,25 @@ const LoginScreen = () => {
       return;
     }
 
+    console.log('re1');
     setLoading(true);
     try {
-      const result: any = await apiService.post(API_ENDPOINTS.auth.login, {
-        email,
-        password,
-      });
-
+      const result: any = await axios.post(
+        `${Config.API_URL}/auth/Auth/Login`,
+        {email, password},
+      );
+      console.log(result, 'res');
       await AsyncStorage.multiSet([
-        ['userToken', result.accessToken],
-        ['userId', result.userId],
-        ['expiresAt', result.expires],
+        ['userToken', result.data.accessToken],
+        ['userId', result.data.userId],
+        ['expiresAt', result.data.expires],
         ['isLoggedIn', 'true'],
       ]);
-      await AsyncStorage.setItem('roleName', result.roleName);
+      await AsyncStorage.setItem('roleName', result.data.roleName);
 
       navigation.navigate('PinSetup');
     } catch (error: any) {
+      console.log(error, 'error');
       setModalTitle('Xəta');
       setModalDescription(
         error.response?.status === 401
@@ -139,7 +141,7 @@ const LoginScreen = () => {
       ) : null}
 
       <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')}>
-        <Text style={styles.forgotPassword}>Şifrəni unutmusuz?</Text>
+        <Text style={styles.forgotPassword}>Şifrəni unutmusuzzz?</Text>
       </TouchableOpacity>
 
       <TouchableOpacity

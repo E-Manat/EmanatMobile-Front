@@ -22,6 +22,7 @@ import * as signalR from '@microsoft/signalr';
 import {RefreshIcon} from '../assets/icons';
 type NavigationProp = StackNavigationProp<RootStackParamList, 'PinSetup'>;
 import {API_ENDPOINTS} from '../services/api_endpoint';
+import Config from 'react-native-config';
 
 export enum TaskStatus {
   NotStarted = 'NotStarted',
@@ -74,6 +75,7 @@ const TasksScreen: React.FC = () => {
 
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+
   const [tasksData, setTasksData] = useState<TasksPayload>({
     tasks: [],
     pendingTaskCount: 0,
@@ -81,6 +83,7 @@ const TasksScreen: React.FC = () => {
     completedTaskCount: 0,
   });
 
+  const [refreshing, setRefreshing] = useState(false);
   const navigation = useNavigation<NavigationProp>();
   const [filteredTasks, setFilteredTasks] = useState<any>([]);
 
@@ -212,14 +215,16 @@ const TasksScreen: React.FC = () => {
   );
 
   useEffect(() => {
+    console.log('step1');
     const connectSignalR = async () => {
       try {
+        console.log('step2');
         const token = await AsyncStorage.getItem('userToken');
         const roleName = await AsyncStorage.getItem('roleName');
         if (!token || connectionRef.current) return;
 
         const connection = new signalR.HubConnectionBuilder()
-          .withUrl(`http://172.23.0.78:5000/hubs/mobile`, {
+          .withUrl(`${Config.SIGNALR_URL}`, {
             accessTokenFactory: () => token,
           })
           .withAutomaticReconnect()
@@ -227,7 +232,7 @@ const TasksScreen: React.FC = () => {
           .build();
 
         console.log(connection, 'connection');
-
+        console.log('step3');
         const createdEvent =
           roleName === 'Collector' ? 'TaskCreated' : 'TechnicianTaskCreated';
         const deletedEvent =
@@ -323,6 +328,12 @@ const TasksScreen: React.FC = () => {
 
   const sortedTasks = [...filteredTasks].sort((a, b) => a.order - b.order);
 
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await fetchTasks(getStatusFromFilter(selectedFilter));
+    setRefreshing(false);
+  };
+
   return (
     <View style={styles.container}>
       <TopHeader
@@ -407,6 +418,8 @@ const TasksScreen: React.FC = () => {
             keyExtractor={item => item.id}
             renderItem={renderTask}
             ListFooterComponent={<View style={{height: 20}} />}
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
           />
         ) : (
           <View style={styles.noResult}>

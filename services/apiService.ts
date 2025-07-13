@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Config from 'react-native-config';
 
-console.log(Config.API_URL,'API_URL'); 
+console.log(Config.API_URL, 'API_URL');
 
 let navigationRef: any = null;
 
@@ -21,7 +21,7 @@ const getToken = async (): Promise<string | null> => {
 
 const request = async (
   endpoint: string,
-  method: 'GET' | 'POST' | 'PUT' | 'DELETE',
+  method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH',
   body?: any,
   isMultipart: boolean = false,
 ): Promise<any> => {
@@ -45,7 +45,7 @@ const request = async (
   try {
     const res = await fetch(`${Config.API_URL}${endpoint}`, options);
     console.log(res, 'geden sorgu');
-    
+
     if (res.status === 401) {
       await AsyncStorage.multiRemove(['userToken', 'isLoggedIn']);
       if (navigationRef) {
@@ -75,28 +75,29 @@ const request = async (
 };
 
 export const apiService = {
-   get : async (endpoint: string): Promise<any> => {
+  get: async (endpoint: string): Promise<any> => {
     const token = await getToken();
     if (!token) throw new Error('Token tapılmadı.');
-  
+
     const headers: Record<string, string> = {
       Authorization: `Bearer ${token}`,
     };
-  
+
     const res = await fetch(`${Config.API_URL}${endpoint}`, {
       method: 'GET',
       headers,
     });
-  
+
     const contentType = res.headers.get('Content-Type');
     const result = contentType?.includes('application/json')
       ? await res.json()
       : await res.text();
-  
+
     return result;
-  },  
+  },
   post: (endpoint: string, body: any) => request(endpoint, 'POST', body),
   put: (endpoint: string, body: any) => request(endpoint, 'PUT', body),
+  patch: (endpoint: string, body: any) => request(endpoint, 'PATCH', body),
   delete: (endpoint: string) => request(endpoint, 'DELETE'),
   postMultipart: (endpoint: string, formData: FormData) =>
     request(endpoint, 'POST', formData, true),

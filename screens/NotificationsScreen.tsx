@@ -102,7 +102,6 @@ const NotificationsScreen = () => {
     }, [fetchNotifications]),
   );
 
-  console.log(AsyncStorage.getAllKeys);
   const connectionRef = useRef<signalR.HubConnection | null>(null);
 
   useEffect(() => {
@@ -120,7 +119,7 @@ const NotificationsScreen = () => {
         }
 
         const connection = new signalR.HubConnectionBuilder()
-          .withUrl('http://172.23.0.78:5000/hubs/mobile', {
+          .withUrl(`${Config.SIGNALR_URL}`, {
             accessTokenFactory: () => token,
           })
           .withAutomaticReconnect()
@@ -221,10 +220,6 @@ const NotificationsScreen = () => {
     }
   }, [filter, fetchNotifications, fetchUnreadNotifications]);
 
-  const [successMessage, setSuccessMessage] = useState('');
-
-  console.log(data, 'data');
-
   const markAllAsRead = async () => {
     try {
       await apiService.post(API_ENDPOINTS.notification.markAllAsRead, {});
@@ -239,23 +234,47 @@ const NotificationsScreen = () => {
 
   const markAsRead = async (notificationId: string) => {
     try {
-      await apiService.post(API_ENDPOINTS.notification.markAsRead, {
+      await apiService.patch(API_ENDPOINTS.notification.markAsRead, {
         notificationId,
       });
     } catch (err) {
-      console.error('markAsRead error:', err);
+      console.error('❌ markAsRead error:', err);
     }
   };
 
   const handleSwipeDelete = async (id: string) => {
     try {
-      await apiService.post(API_ENDPOINTS.notification.delete, {
-        notificationId: id,
-      });
-      setData((d: any) => d.filter((x: any) => x.id !== id));
-      Toast.show({type: 'success', text1: 'Bildiriş silindi'});
+      const token = await AsyncStorage.getItem('userToken');
+      if (!token) {
+        console.warn('Token tapılmadı');
+        return;
+      }
+
+      console.log(id);
+
+      const response: any = await fetch(
+        `${Config.API_URL}/notification/Notification/Delete`,
+        {
+          method: 'DELETE',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({notificationId: id}),
+        },
+      );
+
+      if (response) {
+        setData((prev: any) => prev.filter((item: any) => item.id !== id));
+        Toast.show({
+          type: 'success',
+          text1: 'Bildiriş silindi',
+        });
+      } else {
+        console.error('❌ Bildiriş silinmədi:', response.status);
+      }
     } catch (err) {
-      console.error('delete error:', err);
+      console.error('❌ handleSwipeDelete istisna:', err);
     }
   };
 
@@ -304,27 +323,78 @@ const NotificationsScreen = () => {
 
   const handleBulkDelete = async () => {
     try {
-      await apiService.post(API_ENDPOINTS.notification.deleteSelected, {
-        notificationIds: selectedIds,
-      });
-      setData((d: any) => d.filter((x: any) => !selectedIds.includes(x.id)));
-      setSelectionMode(false);
-      setSelectedIds([]);
-      Toast.show({type: 'success', text1: 'Seçilənlər silindi'});
+      const token = await AsyncStorage.getItem('userToken');
+      if (!token) return console.warn('Token tapılmadı');
+
+      const response = await fetch(
+        `${Config.API_URL}/notification/Notification/DeleteSelectedIds`,
+        {
+          method: 'DELETE',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({notificationIds: selectedIds}),
+        },
+      );
+
+      if (response.ok) {
+        setData((prev: any) =>
+          prev.filter((item: any) => !selectedIds.includes(item.id)),
+        );
+        setSelectedIds([]);
+        setSelectionMode(false);
+
+        Toast.show({
+          type: 'success',
+          text1: 'Seçilmiş bildirişlər silindi',
+        });
+      } else {
+        Toast.show({
+          type: 'error',
+          text1: 'Xəta baş verdi',
+          text2: 'Bildirişlər silinmədi',
+        });
+      }
     } catch (err) {
-      console.error('bulk delete error:', err);
+      console.error('❌ handleBulkDelete istisna:', err);
     }
   };
 
   const handleDeleteAll = async () => {
     try {
-      await apiService.post(API_ENDPOINTS.notification.deleteAll, {});
-      setData([]);
-      setSelectionMode(false);
-      setSelectedIds([]);
-      Toast.show({type: 'success', text1: 'Bütün bildirişlər silindi'});
+      const token = await AsyncStorage.getItem('userToken');
+      if (!token) return console.warn('Token tapılmadı');
+
+      const response = await fetch(
+        `${Config.API_URL}/notification/Notification/DeleteAll`,
+        {
+          method: 'DELETE',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({}),
+        },
+      );
+      console.log(response, 'response');
+      if (response) {
+        setData([]);
+        setSelectedIds([]);
+        setSelectionMode(false);
+        Toast.show({
+          type: 'success',
+          text1: 'Bütün bildirişlər silindi',
+        });
+      } else {
+        Toast.show({
+          type: 'error',
+          text1: 'Xəta baş verdi',
+          text2: 'Bildirişlər silinmədi',
+        });
+      }
     } catch (err) {
-      console.error('delete all error:', err);
+      console.error('❌ handleDeleteAll istisna:', err);
     }
   };
 
