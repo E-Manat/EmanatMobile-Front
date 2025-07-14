@@ -154,16 +154,16 @@ const App = () => {
     }
   };
 
-  const handleUpdate = async () => {
-    if (downloadUrl) {
-      await Linking.openURL(downloadUrl);
-    }
-    setModalVisible(false);
-  };
+  // const handleUpdate = async () => {
+  //   if (downloadUrl) {
+  //     await Linking.openURL(downloadUrl);
+  //   }
+  //   setModalVisible(false);
+  // };
 
-  useEffect(() => {
-    checkForUpdate();
-  }, []);
+  // useEffect(() => {
+  //   checkForUpdate();
+  // }, []);
 
   const [hasCurrentTask, setHasCurrentTask] = useState(false);
 
@@ -200,7 +200,7 @@ const App = () => {
           title="Yeniləmə Mövcuddur"
           description="Yeni versiya mövcuddur. Tətbiqi yeniləmək istəyirsiniz?"
           confirmText="Yenilə"
-          onConfirm={handleUpdate}
+          // onConfirm={handleUpdate}
         />
         <Stack.Navigator
           initialRouteName="Splash"

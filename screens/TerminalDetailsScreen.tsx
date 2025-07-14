@@ -14,7 +14,7 @@ import Icon2 from 'react-native-vector-icons/Octicons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {RootStackParamList} from '../App';
-import {useNavigation} from '@react-navigation/native';
+import {useIsFocused, useNavigation} from '@react-navigation/native';
 import TopHeader from '../components/TopHeader';
 import CustomModal from '../components/Modal';
 import Config from 'react-native-config';
@@ -23,14 +23,14 @@ import {HomeIcon} from '../assets/icons';
 type NavigationProp = StackNavigationProp<RootStackParamList, 'Hesabatlar'>;
 
 const TerminalDetailsScreen = ({route}: any) => {
-  const {taskData} = route.params;
+  const isFocused = useIsFocused();
+  const [taskData, setTaskDetails] = useState(route.params.taskData);
   const [confirmVisible, setConfirmVisible] = useState(false);
   const [loading, setLoading] = useState(false);
   const [taskInProgress, setTaskInProgress] = useState(false);
   const [customModalVisible, setCustomModalVisible] = useState(false);
   const [roleName, setRoleName] = useState<string | null>(null);
 
-  console.log(taskData, 'dd');
   useEffect(() => {
     const loadRoleName = async () => {
       const storedRoleName = await AsyncStorage.getItem('roleName');
@@ -136,8 +136,8 @@ const TerminalDetailsScreen = ({route}: any) => {
     }
   };
 
-  console.log(getStatusText(taskData.status));
   const navigation = useNavigation<NavigationProp>();
+
   const formatDuration = (durationStr: string) => {
     if (!durationStr) return 'Qeyd olunmayıb';
 
@@ -167,6 +167,27 @@ const TerminalDetailsScreen = ({route}: any) => {
         return '#9E9E9E';
     }
   };
+
+  useEffect(() => {
+    if (!isFocused) return;
+
+    const fetchTask = async () => {
+      try {
+        const token = await AsyncStorage.getItem('userToken');
+        const res = await fetch(
+          `${Config.API_URL}/mobile/CollectorTask/GetById?id=${taskData.id}`,
+          {headers: {Authorization: `Bearer ${token}`}},
+        );
+        console.log(res, 'r');
+        const updated = await res.json();
+        setTaskDetails(updated);
+      } catch (e) {
+        console.error('Task fetch error:', e);
+      }
+    };
+
+    fetchTask();
+  }, [isFocused]);
 
   return (
     <ScrollView contentContainerStyle={{flexGrow: 1}}>

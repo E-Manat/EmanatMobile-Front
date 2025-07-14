@@ -443,6 +443,7 @@ const TaskProcessScreen = ({route}: any) => {
           cancelText="Bağla"
           onCancel={() => {
             setSuccessModalVisible(false);
+            console.log(taskData, 'taskData');
             navigation.navigate('YeniHesabat', {
               terminalId: taskData?.terminal?.id,
             });

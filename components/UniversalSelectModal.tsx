@@ -1,11 +1,18 @@
-import React from 'react';
+import React, {useState, useMemo} from 'react';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  FlatList,
+  TextInput,
+} from 'react-native';
 import Modal from 'react-native-modal';
-import {View, Text, TouchableOpacity, StyleSheet, FlatList} from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
 
 type Item = {
   id: number | string;
-  name: string;
+  name: number | string;
 };
 
 type Props = {
@@ -23,12 +30,24 @@ const UniversalSelectModal = ({
   title,
   onSelect,
 }: Props) => {
+  const [searchText, setSearchText] = useState('');
+
+  const filteredData = useMemo(
+    () =>
+      data.filter(item =>
+        String(item.name)
+          .toLowerCase()
+          .includes(searchText.trim().toLowerCase()),
+      ),
+    [data, searchText],
+  );
+
   return (
     <Modal
       isVisible={visible}
       onBackdropPress={onClose}
       backdropOpacity={0.4}
-      style={{justifyContent: 'center', margin: 0}}>
+      style={styles.modalWrapper}>
       <View style={styles.modalContainer}>
         <View style={styles.header}>
           <Text style={styles.title}>{title}</Text>
@@ -37,9 +56,27 @@ const UniversalSelectModal = ({
           </TouchableOpacity>
         </View>
 
+        <View style={styles.searchWrapper}>
+          <TextInput
+            placeholder="Axtar..."
+            value={searchText}
+            onChangeText={setSearchText}
+            style={styles.searchInput}
+            autoCorrect={false}
+            clearButtonMode="never"
+          />
+          {searchText.length > 0 && (
+            <TouchableOpacity
+              onPress={() => setSearchText('')}
+              style={styles.clearButton}>
+              <Icon name="x" size={16} color="#4B5D6A" />
+            </TouchableOpacity>
+          )}
+        </View>
+
         <View style={styles.listWrapper}>
           <FlatList
-            data={data}
+            data={filteredData}
             keyExtractor={item => item.id.toString()}
             renderItem={({item}) => (
               <TouchableOpacity
@@ -48,8 +85,13 @@ const UniversalSelectModal = ({
                   onSelect(item);
                   onClose();
                 }}>
-                <Text style={styles.optionText}>{item.name}</Text>
+                <Text style={styles.optionText}>{String(item.name)}</Text>
               </TouchableOpacity>
+            )}
+            ListEmptyComponent={() => (
+              <View style={styles.emptyContainer}>
+                <Text style={styles.emptyText}>Nəticə yoxdur</Text>
+              </View>
             )}
           />
         </View>
@@ -61,6 +103,7 @@ const UniversalSelectModal = ({
 export default UniversalSelectModal;
 
 const styles = StyleSheet.create({
+  modalWrapper: {justifyContent: 'center', margin: 0},
   modalContainer: {
     backgroundColor: '#fff',
     padding: 20,
@@ -70,7 +113,7 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 16,
+    marginBottom: 8,
     borderBottomWidth: 1,
     borderBottomColor: '#E0E3E6',
     paddingBottom: 8,
@@ -82,6 +125,29 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     lineHeight: 24,
   },
+  searchWrapper: {
+    position: 'relative',
+    marginBottom: 12,
+  },
+  searchInput: {
+    height: 40,
+    // borderBottomWidth: 1,
+    borderColor: '#E0E3E6',
+    borderRadius: 8,
+    // paddingHorizontal: 10,
+    paddingRight: 36, // space for clear button
+    fontFamily: 'DMSans-Regular',
+    fontSize: 14,
+  },
+  clearButton: {
+    position: 'absolute',
+    right: 10,
+    top: '50%',
+    transform: [{translateY: -8}],
+  },
+  listWrapper: {
+    maxHeight: 400,
+  },
   option: {
     paddingVertical: 12,
   },
@@ -92,7 +158,13 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     lineHeight: 18,
   },
-  listWrapper: {
-    maxHeight: 400, // təxminən 6-7 seçimlik yer üçün ideal
+  emptyContainer: {
+    alignItems: 'center',
+    paddingVertical: 20,
+  },
+  emptyText: {
+    color: '#999',
+    fontFamily: 'DMSans-Regular',
+    fontSize: 14,
   },
 });

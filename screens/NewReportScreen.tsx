@@ -251,13 +251,16 @@ const NewReportScreen = () => {
   };
 
   useEffect(() => {
-    if (terminalList.length && terminalIdFromRoute !== undefined) {
-      const matchedTerminal = terminalList?.find(
-        terminal => terminal.id === terminalIdFromRoute,
+    if (terminalList.length && terminalIdFromRoute != null) {
+      const matchedTerminal = terminalList.find(
+        t => String(t.id) === String(terminalIdFromRoute),
       );
-
       if (matchedTerminal) {
-        setSelectedTerminalId(matchedTerminal.id);
+        setSelectedTerminalId(matchedTerminal.pointId);
+        setSelectedTerminalObj({
+          id: matchedTerminal.id,
+          name: String(matchedTerminal.pointId),
+        });
       }
     }
   }, [terminalList, terminalIdFromRoute]);
@@ -296,10 +299,7 @@ const NewReportScreen = () => {
             onPress={() => {
               const mapped =
                 terminalList &&
-                terminalList?.map(t => ({
-                  id: t?.pointId,
-                  name: t?.pointId,
-                }));
+                terminalList?.map(t => ({id: t?.pointId, name: t?.pointId}));
               setModalData(mapped || []);
               setModalTitle('Terminal seçin');
               setModalType('terminal');

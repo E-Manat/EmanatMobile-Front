@@ -406,29 +406,29 @@ const NotificationsScreen = () => {
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Bildirişlər</Text>
 
-        {filter === 'unread' && filteredData?.length > 0 ? (
-          <TouchableOpacity onPress={() => setModalVisible(true)}>
-            <IconCheck name="checkmark-done-sharp" size={20} color="#2D64AF" />
-          </TouchableOpacity>
-        ) : (
-          <View style={{width: 20}} />
-        )}
+        <View style={{flexDirection: 'row', alignItems: 'center'}}>
+          {filter === 'unread' && filteredData.length > 0 ? (
+            <TouchableOpacity
+              onPress={() => setModalVisible(true)}
+              style={{marginRight: 12}}>
+              <IconCheck
+                name="checkmark-done-sharp"
+                size={20}
+                color="#2D64AF"
+              />
+            </TouchableOpacity>
+          ) : (
+            <View style={{width: 20, marginRight: 12}} />
+          )}
 
-        {selectionMode && selectedIds.length > 0 && (
-          <TouchableOpacity
-            onPress={handleBulkDelete}
-            style={{
-              backgroundColor: 'red',
-              padding: 10,
-              alignItems: 'center',
-              margin: 10,
-              borderRadius: 10,
-            }}>
-            <Text style={{color: 'white', fontFamily: 'DMSans-Regular'}}>
-              Seçilmişləri Sil ({selectedIds.length})
-            </Text>
-          </TouchableOpacity>
-        )}
+          {selectionMode && selectedIds.length > 0 && (
+            <TouchableOpacity
+              onPress={handleBulkDelete}
+              style={styles.bulkDeleteButton}>
+              <Icon name="trash" size={20} color="#FF3B30" />
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
 
       <View style={styles.filterContainer}>
@@ -595,6 +595,10 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontFamily: 'DMSans-SemiBold',
     color: '#2D64AF',
+  },
+  bulkDeleteButton: {
+    padding: 8,
+    borderRadius: 8,
   },
   filterContainer: {
     flexDirection: 'row',
