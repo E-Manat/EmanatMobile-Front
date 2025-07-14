@@ -242,6 +242,37 @@ const TasksScreen: React.FC = () => {
           console.log(notification, 'TaskCreated');
           const {taskId, status, pointName, pointId, order} = notification;
 
+          if (status === TaskStatus.Canceled) {
+            tasksRef.current = tasksRef.current.filter(
+              (t: any) => t.id !== taskId,
+            );
+            setFilteredTasks(tasksRef.current);
+
+            setTasksData(prev => ({
+              tasks: tasksRef.current,
+              pendingTaskCount: tasksRef.current.filter(
+                (t: any) => t.status === TaskStatus.NotStarted,
+              ).length,
+              inProgressTaskCount: tasksRef.current.filter(
+                (t: any) =>
+                  t.status === TaskStatus.InTransit ||
+                  t.status === TaskStatus.TechnicalWorkInProgress ||
+                  t.status === TaskStatus.CollectionInProgress,
+              ).length,
+              completedTaskCount: tasksRef.current.filter(
+                (t: any) => t.status === TaskStatus.Completed,
+              ).length,
+            }));
+            Toast.show({
+              type: 'error',
+              text1: `Tapşırıq ləğv olundu`,
+              text2: `Terminal ID ${pointId}`,
+              position: 'top',
+              visibilityTime: 3000,
+            });
+            return;
+          }
+
           if (
             status === TaskStatus.InTransit ||
             status === TaskStatus.TechnicalWorkInProgress ||
