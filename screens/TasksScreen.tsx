@@ -234,35 +234,38 @@ const TasksScreen: React.FC = () => {
         const deletedEvent =
           roleName === 'Collector' ? 'TaskDeleted' : 'TechnicianTaskDeleted';
 
-        connection.on(createdEvent, (notification: any) => {
+        connection.on('TaskCreated', (notification: any) => {
           console.log(notification, 'TaskCreated');
           const {taskId, status, pointName, pointId, order} = notification;
 
           if (status === TaskStatus.Canceled) {
+            const removed = tasksRef.current.find((t: any) => t.id === taskId);
+
             tasksRef.current = tasksRef.current.filter(
               (t: any) => t.id !== taskId,
             );
             setFilteredTasks(tasksRef.current);
 
-            // count-ları da yenilə (istəsən)
-            setTasksData(prev => ({
-              tasks: tasksRef.current,
-              pendingTaskCount: tasksRef.current.filter(
-                (t: any) => t.status === TaskStatus.NotStarted,
-              ).length,
-              inProgressTaskCount: tasksRef.current.filter(
-                (t: any) =>
-                  t.status === TaskStatus.InTransit ||
-                  t.status === TaskStatus.TechnicalWorkInProgress ||
-                  t.status === TaskStatus.CollectionInProgress,
-              ).length,
-              completedTaskCount: tasksRef.current.filter(
-                (t: any) => t.status === TaskStatus.Completed,
-              ).length,
-            }));
+            setTasksData(prev => {
+              let {pendingTaskCount, inProgressTaskCount, completedTaskCount} =
+                prev;
+
+              if (removed) {
+                pendingTaskCount = Math.max(0, pendingTaskCount - 1);
+              }
+
+              return {
+                ...prev,
+                tasks: tasksRef.current,
+                pendingTaskCount,
+                inProgressTaskCount,
+                completedTaskCount,
+              };
+            });
+
             Toast.show({
               type: 'error',
-              text1: `Tapşırıq ləğv olundu`,
+              text1: 'Tapşırıq ləğv olundu',
               text2: `Terminal ID ${pointId}`,
               position: 'top',
               visibilityTime: 3000,
@@ -288,22 +291,12 @@ const TasksScreen: React.FC = () => {
           const pending = tasksRef.current.filter(
             (t: any) => t.status === TaskStatus.NotStarted,
           ).length;
-          const inProg = tasksRef.current.filter(
-            (t: any) =>
-              t.status === TaskStatus.InTransit ||
-              t.status === TaskStatus.TechnicalWorkInProgress ||
-              t.status === TaskStatus.CollectionInProgress,
-          ).length;
-          const completed = tasksRef.current.filter(
-            (t: any) => t.status === TaskStatus.Completed,
-          ).length;
 
-          setTasksData({
+          setTasksData(prev => ({
+            ...prev,
             tasks: tasksRef.current,
             pendingTaskCount: pending,
-            inProgressTaskCount: inProg,
-            completedTaskCount: completed,
-          });
+          }));
 
           Toast.show({
             type: 'info',
@@ -315,26 +308,53 @@ const TasksScreen: React.FC = () => {
         });
 
         connection.on('TaskDeleted', (notification: any) => {
-          console.log('TaskDeleted', notification);
-          console.log(notification, 'ntt', deletedEvent);
-          tasksRef.current = tasksRef.current.filter(
-            (t: any) => t.id !== notification.taskId,
-          );
-          setFilteredTasks((prev: any) =>
-            prev.filter((t: any) => t.id !== notification.taskId),
-          );
-          setTasksData(prev => ({
-            ...prev,
-            pendingTaskCount: prev.pendingTaskCount - 1,
-          }));
+          const {taskId, pointId} = notification;
 
+          const removed = tasksRef.current.find((t: any) => t.id === taskId);
+          if (!removed) {
+            return;
+          }
+
+          tasksRef.current = tasksRef.current.filter(
+            (t: any) => t.id !== taskId,
+          );
+          setFilteredTasks(tasksRef.current);
+
+          setTasksData(prev => {
+            let {pendingTaskCount, inProgressTaskCount, completedTaskCount} =
+              prev;
+
+            switch (removed.status) {
+              case TaskStatus.NotStarted:
+                pendingTaskCount = Math.max(0, pendingTaskCount - 1);
+                break;
+              // case TaskStatus.InTransit:
+              // case TaskStatus.TechnicalWorkInProgress:
+              // case TaskStatus.CollectionInProgress:
+              //   inProgressTaskCount = Math.max(0, inProgressTaskCount - 1);
+              //   break;
+              // case TaskStatus.Completed:
+              //   completedTaskCount = Math.max(0, completedTaskCount - 1);
+              //   break;
+            }
+
+            return {
+              ...prev,
+              tasks: tasksRef.current,
+              pendingTaskCount,
+              inProgressTaskCount,
+              completedTaskCount,
+            };
+          });
+
+          // 4) Bildiriş göstər
           Toast.show({
             type: 'error',
-            text1: `Tapşırıq silindi: Terminal ID ${notification.pointId}`,
+            text1: 'Tapşırıq silindi',
+            text2: `Terminal ID ${pointId}`,
             position: 'top',
             visibilityTime: 3000,
           });
-          // fetchTasks(getStatusFromFilter(selectedFilter));
         });
 
         await connection.start();
