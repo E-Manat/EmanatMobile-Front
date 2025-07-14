@@ -35,7 +35,7 @@ const LoginScreen = () => {
   const [focusedInput, setFocusedInput] = useState<any>(null);
   const [loading, setLoading] = useState(false);
 
-  const API_URL = `https://emanat-api.siesco.studio/auth/Auth/Login`;
+  const API_URL = `http://192.168.10.104:5202/api/Auth/Login`;
 
   const handleLogin = async () => {
     setEmailError('');

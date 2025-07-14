@@ -83,6 +83,7 @@ const TasksScreen: React.FC = () => {
 
   const navigation = useNavigation<NavigationProp>();
   const [filteredTasks, setFilteredTasks] = useState<any>([]);
+  const [refreshing, setRefreshing] = useState(false);
 
   const tasksRef = useRef<any>([]);
   const connectionRef = useRef<signalR.HubConnection | null>(null);
@@ -237,6 +238,38 @@ const TasksScreen: React.FC = () => {
           console.log(notification, 'TaskCreated');
           const {taskId, status, pointName, pointId, order} = notification;
 
+          if (status === TaskStatus.Canceled) {
+            tasksRef.current = tasksRef.current.filter(
+              (t: any) => t.id !== taskId,
+            );
+            setFilteredTasks(tasksRef.current);
+
+            // count-ları da yenilə (istəsən)
+            setTasksData(prev => ({
+              tasks: tasksRef.current,
+              pendingTaskCount: tasksRef.current.filter(
+                (t: any) => t.status === TaskStatus.NotStarted,
+              ).length,
+              inProgressTaskCount: tasksRef.current.filter(
+                (t: any) =>
+                  t.status === TaskStatus.InTransit ||
+                  t.status === TaskStatus.TechnicalWorkInProgress ||
+                  t.status === TaskStatus.CollectionInProgress,
+              ).length,
+              completedTaskCount: tasksRef.current.filter(
+                (t: any) => t.status === TaskStatus.Completed,
+              ).length,
+            }));
+            Toast.show({
+              type: 'error',
+              text1: `Tapşırıq ləğv olundu`,
+              text2: `Terminal ID ${pointId}`,
+              position: 'top',
+              visibilityTime: 3000,
+            });
+            return;
+          }
+
           if (
             status === TaskStatus.InTransit ||
             status === TaskStatus.TechnicalWorkInProgress ||
@@ -323,6 +356,12 @@ const TasksScreen: React.FC = () => {
 
   const sortedTasks = [...filteredTasks].sort((a, b) => a.order - b.order);
 
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await fetchTasks(getStatusFromFilter(selectedFilter));
+    setRefreshing(false);
+  };
+
   return (
     <View style={styles.container}>
       <TopHeader
@@ -407,6 +446,8 @@ const TasksScreen: React.FC = () => {
             keyExtractor={item => item.id}
             renderItem={renderTask}
             ListFooterComponent={<View style={{height: 20}} />}
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
           />
         ) : (
           <View style={styles.noResult}>
