@@ -8,6 +8,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import Image1 from '../assets/icons/img1.svg';
 import Image2 from '../assets/icons/img2.svg';
 import Image3 from '../assets/icons/img3.svg';
+import {useIsFocused} from '@react-navigation/native';
 const HomeScreen = () => {
   useEffect(() => {
     const logAllAsyncStorage = async () => {
@@ -25,22 +26,24 @@ const HomeScreen = () => {
 
     logAllAsyncStorage();
   }, []);
+
+  const isFocused = useIsFocused();
   const [taskData, setTaskData] = useState<any>(null);
 
-  useEffect(() => {
-    const fetchTaskData = async () => {
-      try {
-        const task = await AsyncStorage.getItem('currentTask');
-        if (task) {
-          setTaskData(JSON.parse(task));
-        }
-      } catch (error) {
-        console.error('Error reading task from AsyncStorage:', error);
-      }
-    };
+  const fetchTaskData = async () => {
+    try {
+      const task = await AsyncStorage.getItem('currentTask');
+      setTaskData(task ? JSON.parse(task) : null);
+    } catch (error) {
+      console.error('Error reading task from AsyncStorage:', error);
+    }
+  };
 
-    fetchTaskData();
-  }, []);
+  useEffect(() => {
+    if (isFocused) {
+      fetchTaskData();
+    }
+  }, [isFocused]);
 
   return (
     <ScrollView

@@ -134,7 +134,6 @@ const TasksScreen: React.FC = () => {
         break;
       case 'İcra olunan':
         fetchTasks(1);
-        fetchTasks(3);
         break;
       case 'Tamamlanıb':
         fetchTasks(4); // Completed

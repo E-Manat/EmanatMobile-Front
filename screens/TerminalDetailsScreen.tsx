@@ -7,6 +7,7 @@ import {
   StyleSheet,
   Modal,
   Alert,
+  DeviceEventEmitter,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome6';
 import Icon1 from 'react-native-vector-icons/MaterialIcons';
@@ -84,6 +85,7 @@ const TerminalDetailsScreen = ({route}: any) => {
 
       setConfirmVisible(false);
       await AsyncStorage.setItem('currentTask', JSON.stringify(taskData));
+      DeviceEventEmitter.emit('taskStarted');
       await AsyncStorage.setItem(
         'routeStartTime',
         new Date().getTime().toString(),

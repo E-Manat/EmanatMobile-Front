@@ -1,4 +1,11 @@
-import {Alert, Button, Linking, StatusBar, View} from 'react-native';
+import {
+  Alert,
+  Button,
+  DeviceEventEmitter,
+  Linking,
+  StatusBar,
+  View,
+} from 'react-native';
 import React, {useEffect, useRef, useState} from 'react';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {NavigationContainer} from '@react-navigation/native';
@@ -165,6 +172,13 @@ const App = () => {
   //   checkForUpdate();
   // }, []);
 
+  useEffect(() => {
+    const sub = DeviceEventEmitter.addListener('taskStarted', () => {
+      setHasCurrentTask(true);
+    });
+    return () => sub.remove();
+  }, []);
+
   const [hasCurrentTask, setHasCurrentTask] = useState(false);
 
   useEffect(() => {
@@ -173,7 +187,7 @@ const App = () => {
       setHasCurrentTask(!!task);
     };
 
-    const interval = setInterval(checkCurrentTask, 1000);
+    const interval = setInterval(checkCurrentTask, 200);
     checkCurrentTask();
 
     return () => clearInterval(interval);
@@ -190,9 +204,11 @@ const App = () => {
           const route = navigationRef.current?.getCurrentRoute();
           setCurrentRouteName(route?.name);
         }}
-        onStateChange={() => {
+        onStateChange={async () => {
           const route = navigationRef.current?.getCurrentRoute();
           setCurrentRouteName(route?.name);
+          const task = await AsyncStorage.getItem('currentTask');
+          setHasCurrentTask(!!task);
         }}>
         <StatusBar />
         <CustomModal

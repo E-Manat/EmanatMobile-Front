@@ -1,5 +1,5 @@
-import {useNavigation} from '@react-navigation/native';
-import React, {useEffect, useState} from 'react';
+import {useFocusEffect, useNavigation} from '@react-navigation/native';
+import React, {useCallback, useEffect, useState} from 'react';
 import {
   View,
   Text,
@@ -133,6 +133,12 @@ const ReportsScreen = () => {
   useEffect(() => {
     fetchReports();
   }, [selectedFilters]);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchReports();
+    }, [searchText, selectedFilters]),
+  );
 
   const renderFilterOption = (option: string) => (
     <TouchableOpacity
