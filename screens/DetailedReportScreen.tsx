@@ -49,6 +49,8 @@ const DetailedReportScreen = () => {
     fetchReportById();
   }, [report.id]);
 
+  console.log(detailedReport, 'rpt');
+
   const renderDetail = (
     icon: any,
     label: string,
@@ -255,11 +257,13 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     padding: 20,
     width: '80%',
+    height: '60%',
   },
   modalImage: {
     width: '100%',
-    height: 200,
+    height: 300,
     borderRadius: 10,
     marginBottom: 10,
+    resizeMode: 'cover',
   },
 });
