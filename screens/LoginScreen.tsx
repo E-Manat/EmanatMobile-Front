@@ -16,12 +16,8 @@ import {StackNavigationProp} from '@react-navigation/stack';
 import CustomModal from '../components/Modal';
 import {Image} from 'react-native';
 import Config from 'react-native-config';
-import {apiService} from '../services/apiService';
-import {API_ENDPOINTS} from '../services/api_endpoint';
 
 type NavigationProp = StackNavigationProp<RootStackParamList, 'Login'>;
-
-// https://emanat-api.siesco.studio/auth/Auth/Login
 
 const LoginScreen = () => {
   const navigation = useNavigation<NavigationProp>();
@@ -141,7 +137,7 @@ const LoginScreen = () => {
       ) : null}
 
       <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')}>
-        <Text style={styles.forgotPassword}>Şifrəni unutmusuzzz?</Text>
+        <Text style={styles.forgotPassword}>Şifrəni unutmusuz?</Text>
       </TouchableOpacity>
 
       <TouchableOpacity
@@ -151,7 +147,7 @@ const LoginScreen = () => {
         {loading ? (
           <ActivityIndicator color="#fff" />
         ) : (
-          <Text style={styles.buttonText}>Daxil ol</Text>
+          <Text style={styles.buttonText}>Daxil olun</Text>
         )}
       </TouchableOpacity>
 
