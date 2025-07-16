@@ -149,7 +149,7 @@ const App = () => {
         },
       );
 
-      console.log(response, 'Version/Check');
+      console.log(response.data, 'bu deqiqe bazada olan versiya');
       if (response.data.isUpdateAvailable) {
         setModalVisible(true);
       }

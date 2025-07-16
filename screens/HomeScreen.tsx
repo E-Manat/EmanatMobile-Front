@@ -50,6 +50,7 @@ const HomeScreen = () => {
       style={globalStyles.container}
       contentContainerStyle={{paddingBottom: 40}}>
       <HomeHeader />
+      <View style={styles.spacer} />
       {taskData !== null && (
         <MenuCard
           title="Cari Tapşırıq"
@@ -82,5 +83,10 @@ const HomeScreen = () => {
   );
 };
 
-const styles = StyleSheet.create({});
+const styles = StyleSheet.create({
+  spacer: {
+    height: 30,
+  },
+});
+
 export default HomeScreen;
