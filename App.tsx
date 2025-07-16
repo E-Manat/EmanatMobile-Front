@@ -78,7 +78,7 @@ const App = () => {
   const [downloadUrl, setDownloadUrl] = useState(
     'https://drive.google.com/drive/folders/1ndnxNUn1Bn1LZM28RBzxhiT1MccvGoRp?usp=drive_link',
   );
-  const version = 10;
+  const version = 1;
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -161,16 +161,16 @@ const App = () => {
     }
   };
 
-  // const handleUpdate = async () => {
-  //   if (downloadUrl) {
-  //     await Linking.openURL(downloadUrl);
-  //   }
-  //   setModalVisible(false);
-  // };
+  const handleUpdate = async () => {
+    if (downloadUrl) {
+      await Linking.openURL(downloadUrl);
+    }
+    setModalVisible(false);
+  };
 
-  // useEffect(() => {
-  //   checkForUpdate();
-  // }, []);
+  useEffect(() => {
+    checkForUpdate();
+  }, []);
 
   useEffect(() => {
     const sub = DeviceEventEmitter.addListener('taskStarted', () => {
@@ -214,9 +214,9 @@ const App = () => {
         <CustomModal
           visible={modalVisible}
           title="Yeniləmə Mövcuddur"
-          description="Yeni versiya mövcuddur. Tətbiqi yeniləmək istəyirsiniz?"
+          description="Yeni versiya mövcuddur. Tətbiqi yeniləməyiniz tövsiyyə olunur"
           confirmText="Yenilə"
-          // onConfirm={handleUpdate}
+          onConfirm={handleUpdate}
         />
         <Stack.Navigator
           initialRouteName="Splash"

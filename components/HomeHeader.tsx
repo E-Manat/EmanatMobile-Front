@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {
   View,
   TextInput,
@@ -8,7 +8,7 @@ import {
   Text,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
-import {useNavigation} from '@react-navigation/native';
+import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {RootStackParamList} from '../App';
 import {StackNavigationProp} from '@react-navigation/stack';
@@ -40,10 +40,16 @@ const HomeHeader = () => {
   }, []);
 
   const getInitials = (firstName: string, lastName: string) => {
-    const first = firstName?.trim()?.[0]?.toUpperCase() || 'A';
-    const last = lastName?.trim()?.[0]?.toUpperCase() || 'B';
+    const first = firstName?.trim()?.[0]?.toUpperCase() || 'S';
+    const last = lastName?.trim()?.[0]?.toUpperCase() || 'A';
     return `${first}${last}`;
   };
+
+  useFocusEffect(
+    useCallback(() => {
+      loadProfileData();
+    }, []),
+  );
 
   return (
     <View style={styles.container}>
@@ -96,13 +102,11 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
     alignItems: 'flex-start',
     justifyContent: 'flex-start',
-    // backgroundColor: '#F2F2F2',
     borderRadius: 25,
     paddingHorizontal: 12,
     flex: 1,
     height: 40,
     color: '#2D64AF',
-    // backgroundColor: 'red',
   },
   searchIcon: {
     marginRight: 8,

@@ -165,11 +165,7 @@ const DetailedReportScreen = () => {
         <TouchableWithoutFeedback onPress={closeModal}>
           <View style={styles.modalBackground}>
             <View style={styles.modalContent}>
-              <Image
-                source={selectedImage || require('../assets/img/araz.png')}
-                style={styles.modalImage}
-              />
-
+              <Image source={selectedImage || ''} style={styles.modalImage} />
               <TouchableOpacity style={styles.closeButton} onPress={closeModal}>
                 <Text style={styles.closeButtonText}>Bağla</Text>
               </TouchableOpacity>

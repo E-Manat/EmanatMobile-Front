@@ -50,7 +50,6 @@ const HomeScreen = () => {
       style={globalStyles.container}
       contentContainerStyle={{paddingBottom: 40}}>
       <HomeHeader />
-      <Banner />
       {taskData !== null && (
         <MenuCard
           title="Cari Tapşırıq"
