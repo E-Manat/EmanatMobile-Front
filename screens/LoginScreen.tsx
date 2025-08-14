@@ -40,6 +40,7 @@ const LoginScreen = () => {
   const handleLogin = async () => {
     setEmailError('');
     setPasswordError('');
+    console.log('step1');
 
     if (!email || !password) {
       setModalTitle('Xəta');
@@ -56,8 +57,8 @@ const LoginScreen = () => {
         {email, password},
         {headers: {'Content-Type': 'application/json'}},
       );
-      console.log(response);
-
+      console.log(response, API_URL);
+      console.log('step2');
       if (response) {
         console.log(response, 'response login');
         await AsyncStorage.multiSet([
@@ -73,7 +74,7 @@ const LoginScreen = () => {
       }
     } catch (error: any) {
       if (error.response || error.response.status === 401) {
-        console.log(error, 'error');
+        console.log(error.response, 'error');
         setModalTitle('Xəta');
         setModalDescription('Daxil edilən məlumatlarda səhv var!');
         setModalVisible(true);

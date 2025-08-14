@@ -67,6 +67,8 @@ const TasksScreen: React.FC = () => {
         return '#29C0B9'; // Completed (Tamamlanıb)
       case 0:
         return '#9E9E9E'; // Not started (Başlanmayıb)
+      case 9:
+        return '#090b3eff';
       default:
         return '#9E9E9E';
     }
@@ -140,6 +142,9 @@ const TasksScreen: React.FC = () => {
       case 'Ləğv edilmiş':
         fetchTasks(5); // Cancelled
         break;
+      case 'Uğursuz əməliyyat':
+        fetchTasks(9); // failed
+        break;
       case 'Hamısı':
       default:
         fetchTasks(); // Statussuz bütün datalar
@@ -157,6 +162,8 @@ const TasksScreen: React.FC = () => {
         return 4;
       case 'Ləğv edilmiş':
         return 5;
+      case 'Uğursuz əməliyyat':
+        return 9;
       case 'Hamısı':
       default:
         return undefined;
@@ -374,7 +381,9 @@ const TasksScreen: React.FC = () => {
     };
   }, []);
 
-  const sortedTasks = [...filteredTasks].sort((a, b) => a.order - b.order);
+  const sortedTasks = [...(filteredTasks ?? [])].sort(
+    (a, b) => a.order - b.order,
+  );
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -421,6 +430,7 @@ const TasksScreen: React.FC = () => {
             'İcra olunmamış',
             'İcra olunan',
             'Tamamlanıb',
+            'Uğursuz əməliyyat',
             'Ləğv edilmiş',
           ].map(filter => (
             <TouchableOpacity
@@ -441,6 +451,8 @@ const TasksScreen: React.FC = () => {
                       ? 4
                       : filter === 'Ləğv edilmiş'
                       ? 5
+                      : filter === 'Uğursuz əməliyyat'
+                      ? 9
                       : 0,
                   )}
                   style={{marginRight: 6}}

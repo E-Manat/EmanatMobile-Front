@@ -18,6 +18,8 @@ export const API_ENDPOINTS = {
         `/CollectorTask/CompleteTask?taskId=${taskId}&latitude=${lat}&longitude=${lon}`,
       startTask: (taskId: string) =>
         `/CollectorTask/StartTask?taskId=${taskId}`,
+      setAsFailed: (taskId: string) =>
+        `/CollectorTask/SetAsFailed?taskId=${taskId}`,
     },
     technician: {
       getAll: `/TechnicianTask/GetAll`,

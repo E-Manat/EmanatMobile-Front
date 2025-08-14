@@ -20,7 +20,7 @@ import TopHeader from '../components/TopHeader';
 import CustomModal from '../components/Modal';
 import Config from 'react-native-config';
 import Geolocation from '@react-native-community/geolocation';
-import {HomeIcon} from '../assets/icons';
+import {HomeIcon, LocationIcon} from '../assets/icons';
 import Icon2 from 'react-native-vector-icons/Octicons';
 type NavigationProp = StackNavigationProp<RootStackParamList, 'Hesabatlar'>;
 
@@ -37,7 +37,15 @@ const TaskProcessScreen = ({route}: any) => {
   const [successModalVisible, setSuccessModalVisible] = useState(false);
   const [completeTaskLoading, setCompleteTaskLoading] = useState(false);
 
+  const [failModalVisible, setFailModalVisible] = useState(false);
+  const [failTaskLoading, setFailTaskLoading] = useState(false);
+
   const [roleName, setRoleName] = useState<string | null>(null);
+
+  const [confirmShareModalVisible, setConfirmShareModalVisible] =
+    useState(false);
+  const [successShareModalVisible, setSuccessShareModalVisible] =
+    useState(false);
 
   useEffect(() => {
     const restoreTimers = async () => {
@@ -227,6 +235,7 @@ const TaskProcessScreen = ({route}: any) => {
       setCompleteTaskLoading(false);
     }
   };
+
   const handleConfirmComplete = async () => {
     setModalVisible(false);
     await completeTask();
@@ -340,7 +349,76 @@ const TaskProcessScreen = ({route}: any) => {
     );
   };
 
-  console.log(step, 'step');
+  const failTask = async () => {
+    setFailTaskLoading(true);
+    try {
+      const token = await AsyncStorage.getItem('userToken');
+      const taskId = taskData.id;
+      const url =
+        roleName === 'Collector'
+          ? `${Config.API_URL}/CollectorTask/SetAsFailed?taskId=${taskId}`
+          : `${Config.API_URL}/TechnicianTask/SetAsFailed?taskId=${taskId}`;
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {Authorization: `Bearer ${token}`},
+      });
+      console.log(response, response.status, 'rr');
+
+      await AsyncStorage.multiRemove([
+        'currentTask',
+        'routeStartTime',
+        'collectionStartTime',
+      ]);
+      navigation.navigate('YeniHesabat', {
+        terminalId: taskData?.terminal?.id,
+      });
+    } catch (err: any) {
+      console.error('Error setting task as failed:', err, err.status);
+    } finally {
+      setFailTaskLoading(false);
+    }
+  };
+
+  const sendShareLocation = async () => {
+    setLoading(true);
+
+    try {
+      const token = await AsyncStorage.getItem('userToken');
+      const location = await getLocation();
+
+      if (!location) {
+        setConfirmShareModalVisible(false);
+        return;
+      }
+
+      const latitude = location.latitude;
+      const longitude = location.longitude;
+      const taskId = taskData.id;
+
+      const url =
+        roleName === 'Collector'
+          ? `${Config.API_URL}/CollectorTask/ShareLocation?taskId=${taskId}&latitude=${latitude}&longitude=${longitude}`
+          : `${Config.API_URL}/TechnicianTask/ShareLocation?taskId=${taskId}&latitude=${latitude}&longitude=${longitude}`;
+
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) throw new Error('Server error');
+
+      setConfirmShareModalVisible(false);
+      setSuccessShareModalVisible(true);
+    } catch (error) {
+      console.error('Konum paylaşma xətası:', error);
+      setConfirmShareModalVisible(false);
+      Alert.alert('Xəta', 'Konum paylaşılarkən xəta baş verdi.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -350,7 +428,20 @@ const TaskProcessScreen = ({route}: any) => {
           onRightPress={() => navigation.navigate('Ana səhifə')}
           rightIconComponent={<HomeIcon color="#fff" />}
         />
+        <TouchableOpacity style={styles.wazeButton} onPress={openInWaze}>
+          <Image
+            source={require('../assets/img/waze.png')}
+            style={styles.profileImage}
+          />
+          <Text style={styles.secondaryButtonText}>Xəritəyə bax</Text>
+        </TouchableOpacity>
 
+        <TouchableOpacity
+          style={styles.shareLocButton}
+          onPress={() => setConfirmShareModalVisible(true)}>
+          <LocationIcon color="#1269B5" width={20} height={20} />
+          <Text style={styles.secondaryButtonText}>Konumu paylaş</Text>
+        </TouchableOpacity>
         <View style={styles.card}>
           <View style={styles.row}>
             <Image
@@ -363,7 +454,6 @@ const TaskProcessScreen = ({route}: any) => {
               </Text>
               <Text style={styles.terminalSubtitle}>
                 {taskData?.terminal?.address}
-               
               </Text>
             </View>
           </View>
@@ -372,7 +462,7 @@ const TaskProcessScreen = ({route}: any) => {
             <View style={styles.step}>
               <View style={step === 0 ? styles.circleActive : styles.circle}>
                 {step === 1 ? (
-                  <Icon2 name="check" size={20} color="#fff" /> 
+                  <Icon2 name="check" size={20} color="#fff" />
                 ) : step === 0 ? (
                   <Icon2 name="dot-fill" size={20} color="#1269B5" />
                 ) : (
@@ -417,14 +507,10 @@ const TaskProcessScreen = ({route}: any) => {
         </View>
 
         <View style={styles.bottomButtons}>
-          {' '}
-          <TouchableOpacity style={styles.secondaryButton} onPress={openInWaze}>
-            {' '}
-            <Image
-              source={require('../assets/img/waze.png')}
-              style={styles.profileImage}
-            />
-            <Text style={styles.secondaryButtonText}>Xəritəyə bax</Text>
+          <TouchableOpacity
+            style={styles.secondaryButton}
+            onPress={() => setFailModalVisible(true)}>
+            <Text style={styles.secondaryButtonText}>Uğursuz əməliyyat</Text>
           </TouchableOpacity>
           {renderBottomButton()}
         </View>
@@ -449,6 +535,38 @@ const TaskProcessScreen = ({route}: any) => {
             });
           }}
         />
+
+        <CustomModal
+          visible={failModalVisible}
+          title="Xəbərdarlıq"
+          description="Əməliyyatı uğursuz kimi işarələmək istədiyinizə əminsiniz?"
+          confirmText="Bəli"
+          cancelText="Xeyr"
+          onCancel={() => setFailModalVisible(false)}
+          onConfirm={async () => {
+            setFailModalVisible(false);
+            await failTask();
+          }}
+          loading={failTaskLoading}
+        />
+
+        <CustomModal
+          visible={confirmShareModalVisible}
+          title="Konumu paylaş"
+          description="Mövcud koordinatlar paylaşılacaq. Əminsiniz?"
+          confirmText="Bəli"
+          cancelText="Xeyr"
+          onCancel={() => setConfirmShareModalVisible(false)}
+          onConfirm={sendShareLocation}
+        />
+
+        <CustomModal
+          visible={successShareModalVisible}
+          title="Bildiriş"
+          description="Konum uğurla paylaşıldı."
+          cancelText="Bağla"
+          onCancel={() => setSuccessShareModalVisible(false)}
+        />
       </View>
     </SafeAreaView>
   );
@@ -458,7 +576,7 @@ const CIRCLE_SIZE = 34;
 export default TaskProcessScreen;
 
 const styles = StyleSheet.create({
-  container: {flex: 1, backgroundColor: '#fff'},
+  container: {flex: 1, backgroundColor: '#fff', position: 'relative'},
   card: {
     borderRadius: 16,
     padding: 16,
@@ -615,11 +733,33 @@ const styles = StyleSheet.create({
   secondaryButtonText: {
     color: '#1269B5',
     fontFamily: 'DMSans-SemiBold',
-    fontSize: 16,
+    fontSize: 14,
   },
   image: {
     width: 42,
     height: 42,
   },
-  profileImage: {width: 25, height: 25, resizeMode: 'contain'},
+  profileImage: {width: 20, height: 20, resizeMode: 'contain'},
+  wazeButton: {
+    display: 'flex',
+    alignItems: 'center',
+    flexDirection: 'row',
+    position: 'absolute',
+    left: 30,
+    top: 110,
+    zIndex: 34,
+    gap: 4,
+    cursor: 'pointer',
+  },
+  shareLocButton: {
+    display: 'flex',
+    alignItems: 'center',
+    flexDirection: 'row',
+    position: 'absolute',
+    right: 30,
+    top: 110,
+    zIndex: 34,
+    gap: 4,
+    cursor: 'pointer',
+  },
 });
