@@ -59,15 +59,16 @@ const TasksScreen: React.FC = () => {
   const getStatusColor = (status: number) => {
     switch (status) {
       case 5:
-        return '#EF4444'; // Canceled (Ləğv edilib)
+        return '#EF4444';
       case 1:
       case 2:
       case 3:
-        return '#FFB600'; // In progress (İcra olunur)
       case 4:
-        return '#29C0B9'; // Completed (Tamamlanıb)
+        return '#29C0B9';
       case 0:
-        return '#9E9E9E'; // Not started (Başlanmayıb)
+        return '#9E9E9E';
+      case 9:
+        return '#090b3eff';
       default:
         return '#9E9E9E';
     }
@@ -75,7 +76,6 @@ const TasksScreen: React.FC = () => {
 
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-
   const [tasksData, setTasksData] = useState<TasksPayload>({
     tasks: [],
     pendingTaskCount: 0,
@@ -83,9 +83,9 @@ const TasksScreen: React.FC = () => {
     completedTaskCount: 0,
   });
 
-  const [refreshing, setRefreshing] = useState(false);
   const navigation = useNavigation<NavigationProp>();
   const [filteredTasks, setFilteredTasks] = useState<any>([]);
+  const [refreshing, setRefreshing] = useState(false);
 
   const tasksRef = useRef<any>([]);
   const connectionRef = useRef<signalR.HubConnection | null>(null);
@@ -136,14 +136,17 @@ const TasksScreen: React.FC = () => {
         fetchTasks(1);
         break;
       case 'Tamamlanıb':
-        fetchTasks(4); // Completed
+        fetchTasks(4);
         break;
       case 'Ləğv edilmiş':
-        fetchTasks(5); // Cancelled
+        fetchTasks(5);
+        break;
+      case 'Uğursuz əməliyyat':
+        fetchTasks(9);
         break;
       case 'Hamısı':
       default:
-        fetchTasks(); // Statussuz bütün datalar
+        fetchTasks();
         break;
     }
   };
@@ -158,14 +161,13 @@ const TasksScreen: React.FC = () => {
         return 4;
       case 'Ləğv edilmiş':
         return 5;
+      case 'Uğursuz əməliyyat':
+        return 9;
       case 'Hamısı':
       default:
         return undefined;
     }
   };
-
-  // console.log(tasksData, 'tasksData');
-  // console.log(filteredTasks, 'filteredTasks');
 
   const renderTask = ({item}: any) => (
     <TouchableOpacity
@@ -175,7 +177,6 @@ const TasksScreen: React.FC = () => {
           const roleName = await AsyncStorage.getItem('roleName');
           const isCollector = roleName === 'Collector';
 
-          // /mobile
           const endpoint = isCollector
             ? API_ENDPOINTS.mobile.collector.getById(item.id)
             : API_ENDPOINTS.mobile.technician.getById(item.id);
@@ -214,10 +215,8 @@ const TasksScreen: React.FC = () => {
   );
 
   useEffect(() => {
-    console.log('step1');
     const connectSignalR = async () => {
       try {
-        console.log('step2');
         const token = await AsyncStorage.getItem('userToken');
         const roleName = await AsyncStorage.getItem('roleName');
         if (!token || connectionRef.current) return;
@@ -350,7 +349,6 @@ const TasksScreen: React.FC = () => {
             };
           });
 
-          // 4) Bildiriş göstər
           Toast.show({
             type: 'error',
             text1: 'Tapşırıq silindi',
@@ -377,7 +375,9 @@ const TasksScreen: React.FC = () => {
     };
   }, []);
 
-  const sortedTasks = [...filteredTasks].sort((a, b) => a.order - b.order);
+  const sortedTasks = [...(filteredTasks ?? [])].sort(
+    (a, b) => a.order - b.order,
+  );
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -424,6 +424,7 @@ const TasksScreen: React.FC = () => {
             'İcra olunmamış',
             'İcra olunan',
             'Tamamlanıb',
+            'Uğursuz əməliyyat',
             'Ləğv edilmiş',
           ].map(filter => (
             <TouchableOpacity
@@ -444,6 +445,8 @@ const TasksScreen: React.FC = () => {
                       ? 4
                       : filter === 'Ləğv edilmiş'
                       ? 5
+                      : filter === 'Uğursuz əməliyyat'
+                      ? 9
                       : 0,
                   )}
                   style={{marginRight: 6}}

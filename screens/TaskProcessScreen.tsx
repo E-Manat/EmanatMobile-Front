@@ -20,8 +20,9 @@ import TopHeader from '../components/TopHeader';
 import CustomModal from '../components/Modal';
 import Config from 'react-native-config';
 import Geolocation from '@react-native-community/geolocation';
-import {HomeIcon} from '../assets/icons';
+import {HomeIcon, LocationIcon} from '../assets/icons';
 import Icon2 from 'react-native-vector-icons/Octicons';
+
 type NavigationProp = StackNavigationProp<RootStackParamList, 'Hesabatlar'>;
 
 const TaskProcessScreen = ({route}: any) => {
@@ -29,45 +30,39 @@ const TaskProcessScreen = ({route}: any) => {
   const {taskData} = route?.params || {};
 
   const [step, setStep] = useState(0);
+
   const [taskTimer, setTaskTimer] = useState(0);
-  const [collectionTimer, setCollectionTimer] = useState(0);
   const [timerActive, setTimerActive] = useState(false);
+
   const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [successModalVisible, setSuccessModalVisible] = useState(false);
   const [completeTaskLoading, setCompleteTaskLoading] = useState(false);
 
+  const [failModalVisible, setFailModalVisible] = useState(false);
+  const [failTaskLoading, setFailTaskLoading] = useState(false);
+
   const [roleName, setRoleName] = useState<string | null>(null);
 
-  useEffect(() => {
-    const restoreTimers = async () => {
-      const routeStart = await AsyncStorage.getItem('routeStartTime');
-      const collectionStart = await AsyncStorage.getItem('collectionStartTime');
+  const [confirmShareModalVisible, setConfirmShareModalVisible] =
+    useState(false);
+  const [successShareModalVisible, setSuccessShareModalVisible] =
+    useState(false);
 
-      if (collectionStart) {
-        setStep(1);
-        setTimerActive(true);
-        const diff = Math.floor(
-          (new Date().getTime() - parseInt(collectionStart, 10)) / 1000,
-        );
-        setCollectionTimer(diff);
-      } else if (routeStart) {
+  useEffect(() => {
+    const restore = async () => {
+      const routeStart = await AsyncStorage.getItem('routeStartTime');
+      const storedRoleName = await AsyncStorage.getItem('roleName');
+      setRoleName(storedRoleName);
+
+      if (routeStart) {
         setStep(0);
         setTimerActive(true);
-        const diff = Math.floor(
-          (new Date().getTime() - parseInt(routeStart, 10)) / 1000,
-        );
+        const diff = Math.floor((Date.now() - parseInt(routeStart, 10)) / 1000);
         setTaskTimer(diff);
       }
     };
-
-    const loadRoleName = async () => {
-      const storedRoleName = await AsyncStorage.getItem('roleName');
-      setRoleName(storedRoleName);
-    };
-
-    restoreTimers();
-    loadRoleName();
+    restore();
   }, []);
 
   useEffect(() => {
@@ -76,16 +71,14 @@ const TaskProcessScreen = ({route}: any) => {
     const loadRouteStartTime = async () => {
       if (step === 0 && timerActive) {
         const storedTime = await AsyncStorage.getItem('routeStartTime');
-        const start = storedTime
-          ? parseInt(storedTime, 10)
-          : new Date().getTime();
+        const start = storedTime ? parseInt(storedTime, 10) : Date.now();
 
         if (!storedTime) {
           await AsyncStorage.setItem('routeStartTime', start.toString());
         }
 
         routeInterval = setInterval(() => {
-          const now = new Date().getTime();
+          const now = Date.now();
           setTaskTimer(Math.floor((now - start) / 1000));
         }, 1000);
       }
@@ -94,35 +87,7 @@ const TaskProcessScreen = ({route}: any) => {
     loadRouteStartTime();
 
     return () => {
-      clearInterval(routeInterval);
-    };
-  }, [step, timerActive]);
-
-  useEffect(() => {
-    let collectionInterval: any;
-
-    const loadCollectionStartTime = async () => {
-      if (step === 1 && timerActive) {
-        const storedTime = await AsyncStorage.getItem('collectionStartTime');
-        const start = storedTime
-          ? parseInt(storedTime, 10)
-          : new Date().getTime();
-
-        if (!storedTime) {
-          await AsyncStorage.setItem('collectionStartTime', start.toString());
-        }
-
-        collectionInterval = setInterval(() => {
-          const now = new Date().getTime();
-          setCollectionTimer(Math.floor((now - start) / 1000));
-        }, 1000);
-      }
-    };
-
-    loadCollectionStartTime();
-
-    return () => {
-      clearInterval(collectionInterval);
+      if (routeInterval) clearInterval(routeInterval);
     };
   }, [step, timerActive]);
 
@@ -133,7 +98,6 @@ const TaskProcessScreen = ({route}: any) => {
     return new Promise(async resolve => {
       const success = (position: any) => {
         const {latitude, longitude} = position.coords;
-        console.log('📍 Uğurla koordinat tapıldı:', latitude, longitude);
         resolve({latitude, longitude});
       };
 
@@ -180,6 +144,22 @@ const TaskProcessScreen = ({route}: any) => {
     });
   };
 
+  const startRoute = async () => {
+    try {
+      setLoading(true);
+      const existing = await AsyncStorage.getItem('routeStartTime');
+      if (!existing) {
+        await AsyncStorage.setItem('routeStartTime', Date.now().toString());
+      }
+      setTimerActive(true);
+      setStep(0);
+    } catch (e) {
+      console.error('Marşruta başla xətası:', e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const completeTask = async () => {
     setCompleteTaskLoading(true);
     try {
@@ -198,73 +178,37 @@ const TaskProcessScreen = ({route}: any) => {
           ? `${Config.API_URL}/mobile/CollectorTask/CompleteTask?taskId=${taskData.id}&latitude=${latitude}&longitude=${longitude}`
           : `${Config.API_URL}/mobile/TechnicianTask/CompleteTask?taskId=${taskData.id}&latitude=${latitude}&longitude=${longitude}`;
 
+      console.log(url, 'url');
+
       const response = await fetch(url, {
         method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: {Authorization: `Bearer ${token}`},
       });
 
-      console.log(response, 'complete task');
+      if (!response.ok) throw new Error('Server error: ' + response.status);
 
-      if (!response.ok) {
-        throw new Error('Server error: ' + response.status);
-      }
-
-      setStep(2);
+      setStep(1);
       setTimerActive(false);
 
-      await AsyncStorage.multiRemove([
-        'currentTask',
-        'routeStartTime',
-        'collectionStartTime',
-      ]);
+      await AsyncStorage.multiRemove(['currentTask', 'routeStartTime']);
 
       setSuccessModalVisible(true);
-    } catch (error) {
-      console.error('Error completing task:', error);
+    } catch (error: any) {
+      console.error(
+        'Error completing task:',
+        error,
+        error?.status,
+        error?.response?.data,
+        error?.response,
+      );
     } finally {
       setCompleteTaskLoading(false);
     }
   };
+
   const handleConfirmComplete = async () => {
     setModalVisible(false);
     await completeTask();
-  };
-
-  const startCollection = async () => {
-    setLoading(true);
-    const token = await AsyncStorage.getItem('userToken');
-    const url =
-      roleName === 'Collector'
-        ? `${Config.API_URL}/mobile/CollectorTask/StartCollection?taskId=${taskData.id}`
-        : `${Config.API_URL}/mobile/TechnicianTask/StartTechnicalWork?taskId=${taskData.id}`;
-
-    try {
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      console.log(response);
-
-      if (!response.ok) {
-        throw new Error('Server error: ' + response.status);
-      }
-
-      setTimerActive(false);
-      setStep(1);
-      await AsyncStorage.setItem(
-        'collectionStartTime',
-        new Date().getTime().toString(),
-      );
-      setTimerActive(true);
-    } catch (error) {
-      console.error('Error starting collection:', error);
-    } finally {
-      setLoading(false);
-    }
   };
 
   const formatTime = (seconds: number) => {
@@ -277,8 +221,6 @@ const TaskProcessScreen = ({route}: any) => {
 
   const openInWaze = async () => {
     const address = taskData?.terminal?.address;
-    console.log(address, 'adresimiz');
-
     if (!address) {
       Alert.alert('Xəta', 'Ünvan tapılmadı.');
       return;
@@ -298,30 +240,23 @@ const TaskProcessScreen = ({route}: any) => {
 
   const renderBottomButton = () => {
     if (step === 0) {
-      return (
-        <TouchableOpacity
-          style={styles.primaryButton}
-          onPress={startCollection}
-          disabled={loading}>
-          <Text style={styles.primaryButtonText}>
-            {loading ? (
-              <ActivityIndicator color="#fff" />
-            ) : roleName === 'Collector' ? (
-              'İnkassasiyaya başla'
-            ) : (
-              'Texniki işə başla'
-            )}
-          </Text>
-        </TouchableOpacity>
-      );
-    }
-
-    if (step === 1) {
+      if (!timerActive) {
+        return (
+          <TouchableOpacity
+            style={styles.primaryButton}
+            onPress={startRoute}
+            disabled={loading}>
+            <Text style={styles.primaryButtonText}>
+              {loading ? <ActivityIndicator color="#fff" /> : 'Marşruta başla'}
+            </Text>
+          </TouchableOpacity>
+        );
+      }
       return (
         <TouchableOpacity
           style={styles.primaryButton}
           onPress={() => setModalVisible(true)}
-          disabled={loading || completeTaskLoading}>
+          disabled={completeTaskLoading}>
           <Text style={styles.primaryButtonText}>
             {completeTaskLoading ? (
               <ActivityIndicator color="#fff" />
@@ -340,7 +275,66 @@ const TaskProcessScreen = ({route}: any) => {
     );
   };
 
-  console.log(step, 'step');
+  const failTask = async () => {
+    setFailTaskLoading(true);
+    try {
+      const token = await AsyncStorage.getItem('userToken');
+      const taskId = taskData.id;
+      const url =
+        roleName === 'Collector'
+          ? `${Config.API_URL}/mobile/CollectorTask/SetAsFailed?taskId=${taskId}`
+          : `${Config.API_URL}/mobile/TechnicianTask/SetAsFailed?taskId=${taskId}`;
+
+      await fetch(url, {
+        method: 'POST',
+        headers: {Authorization: `Bearer ${token}`},
+      });
+
+      await AsyncStorage.multiRemove(['currentTask', 'routeStartTime']);
+      navigation.navigate('YeniHesabat', {terminalId: taskData?.terminal?.id});
+    } catch (err: any) {
+      console.error('Error setting task as failed:', err);
+    } finally {
+      setFailTaskLoading(false);
+    }
+  };
+
+  const sendShareLocation = async () => {
+    setLoading(true);
+    try {
+      const token = await AsyncStorage.getItem('userToken');
+      const location = await getLocation();
+
+      if (!location) {
+        setConfirmShareModalVisible(false);
+        return;
+      }
+
+      const {latitude, longitude} = location;
+      const taskId = taskData.id;
+
+      const url =
+        roleName === 'Collector'
+          ? `${Config.API_URL}/mobile/CollectorTask/ShareLocation?taskId=${taskId}&latitude=${latitude}&longitude=${longitude}`
+          : `${Config.API_URL}/mobile/TechnicianTask/ShareLocation?taskId=${taskId}&latitude=${latitude}&longitude=${longitude}`;
+
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {Authorization: `Bearer ${token}`},
+      });
+
+      if (!response.ok) throw new Error('Server error');
+
+      setConfirmShareModalVisible(false);
+      setSuccessShareModalVisible(true);
+    } catch (error) {
+      console.error('Konum paylaşma xətası:', error);
+      setConfirmShareModalVisible(false);
+      Alert.alert('Xəta', 'Konum paylaşılarkən xəta baş verdi.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -350,6 +344,21 @@ const TaskProcessScreen = ({route}: any) => {
           onRightPress={() => navigation.navigate('Ana səhifə')}
           rightIconComponent={<HomeIcon color="#fff" />}
         />
+
+        <TouchableOpacity style={styles.wazeButton} onPress={openInWaze}>
+          <Image
+            source={require('../assets/img/waze.png')}
+            style={styles.profileImage}
+          />
+          <Text style={styles.secondaryButtonText}>Xəritəyə bax</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.shareLocButton}
+          onPress={() => setConfirmShareModalVisible(true)}>
+          <LocationIcon color="#1269B5" width={20} height={20} />
+          <Text style={styles.secondaryButtonText}>Konumu paylaş</Text>
+        </TouchableOpacity>
 
         <View style={styles.card}>
           <View style={styles.row}>
@@ -369,64 +378,55 @@ const TaskProcessScreen = ({route}: any) => {
 
           <View style={styles.timeline}>
             <View style={styles.step}>
-              <View style={step === 0 ? styles.circleActive : styles.circle}>
+              <View style={timerActive ? styles.circleActive : styles.circle}>
                 {step === 1 ? (
                   <Icon2 name="check" size={20} color="#fff" />
-                ) : step === 0 ? (
+                ) : timerActive ? (
                   <Icon2 name="dot-fill" size={20} color="#1269B5" />
                 ) : (
                   <Text style={styles.stepNum}>01</Text>
                 )}
               </View>
               <View style={styles.stepContent}>
-                <Text
-                  style={step >= 0 ? styles.stepTitleActive : styles.stepTitle}>
-                  {roleName === 'Collector' ? 'Marşrut' : 'Marşrut'}
-                </Text>
+                <Text style={styles.stepTitleActive}>Marşrut</Text>
                 <Text style={styles.stepTime}>{formatTime(taskTimer)}</Text>
               </View>
             </View>
 
-            <View style={styles.verticalLine} />
+            <View className="verticalLine" style={styles.verticalLine} />
 
+            {/* 02: Tapşırığı sonlandır */}
             <View style={styles.step}>
               <View style={step === 1 ? styles.circleActive1 : styles.circle1}>
                 {step === 1 ? (
-                  <Icon2 name="dot-fill" size={20} color="#1269B5" /> // Aktiv addım
-                ) : step === 0 ? (
-                  <Text style={styles.stepNum1}>02</Text> // İlk addımda 02 göstər
+                  <Icon2 name="check" size={20} color="#fff" />
                 ) : (
-                  <Icon2 name="check" size={20} color="#fff" /> // Tamamlanmış addım
+                  <Text style={styles.stepNum1}>02</Text>
                 )}
               </View>
 
               <View style={styles.stepContent}>
                 <Text
                   style={step >= 1 ? styles.stepTitleActive : styles.stepTitle}>
-                  {roleName === 'Collector'
-                    ? 'İnkassasiyaya başla'
-                    : 'Texniki işə başla'}
+                  Tapşırığı sonlandır
                 </Text>
-                <Text style={styles.stepTime}>
-                  {formatTime(collectionTimer)}
-                </Text>
+                {/* Bu addım üçün taymer yoxdur */}
               </View>
             </View>
           </View>
         </View>
 
         <View style={styles.bottomButtons}>
-          {' '}
-          <TouchableOpacity style={styles.secondaryButton} onPress={openInWaze}>
-            {' '}
-            <Image
-              source={require('../assets/img/waze.png')}
-              style={styles.profileImage}
-            />
-            <Text style={styles.secondaryButtonText}>Xəritəyə bax</Text>
+          <TouchableOpacity
+            style={styles.secondaryButton}
+            onPress={() => setFailModalVisible(true)}>
+            <Text style={styles.secondaryButtonText}>Uğursuz əməliyyat</Text>
           </TouchableOpacity>
+
           {renderBottomButton()}
         </View>
+
+        {/* Confirm complete */}
         <CustomModal
           visible={modalVisible}
           title="Təsdiqləmə"
@@ -436,6 +436,8 @@ const TaskProcessScreen = ({route}: any) => {
           onCancel={() => setModalVisible(false)}
           onConfirm={handleConfirmComplete}
         />
+
+        {/* Success complete */}
         <CustomModal
           visible={successModalVisible}
           title="Tapşırıq tamamlandı"
@@ -443,11 +445,45 @@ const TaskProcessScreen = ({route}: any) => {
           cancelText="Bağla"
           onCancel={() => {
             setSuccessModalVisible(false);
-            console.log(taskData, 'taskData');
             navigation.navigate('YeniHesabat', {
               terminalId: taskData?.terminal?.id,
             });
           }}
+        />
+
+        {/* Fail task */}
+        <CustomModal
+          visible={failModalVisible}
+          title="Xəbərdarlıq"
+          description="Əməliyyatı uğursuz kimi işarələmək istədiyinizə əminsiniz?"
+          confirmText="Bəli"
+          cancelText="Xeyr"
+          onCancel={() => setFailModalVisible(false)}
+          onConfirm={async () => {
+            setFailModalVisible(false);
+            await failTask();
+          }}
+          loading={failTaskLoading}
+        />
+
+        {/* Share location confirm */}
+        <CustomModal
+          visible={confirmShareModalVisible}
+          title="Konumu paylaş"
+          description="Mövcud koordinatlar paylaşılacaq. Əminsiniz?"
+          confirmText="Bəli"
+          cancelText="Xeyr"
+          onCancel={() => setConfirmShareModalVisible(false)}
+          onConfirm={sendShareLocation}
+        />
+
+        {/* Share location success */}
+        <CustomModal
+          visible={successShareModalVisible}
+          title="Bildiriş"
+          description="Konum uğurla paylaşıldı."
+          cancelText="Bağla"
+          onCancel={() => setSuccessShareModalVisible(false)}
         />
       </View>
     </SafeAreaView>
@@ -458,7 +494,7 @@ const CIRCLE_SIZE = 34;
 export default TaskProcessScreen;
 
 const styles = StyleSheet.create({
-  container: {flex: 1, backgroundColor: '#fff'},
+  container: {flex: 1, backgroundColor: '#fff', position: 'relative'},
   card: {
     borderRadius: 16,
     padding: 16,
@@ -483,7 +519,6 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   row: {
-    display: 'flex',
     flexDirection: 'row',
     gap: 10,
     borderColor: '#E0E0E0',
@@ -492,7 +527,6 @@ const styles = StyleSheet.create({
   },
   distance: {color: '#1269B5', fontFamily: 'DMSans-SemiBold', marginLeft: 5},
   timeline: {
-    height: 'auto',
     width: '100%',
     marginTop: 30,
     shadowColor: '#75ACDA',
@@ -606,7 +640,6 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingVertical: 14,
     alignItems: 'center',
-    display: 'flex',
     justifyContent: 'center',
     flexDirection: 'row',
     height: 48,
@@ -615,11 +648,29 @@ const styles = StyleSheet.create({
   secondaryButtonText: {
     color: '#1269B5',
     fontFamily: 'DMSans-SemiBold',
-    fontSize: 16,
+    fontSize: 14,
   },
   image: {
     width: 42,
     height: 42,
   },
-  profileImage: {width: 25, height: 25, resizeMode: 'contain'},
+  profileImage: {width: 20, height: 20, resizeMode: 'contain'},
+  wazeButton: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    position: 'absolute',
+    left: 30,
+    top: 110,
+    zIndex: 34,
+    gap: 4,
+  },
+  shareLocButton: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    position: 'absolute',
+    right: 30,
+    top: 110,
+    zIndex: 34,
+    gap: 4,
+  },
 });
