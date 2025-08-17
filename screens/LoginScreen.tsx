@@ -63,11 +63,11 @@ const LoginScreen = () => {
 
       navigation.navigate('PinSetup');
     } catch (error: any) {
-      console.log(error, 'error');
+      console.log(error, error?.response?.data, error?.data, 'error');
       setModalTitle('Xəta');
       setModalDescription(
-        error.response?.status === 401
-          ? 'Daxil edilən məlumatlarda səhv var!'
+        error?.response?.status === 400
+          ? 'Email və ya şifrə yanlışdır.'
           : 'Şəbəkə xətası baş verdi.',
       );
       setModalVisible(true);

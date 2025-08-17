@@ -79,7 +79,7 @@ const App = () => {
     'https://drive.google.com/drive/folders/1ndnxNUn1Bn1LZM28RBzxhiT1MccvGoRp?usp=drive_link',
   );
   
-  const version = 1;
+  const version = 2;
 
   useEffect(() => {
     const checkAuth = async () => {
