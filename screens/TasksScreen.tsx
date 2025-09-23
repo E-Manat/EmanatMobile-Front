@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
-import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {
   View,
   Text,
@@ -58,17 +58,18 @@ const TasksScreen: React.FC = () => {
 
   const getStatusColor = (status: number) => {
     switch (status) {
-      case 5:
-        return '#EF4444';
+      case 0:
+        return '#9E9E9E';
       case 1:
       case 2:
       case 3:
-      case 4:
-        return '#29C0B9';
-      case 0:
-        return '#9E9E9E';
+        return '#eeee1eff';
+      case 5:
+        return '#EF4444';
       case 9:
         return '#090b3eff';
+      case 10:
+        return '#29C0B9';
       default:
         return '#9E9E9E';
     }
@@ -135,14 +136,14 @@ const TasksScreen: React.FC = () => {
       case 'İcra olunan':
         fetchTasks(1);
         break;
-      case 'Tamamlanıb':
-        fetchTasks(4);
-        break;
       case 'Ləğv edilmiş':
         fetchTasks(5);
         break;
       case 'Uğursuz əməliyyat':
         fetchTasks(9);
+        break;
+      case 'İnkassasiya edildi':
+        fetchTasks(10);
         break;
       case 'Hamısı':
       default:
@@ -157,12 +158,12 @@ const TasksScreen: React.FC = () => {
         return 0;
       case 'İcra olunan':
         return 1;
-      case 'Tamamlanıb':
-        return 4;
       case 'Ləğv edilmiş':
         return 5;
       case 'Uğursuz əməliyyat':
         return 9;
+      case 'İnkassasiya edildi':
+        return 10;
       case 'Hamısı':
       default:
         return undefined;
@@ -423,7 +424,7 @@ const TasksScreen: React.FC = () => {
             'Hamısı',
             'İcra olunmamış',
             'İcra olunan',
-            'Tamamlanıb',
+            'İnkassasiya edildi',
             'Uğursuz əməliyyat',
             'Ləğv edilmiş',
           ].map(filter => (
@@ -441,8 +442,8 @@ const TasksScreen: React.FC = () => {
                   color={getStatusColor(
                     filter === 'İcra olunan'
                       ? 1
-                      : filter === 'Tamamlanıb'
-                      ? 4
+                      : filter === 'İnkassasiya edildi'
+                      ? 10
                       : filter === 'Ləğv edilmiş'
                       ? 5
                       : filter === 'Uğursuz əməliyyat'
