@@ -3,7 +3,6 @@ import React, {useState, useEffect} from 'react';
 import {
   View,
   Text,
-  TextInput,
   TouchableOpacity,
   StyleSheet,
   Image,
@@ -12,8 +11,6 @@ import {
   TouchableWithoutFeedback,
   ScrollView,
   Keyboard,
-  Alert,
-  ActivityIndicator,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
 import Icon2 from 'react-native-vector-icons/Entypo';
@@ -187,14 +184,6 @@ const ProfileScreen = () => {
                     <Text style={styles.textVersion}>1.0.1</Text>
                   </View>
                 </View>
-                {/* <View>
-                  <Icon
-                    name="chevron-right"
-                    size={20}
-                    color="#98A2B3"
-                    style={styles.arrowIcon}
-                  />
-                </View> */}
               </TouchableOpacity>
 
               <TouchableOpacity

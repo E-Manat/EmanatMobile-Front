@@ -331,14 +331,7 @@ const TasksScreen: React.FC = () => {
               case TaskStatus.NotStarted:
                 pendingTaskCount = Math.max(0, pendingTaskCount - 1);
                 break;
-              // case TaskStatus.InTransit:
-              // case TaskStatus.TechnicalWorkInProgress:
-              // case TaskStatus.CollectionInProgress:
-              //   inProgressTaskCount = Math.max(0, inProgressTaskCount - 1);
-              //   break;
-              // case TaskStatus.Completed:
-              //   completedTaskCount = Math.max(0, completedTaskCount - 1);
-              //   break;
+              
             }
 
             return {

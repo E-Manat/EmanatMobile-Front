@@ -13,14 +13,7 @@ import {
 } from 'react-native';
 import TopHeader from '../components/TopHeader';
 import Icon from 'react-native-vector-icons/Ionicons';
-import {
-  AvatarIcon,
-  LocationIcon,
-  MapIcon,
-  RoadIcon,
-  TabletIcon,
-  UserIcon,
-} from '../assets/icons';
+import {LocationIcon, MapIcon, RoadIcon, TabletIcon} from '../assets/icons';
 import {apiService} from '../services/apiService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {API_ENDPOINTS} from '../services/api_endpoint';
@@ -87,17 +80,10 @@ const TerminallarScreen = () => {
             <Text style={styles.terminalId}>
               Terminal ID – {terminal.pointId}
             </Text>
-            <Text style={styles.infoText}>
-              {/* Əsginas sayı: {terminal.passengerCount} */}
-            </Text>
+            <Text style={styles.infoText}></Text>
           </View>
         </View>
-        <View style={styles.right}>
-          {/* <View style={styles.fullnessBox}>
-            <Text style={styles.fullnessText}>{terminal.fullness}</Text>
-          </View> */}
-          {/* <Text style={styles.infoText}>Məbləğ: {terminal.amount}</Text> */}
-        </View>
+        <View style={styles.right}></View>
       </View>
     </TouchableOpacity>
   );
@@ -169,11 +155,6 @@ const TerminallarScreen = () => {
                 label="Ünvan"
                 value={selectedTerminal?.address}
               />
-              {/* <InfoItem
-                icon={<UserIcon color="#1269B5" />}
-                label="Məsul şəxs"
-                value={selectedTerminal?.responsiblePersonPhone}
-              /> */}
             </ScrollView>
           </View>
         </View>

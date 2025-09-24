@@ -395,7 +395,6 @@ const TaskProcessScreen = ({route}: any) => {
 
             <View className="verticalLine" style={styles.verticalLine} />
 
-            {/* 02: Tapşırığı sonlandır */}
             <View style={styles.step}>
               <View style={step === 1 ? styles.circleActive1 : styles.circle1}>
                 {step === 1 ? (
@@ -410,7 +409,6 @@ const TaskProcessScreen = ({route}: any) => {
                   style={step >= 1 ? styles.stepTitleActive : styles.stepTitle}>
                   Tapşırığı sonlandır
                 </Text>
-                {/* Bu addım üçün taymer yoxdur */}
               </View>
             </View>
           </View>
@@ -426,7 +424,6 @@ const TaskProcessScreen = ({route}: any) => {
           {renderBottomButton()}
         </View>
 
-        {/* Confirm complete */}
         <CustomModal
           visible={modalVisible}
           title="Təsdiqləmə"
@@ -437,7 +434,6 @@ const TaskProcessScreen = ({route}: any) => {
           onConfirm={handleConfirmComplete}
         />
 
-        {/* Success complete */}
         <CustomModal
           visible={successModalVisible}
           title="Tapşırıq tamamlandı"
@@ -451,7 +447,6 @@ const TaskProcessScreen = ({route}: any) => {
           }}
         />
 
-        {/* Fail task */}
         <CustomModal
           visible={failModalVisible}
           title="Xəbərdarlıq"
@@ -466,7 +461,6 @@ const TaskProcessScreen = ({route}: any) => {
           loading={failTaskLoading}
         />
 
-        {/* Share location confirm */}
         <CustomModal
           visible={confirmShareModalVisible}
           title="Konumu paylaş"
@@ -477,7 +471,6 @@ const TaskProcessScreen = ({route}: any) => {
           onConfirm={sendShareLocation}
         />
 
-        {/* Share location success */}
         <CustomModal
           visible={successShareModalVisible}
           title="Bildiriş"
