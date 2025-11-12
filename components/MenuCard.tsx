@@ -3,6 +3,7 @@ import {View, Text, StyleSheet, TouchableOpacity} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import Icon from 'react-native-vector-icons/AntDesign';
+import {SvgImage} from './SvgImage';
 
 export type RootStackParamList = {
   home: undefined;
@@ -53,7 +54,7 @@ const MenuCard: React.FC<Props> = ({
       </View>
 
       <View style={styles.fixedIcon}>
-        <Icon name="arrowright" size={24} color="#fff" />
+        <SvgImage source={require('assets/icons/svg/arrow-right.svg')} />
       </View>
     </TouchableOpacity>
   );

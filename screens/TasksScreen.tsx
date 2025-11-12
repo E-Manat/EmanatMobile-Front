@@ -23,6 +23,7 @@ import {RefreshIcon} from '../assets/icons';
 type NavigationProp = StackNavigationProp<RootStackParamList, 'PinSetup'>;
 import {API_ENDPOINTS} from '../services/api_endpoint';
 import Config from 'react-native-config';
+import {SvgImage} from '@components/SvgImage';
 
 export enum TaskStatus {
   NotStarted = 'NotStarted',
@@ -204,9 +205,8 @@ const TasksScreen: React.FC = () => {
           </Text>
         </View>
         <View>
-          <Dot
-            name="dot-fill"
-            size={16}
+          <SvgImage
+            source={require('assets/icons/svg/dot.svg')}
             color={getStatusColor(item.status)}
             style={{marginRight: 6}}
           />
@@ -220,7 +220,9 @@ const TasksScreen: React.FC = () => {
       try {
         const token = await AsyncStorage.getItem('userToken');
         const roleName = await AsyncStorage.getItem('roleName');
-        if (!token || connectionRef.current) return;
+        if (!token || connectionRef.current) {
+          return;
+        }
 
         const connection = new signalR.HubConnectionBuilder()
           .withUrl(`${Config.SIGNALR_URL}`, {
@@ -303,7 +305,7 @@ const TasksScreen: React.FC = () => {
 
           Toast.show({
             type: 'info',
-            text1: `Yeni bildiriş`,
+            text1: 'Yeni bildiriş',
             position: 'top',
             visibilityTime: 4000,
             autoHide: true,
@@ -331,7 +333,6 @@ const TasksScreen: React.FC = () => {
               case TaskStatus.NotStarted:
                 pendingTaskCount = Math.max(0, pendingTaskCount - 1);
                 break;
-              
             }
 
             return {
@@ -429,9 +430,8 @@ const TasksScreen: React.FC = () => {
               ]}
               onPress={() => filterTasks(filter)}>
               {filter !== 'Hamısı' && (
-                <Dot
-                  name="dot-fill"
-                  size={16}
+                <SvgImage
+                  source={require('assets/icons/svg/dot.svg')}
                   color={getStatusColor(
                     filter === 'İcra olunan'
                       ? 1

@@ -12,6 +12,7 @@ import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {RootStackParamList} from '../App';
 import {StackNavigationProp} from '@react-navigation/stack';
+import {SvgImage} from './SvgImage';
 
 type NavigationProp = StackNavigationProp<RootStackParamList, 'Ana səhifə'>;
 const HomeHeader = () => {
@@ -64,7 +65,8 @@ const HomeHeader = () => {
         <TouchableOpacity
           style={styles.notificationContainer}
           onPress={() => navigation.navigate('Bildirişlər')}>
-          <Icon name="bell" size={22} color="#2D64AF" />
+          {/* <Icon name="bell" size={22} color="#2D64AF" /> */}
+          <SvgImage source={require('assets/icons/svg/ring.svg')} />
           {/* <View style={styles.badge}>
             <Text style={styles.badgeText}>3</Text>
           </View> */}

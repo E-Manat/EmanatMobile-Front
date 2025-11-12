@@ -9,6 +9,7 @@ import Image1 from '../assets/icons/img1.svg';
 import Image2 from '../assets/icons/img2.svg';
 import Image3 from '../assets/icons/img3.svg';
 import {useIsFocused} from '@react-navigation/native';
+
 const HomeScreen = () => {
   useEffect(() => {
     const logAllAsyncStorage = async () => {
