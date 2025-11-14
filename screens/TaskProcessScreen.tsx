@@ -10,6 +10,7 @@ import {
   Platform,
   PermissionsAndroid,
   ActivityIndicator,
+  Dimensions,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import TopHeader from '../components/TopHeader';
@@ -22,26 +23,25 @@ import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {MainStackParamList} from 'types/types';
 import {Routes} from '@navigation/routes';
 
+const {width: SCREEN_WIDTH, height: SCREEN_HEIGHT} = Dimensions.get('window');
+const HORIZONTAL_PADDING = SCREEN_WIDTH * 0.05;
+const CARD_MARGIN = SCREEN_WIDTH * 0.025;
+
 const TaskProcessScreen: React.FC<
   NativeStackScreenProps<MainStackParamList, Routes.taskProcess>
 > = ({navigation, route}) => {
   const {taskData} = route?.params || {};
 
   const [step, setStep] = useState(0);
-
   const [taskTimer, setTaskTimer] = useState(0);
   const [timerActive, setTimerActive] = useState(false);
-
   const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [successModalVisible, setSuccessModalVisible] = useState(false);
   const [completeTaskLoading, setCompleteTaskLoading] = useState(false);
-
   const [failModalVisible, setFailModalVisible] = useState(false);
   const [failTaskLoading, setFailTaskLoading] = useState(false);
-
   const [roleName, setRoleName] = useState<string | null>(null);
-
   const [confirmShareModalVisible, setConfirmShareModalVisible] =
     useState(false);
   const [successShareModalVisible, setSuccessShareModalVisible] =
@@ -344,35 +344,37 @@ const TaskProcessScreen: React.FC<
 
   return (
     <View style={styles.container}>
-      <View style={styles.container}>
-        <TopHeader
-          title="Tapşırıq"
-          onRightPress={() => navigation.navigate(Routes.home)}
-          rightIconComponent={<HomeIcon color="#fff" />}
-        />
+      <TopHeader
+        title="Tapşırıq"
+        onRightPress={() => navigation.navigate(Routes.home)}
+        rightIconComponent={<HomeIcon color="#fff" />}
+      />
 
-        <TouchableOpacity style={styles.wazeButton} onPress={openInWaze}>
-          <Image
-            source={require('../assets/img/waze.png')}
-            style={styles.profileImage}
-          />
-          <Text style={styles.secondaryButtonText}>Xəritəyə bax</Text>
-        </TouchableOpacity>
+      <View style={styles.contentContainer}>
+        <View style={styles.actionButtonsRow}>
+          <TouchableOpacity style={styles.actionButton} onPress={openInWaze}>
+            <Image
+              source={require('../assets/img/waze.png')}
+              style={styles.actionIcon}
+            />
+            <Text style={styles.actionButtonText}>Xəritəyə bax</Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.shareLocButton}
-          onPress={() => setConfirmShareModalVisible(true)}>
-          <LocationIcon color="#1269B5" width={20} height={20} />
-          <Text style={styles.secondaryButtonText}>Konumu paylaş</Text>
-        </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() => setConfirmShareModalVisible(true)}>
+            <LocationIcon color="#1269B5" width={20} height={20} />
+            <Text style={styles.actionButtonText}>Konumu paylaş</Text>
+          </TouchableOpacity>
+        </View>
 
         <View style={styles.card}>
           <View style={styles.row}>
             <Image
               source={require('../assets/img/img2.png')}
-              style={styles.image}
+              style={styles.terminalImage}
             />
-            <View>
+            <View style={styles.terminalInfo}>
               <Text style={styles.terminalTitle}>
                 Terminal ID: {taskData?.terminal?.pointId}
               </Text>
@@ -419,118 +421,155 @@ const TaskProcessScreen: React.FC<
             </View>
           </View>
         </View>
-
-        <View style={styles.bottomButtons}>
-          <TouchableOpacity
-            style={styles.secondaryButton}
-            onPress={() => setFailModalVisible(true)}>
-            <Text style={styles.secondaryButtonText}>Uğursuz əməliyyat</Text>
-          </TouchableOpacity>
-
-          {renderBottomButton()}
-        </View>
-
-        <CustomModal
-          visible={modalVisible}
-          title="Təsdiqləmə"
-          description="Tapşırığı sonlandırmaq istədiyinizə əminsiniz?"
-          confirmText="Bəli"
-          cancelText="Xeyr"
-          onCancel={() => setModalVisible(false)}
-          onConfirm={handleConfirmComplete}
-        />
-
-        <CustomModal
-          visible={successModalVisible}
-          title="Tapşırıq tamamlandı"
-          description="Tapşırıq uğurla tamamlandı."
-          cancelText="Bağla"
-          onCancel={() => {
-            setSuccessModalVisible(false);
-            navigation.navigate(Routes.newReport, {
-              terminalId: taskData?.terminal?.id,
-            });
-          }}
-        />
-
-        <CustomModal
-          visible={failModalVisible}
-          title="Xəbərdarlıq"
-          description="Əməliyyatı uğursuz kimi işarələmək istədiyinizə əminsiniz?"
-          confirmText="Bəli"
-          cancelText="Xeyr"
-          onCancel={() => setFailModalVisible(false)}
-          onConfirm={async () => {
-            setFailModalVisible(false);
-            await failTask();
-          }}
-          loading={failTaskLoading}
-        />
-
-        <CustomModal
-          visible={confirmShareModalVisible}
-          title="Konumu paylaş"
-          description="Mövcud koordinatlar paylaşılacaq. Əminsiniz?"
-          confirmText="Bəli"
-          cancelText="Xeyr"
-          onCancel={() => setConfirmShareModalVisible(false)}
-          onConfirm={sendShareLocation}
-        />
-
-        <CustomModal
-          visible={successShareModalVisible}
-          title="Bildiriş"
-          description="Konum uğurla paylaşıldı."
-          cancelText="Bağla"
-          onCancel={() => setSuccessShareModalVisible(false)}
-        />
       </View>
+
+      <View style={styles.bottomButtons}>
+        <TouchableOpacity
+          style={styles.secondaryButton}
+          onPress={() => setFailModalVisible(true)}>
+          <Text style={styles.secondaryButtonText}>Uğursuz əməliyyat</Text>
+        </TouchableOpacity>
+
+        {renderBottomButton()}
+      </View>
+
+      <CustomModal
+        visible={modalVisible}
+        title="Təsdiqləmə"
+        description="Tapşırığı sonlandırmaq istədiyinizə əminsiniz?"
+        confirmText="Bəli"
+        cancelText="Xeyr"
+        onCancel={() => setModalVisible(false)}
+        onConfirm={handleConfirmComplete}
+      />
+
+      <CustomModal
+        visible={successModalVisible}
+        title="Tapşırıq tamamlandı"
+        description="Tapşırıq uğurla tamamlandı."
+        cancelText="Bağla"
+        onCancel={() => {
+          setSuccessModalVisible(false);
+          navigation.navigate(Routes.newReport, {
+            terminalId: taskData?.terminal?.id,
+          });
+        }}
+      />
+
+      <CustomModal
+        visible={failModalVisible}
+        title="Xəbərdarlıq"
+        description="Əməliyyatı uğursuz kimi işarələmək istədiyinizə əminsiniz?"
+        confirmText="Bəli"
+        cancelText="Xeyr"
+        onCancel={() => setFailModalVisible(false)}
+        onConfirm={async () => {
+          setFailModalVisible(false);
+          await failTask();
+        }}
+        // loading={failTaskLoading}
+      />
+
+      <CustomModal
+        visible={confirmShareModalVisible}
+        title="Konumu paylaş"
+        description="Mövcud koordinatlar paylaşılacaq. Əminsiniz?"
+        confirmText="Bəli"
+        cancelText="Xeyr"
+        onCancel={() => setConfirmShareModalVisible(false)}
+        onConfirm={sendShareLocation}
+      />
+
+      <CustomModal
+        visible={successShareModalVisible}
+        title="Bildiriş"
+        description="Konum uğurla paylaşıldı."
+        cancelText="Bağla"
+        onCancel={() => setSuccessShareModalVisible(false)}
+      />
     </View>
   );
 };
 
 const CIRCLE_SIZE = 34;
-export default TaskProcessScreen;
 
 const styles = StyleSheet.create({
-  container: {flex: 1, backgroundColor: '#fff', position: 'relative'},
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+  contentContainer: {
+    flex: 1,
+    paddingHorizontal: HORIZONTAL_PADDING,
+  },
+  actionButtonsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: SCREEN_HEIGHT * 0.02,
+    gap: CARD_MARGIN,
+  },
+  actionButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#1269B5',
+    borderRadius: 8,
+    paddingVertical: SCREEN_HEIGHT * 0.012,
+    gap: 6,
+  },
+  actionIcon: {
+    width: 20,
+    height: 20,
+    resizeMode: 'contain',
+  },
+  actionButtonText: {
+    color: '#1269B5',
+    fontFamily: 'DMSans-SemiBold',
+    fontSize: SCREEN_WIDTH * 0.035,
+  },
   card: {
     borderRadius: 16,
-    padding: 16,
-    marginHorizontal: 20,
-    paddingTop: 40,
+    padding: SCREEN_WIDTH * 0.04,
+    paddingTop: SCREEN_WIDTH * 0.1,
     backgroundColor: '#fff',
     shadowColor: '#D2EAFF',
     elevation: 5,
-    marginTop: 30,
+    marginTop: SCREEN_HEIGHT * 0.025,
     overflow: 'hidden',
-  },
-  terminalTitle: {
-    fontFamily: 'DMSans-SemiBold',
-    fontSize: 16,
-    color: '#063A66',
-  },
-  terminalSubtitle: {
-    fontSize: 13,
-    color: '#9E9E9E',
-    fontFamily: 'DMSans-SemiBold',
-    marginTop: 5,
-    lineHeight: 20,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
   },
   row: {
     flexDirection: 'row',
-    gap: 10,
+    gap: SCREEN_WIDTH * 0.025,
     borderColor: '#E0E0E0',
     borderBottomWidth: 1,
-    paddingBottom: 20,
+    paddingBottom: SCREEN_HEIGHT * 0.02,
   },
-  distance: {color: '#1269B5', fontFamily: 'DMSans-SemiBold', marginLeft: 5},
+  terminalImage: {
+    width: SCREEN_WIDTH * 0.11,
+    height: SCREEN_WIDTH * 0.11,
+  },
+  terminalInfo: {
+    flex: 1,
+  },
+  terminalTitle: {
+    fontFamily: 'DMSans-SemiBold',
+    fontSize: SCREEN_WIDTH * 0.04,
+    color: '#063A66',
+  },
+  terminalSubtitle: {
+    fontSize: SCREEN_WIDTH * 0.033,
+    color: '#9E9E9E',
+    fontFamily: 'DMSans-SemiBold',
+    marginTop: SCREEN_HEIGHT * 0.006,
+    lineHeight: 20,
+  },
   timeline: {
     width: '100%',
-    marginTop: 30,
-    shadowColor: '#75ACDA',
-    shadowRadius: 5,
-    elevation: 6,
+    marginTop: SCREEN_HEIGHT * 0.03,
   },
   circle: {
     width: CIRCLE_SIZE,
@@ -545,7 +584,7 @@ const styles = StyleSheet.create({
   circleActive: {
     width: CIRCLE_SIZE,
     height: CIRCLE_SIZE,
-    borderRadius: 17,
+    borderRadius: CIRCLE_SIZE / 2,
     borderWidth: 2,
     borderColor: '#1269B5',
     alignItems: 'center',
@@ -554,9 +593,10 @@ const styles = StyleSheet.create({
   circleActive1: {
     width: CIRCLE_SIZE,
     height: CIRCLE_SIZE,
-    borderRadius: 17,
+    borderRadius: CIRCLE_SIZE / 2,
     borderWidth: 2,
     borderColor: '#1269B5',
+    backgroundColor: '#1269B5',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -582,94 +622,72 @@ const styles = StyleSheet.create({
   step: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 6,
+    paddingVertical: SCREEN_HEIGHT * 0.008,
   },
   stepContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginLeft: 10,
+    marginLeft: SCREEN_WIDTH * 0.025,
     justifyContent: 'space-between',
     flex: 1,
   },
   stepTitle: {
-    fontSize: 14,
+    fontSize: SCREEN_WIDTH * 0.035,
     fontFamily: 'DMSans-SemiBold',
     color: '#465668',
   },
   stepTitleActive: {
-    fontSize: 14,
+    fontSize: SCREEN_WIDTH * 0.035,
     color: '#1269B5',
     fontFamily: 'DMSans-SemiBold',
   },
   stepTime: {
-    fontSize: 13,
+    fontSize: SCREEN_WIDTH * 0.033,
     color: '#767676',
-    marginLeft: 8,
+    marginLeft: SCREEN_WIDTH * 0.02,
     fontFamily: 'DMSans-SemiBold',
   },
   verticalLine: {
-    height: 60,
+    height: SCREEN_HEIGHT * 0.06,
     borderLeftWidth: 1,
     borderColor: '#ccc',
     borderStyle: 'dashed',
     marginLeft: CIRCLE_SIZE / 2,
   },
   bottomButtons: {
-    paddingHorizontal: 20,
-    marginTop: 'auto',
-    marginBottom: 30,
-    gap: 15,
+    paddingHorizontal: HORIZONTAL_PADDING,
+    paddingBottom: SCREEN_HEIGHT * 0.03,
+    gap: SCREEN_HEIGHT * 0.015,
   },
   primaryButton: {
     backgroundColor: '#1269B5',
     borderRadius: 12,
-    paddingVertical: 14,
+    paddingVertical: SCREEN_HEIGHT * 0.017,
     alignItems: 'center',
-    marginBottom: 12,
-    height: 48,
+    height: SCREEN_HEIGHT * 0.06,
+    justifyContent: 'center',
   },
   primaryButtonText: {
     color: '#fff',
     fontFamily: 'DMSans-SemiBold',
-    fontSize: 16,
+    fontSize: SCREEN_WIDTH * 0.04,
   },
   secondaryButton: {
     borderWidth: 1,
     borderColor: '#1269B5',
     borderRadius: 12,
-    paddingVertical: 14,
+    paddingVertical: SCREEN_HEIGHT * 0.017,
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',
-    height: 48,
+    height: SCREEN_HEIGHT * 0.06,
     gap: 6,
   },
   secondaryButtonText: {
     color: '#1269B5',
     fontFamily: 'DMSans-SemiBold',
-    fontSize: 14,
-  },
-  image: {
-    width: 42,
-    height: 42,
-  },
-  profileImage: {width: 20, height: 20, resizeMode: 'contain'},
-  wazeButton: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    position: 'absolute',
-    left: 30,
-    top: 110,
-    zIndex: 34,
-    gap: 4,
-  },
-  shareLocButton: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    position: 'absolute',
-    right: 30,
-    top: 110,
-    zIndex: 34,
-    gap: 4,
+    fontSize: SCREEN_WIDTH * 0.035,
   },
 });
+
+export default TaskProcessScreen;

@@ -4,6 +4,7 @@ import {useNavigation} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import Icon from 'react-native-vector-icons/AntDesign';
 import {SvgImage} from './SvgImage';
+import {Routes} from '@navigation/routes';
 
 export type RootStackParamList = {
   home: undefined;
@@ -37,7 +38,7 @@ const MenuCard: React.FC<Props> = ({
   const navigation = useNavigation<NavigationProp>();
 
   const handlePress = () => {
-    if (screenName === 'TaskProcess' && taskData) {
+    if (screenName === Routes.taskProcess && taskData) {
       navigation.navigate(screenName, {taskData});
     } else {
       navigation.navigate(screenName);

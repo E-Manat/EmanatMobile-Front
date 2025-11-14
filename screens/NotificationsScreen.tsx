@@ -27,7 +27,7 @@ import {MainStackParamList} from 'types/types';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 
 const NotificationsScreen: React.FC<
-  NativeStackScreenProps<MainStackParamList, Routes.newReport>
+  NativeStackScreenProps<MainStackParamList, Routes.notifications>
 > = ({navigation, route}) => {
   const [filter, setFilter] = useState('all');
   const [data, setData] = useState<any>([]);
@@ -488,6 +488,7 @@ const NotificationsScreen: React.FC<
             data={filteredData}
             keyExtractor={(item: any) => String(item.id)}
             renderItem={renderItem}
+            contentContainerStyle={{paddingHorizontal: 20}}
             ListHeaderComponent={() =>
               filteredData.length ? (
                 <>

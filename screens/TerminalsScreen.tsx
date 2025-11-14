@@ -20,7 +20,7 @@ import {MainStackParamList} from 'types/types';
 import {Routes} from '@navigation/routes';
 
 const TerminallarScreen: React.FC<
-  NativeStackScreenProps<MainStackParamList, Routes.profileDetail>
+  NativeStackScreenProps<MainStackParamList, Routes.terminals>
 > = ({navigation}) => {
   const [selectedTerminal, setSelectedTerminal] = useState<any>(null);
   const [modalVisible, setModalVisible] = useState(false);

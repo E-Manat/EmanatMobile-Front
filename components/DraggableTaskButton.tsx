@@ -7,11 +7,10 @@ import {
   Dimensions,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {useNavigation, useRoute} from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
-import {StackNavigationProp} from '@react-navigation/stack';
-import {RootStackParamList} from '../App';
-type NavigationProp = StackNavigationProp<RootStackParamList, 'PinSetup'>;
+import {navigationRef, reset} from '@utils/navigationUtils';
+import {SvgImage} from './SvgImage';
+
 const {width: SCREEN_WIDTH, height: SCREEN_HEIGHT} = Dimensions.get('window');
 
 const BUTTON_SIZE = 50;
@@ -24,10 +23,9 @@ const DraggableTaskButton = () => {
       y: SCREEN_HEIGHT - 200,
     }),
   ).current;
-  const lastTap = useRef(0);
   const [isVisible, setIsVisible] = useState(false);
-  const scaleAnim = useRef(new Animated.Value(1)).current; // Scale animation
-  const navigation = useNavigation<NavigationProp>();
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+
   useEffect(() => {
     const checkCurrentTask = async () => {
       const task = await AsyncStorage.getItem('currentTask');
@@ -42,7 +40,6 @@ const DraggableTaskButton = () => {
   const panOffset = useRef({x: 0, y: 0}).current;
 
   useEffect(() => {
-    // Infinite loop animation for scaling
     Animated.loop(
       Animated.sequence([
         Animated.timing(scaleAnim, {
@@ -67,12 +64,10 @@ const DraggableTaskButton = () => {
       pan.setOffset(panOffset);
       pan.setValue({x: 0, y: 0});
     },
-
     onPanResponderMove: (_, gestureState) => {
       let newX = panOffset.x + gestureState.dx;
       let newY = panOffset.y + gestureState.dy;
 
-      // Ekran sərhədləri daxilində saxla
       newX = Math.max(
         MARGIN,
         Math.min(SCREEN_WIDTH - BUTTON_SIZE - MARGIN, newX),
@@ -93,12 +88,14 @@ const DraggableTaskButton = () => {
 
   const handlePress = async () => {
     const task = await AsyncStorage.getItem('currentTask');
-    if (task) {
+    if (task && navigationRef.current) {
       const taskData = JSON.parse(task);
-      navigation.navigate('TaskProcess', {taskData});
+      navigationRef.current.navigate(
+        'TaskProcess' as never,
+        {taskData} as never,
+      );
     }
   };
-
 
   return (
     <Animated.View
@@ -106,7 +103,10 @@ const DraggableTaskButton = () => {
       {...panResponder.panHandlers}>
       <Animated.View style={{transform: [{scale: scaleAnim}]}}>
         <TouchableOpacity onPress={handlePress} style={styles.button}>
-          <Icon color="#fff" name="timer-outline" size={25} />
+          <SvgImage
+            color="#fff"
+            source={require('assets/icons/svg/timer.svg')}
+          />
         </TouchableOpacity>
       </Animated.View>
     </Animated.View>

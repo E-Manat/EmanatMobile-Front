@@ -5,19 +5,16 @@ import {
   Image,
   TouchableOpacity,
   StyleSheet,
-  Modal,
-  Alert,
   DeviceEventEmitter,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome6';
 import Icon1 from 'react-native-vector-icons/MaterialIcons';
 import Icon2 from 'react-native-vector-icons/Octicons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {useIsFocused, useNavigation} from '@react-navigation/native';
+import {useIsFocused} from '@react-navigation/native';
 import TopHeader from '../components/TopHeader';
 import CustomModal from '../components/Modal';
 import Config from 'react-native-config';
-import {ScrollView} from 'react-native-gesture-handler';
 import {HomeIcon} from '../assets/icons';
 import {MainStackParamList} from 'types/types';
 import {Routes} from '@navigation/routes';
@@ -203,7 +200,7 @@ const TerminalDetailsScreen: React.FC<
   }, [isFocused]);
 
   return (
-    <ScrollView contentContainerStyle={{flexGrow: 1}}>
+    <View style={{flexGrow: 1}}>
       <View style={styles.container}>
         <TopHeader
           title="Tapşırıq detalları"
@@ -376,7 +373,7 @@ const TerminalDetailsScreen: React.FC<
           </View>
         )}
       </View>
-    </ScrollView>
+    </View>
   );
 };
 
