@@ -13,19 +13,21 @@ import Icon from 'react-native-vector-icons/FontAwesome6';
 import Icon1 from 'react-native-vector-icons/MaterialIcons';
 import Icon2 from 'react-native-vector-icons/Octicons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {StackNavigationProp} from '@react-navigation/stack';
-import {RootStackParamList} from '../App';
 import {useIsFocused, useNavigation} from '@react-navigation/native';
 import TopHeader from '../components/TopHeader';
 import CustomModal from '../components/Modal';
 import Config from 'react-native-config';
 import {ScrollView} from 'react-native-gesture-handler';
 import {HomeIcon} from '../assets/icons';
-type NavigationProp = StackNavigationProp<RootStackParamList, 'Hesabatlar'>;
+import {MainStackParamList} from 'types/types';
+import {Routes} from '@navigation/routes';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 
-const TerminalDetailsScreen = ({route}: any) => {
+const TerminalDetailsScreen: React.FC<
+  NativeStackScreenProps<MainStackParamList, Routes.terminalDetails>
+> = ({navigation, route}) => {
   const isFocused = useIsFocused();
-  const [taskData, setTaskDetails] = useState(route.params.taskData);
+  const [taskData, setTaskDetails] = useState(route?.params?.taskData);
   const [confirmVisible, setConfirmVisible] = useState(false);
   const [loading, setLoading] = useState(false);
   const [taskInProgress, setTaskInProgress] = useState(false);
@@ -91,7 +93,7 @@ const TerminalDetailsScreen = ({route}: any) => {
         new Date().getTime().toString(),
       );
 
-      navigation.navigate('TaskProcess', {
+      navigation.navigate(Routes.taskProcess, {
         taskData,
         startTime: new Date().getTime(),
       });
@@ -138,17 +140,23 @@ const TerminalDetailsScreen = ({route}: any) => {
     }
   };
 
-  const navigation = useNavigation<NavigationProp>();
-
   const formatDuration = (durationStr: string) => {
-    if (!durationStr) return 'Qeyd olunmayıb';
+    if (!durationStr) {
+      return 'Qeyd olunmayıb';
+    }
 
     const [hours, minutes, seconds] = durationStr.split(':').map(Number);
 
     const parts = [];
-    if (hours > 0) parts.push(`${hours} saat`);
-    if (minutes > 0) parts.push(`${minutes} dəqiqə`);
-    if (seconds > 0) parts.push(`${seconds} saniyə`);
+    if (hours > 0) {
+      parts.push(`${hours} saat`);
+    }
+    if (minutes > 0) {
+      parts.push(`${minutes} dəqiqə`);
+    }
+    if (seconds > 0) {
+      parts.push(`${seconds} saniyə`);
+    }
 
     return parts.length > 0 ? parts.join(' ') : '0 saniyə';
   };
@@ -171,7 +179,9 @@ const TerminalDetailsScreen = ({route}: any) => {
   };
 
   useEffect(() => {
-    if (!isFocused) return;
+    if (!isFocused) {
+      return;
+    }
 
     const fetchTask = async () => {
       try {
@@ -189,6 +199,7 @@ const TerminalDetailsScreen = ({route}: any) => {
     };
 
     fetchTask();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isFocused]);
 
   return (
@@ -196,7 +207,7 @@ const TerminalDetailsScreen = ({route}: any) => {
       <View style={styles.container}>
         <TopHeader
           title="Tapşırıq detalları"
-          onRightPress={() => navigation.navigate('Ana səhifə')}
+          onRightPress={() => navigation.navigate(Routes.home)}
           rightIconComponent={<HomeIcon color="#fff" />}
         />
 

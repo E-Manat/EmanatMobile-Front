@@ -7,21 +7,21 @@ import {
   TouchableOpacity,
   StyleSheet,
 } from 'react-native';
-import {RootStackParamList} from '../App';
 import {useNavigation} from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Feather';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
+import {AuthStackParamList} from 'types/types';
+import {Routes} from '@navigation/routes';
 
-const OtpScreen = () => {
-  type NavigationProp = StackNavigationProp<RootStackParamList, 'Login'>;
-
+const OtpScreen: React.FC<
+  NativeStackScreenProps<AuthStackParamList, Routes.otp>
+> = ({navigation, route}) => {
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const handleChange = (text: any, index: any) => {
     const newOtp = [...otp];
     newOtp[index] = text;
     setOtp(newOtp);
   };
-
-  const navigation = useNavigation<NavigationProp>();
 
   return (
     <View style={styles.container}>

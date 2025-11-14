@@ -22,9 +22,13 @@ import {
   TabletIcon,
 } from '../assets/icons';
 import {API_ENDPOINTS} from '../services/api_endpoint';
+import {Routes} from '@navigation/routes';
+import {MainStackParamList} from 'types/types';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 
-const DetailedReportScreen = () => {
-  const navigation = useNavigation();
+const DetailedReportScreen: React.FC<
+  NativeStackScreenProps<MainStackParamList, Routes.detailedReport>
+> = ({navigation}) => {
   const route: any = useRoute();
   const {report} = route.params;
 

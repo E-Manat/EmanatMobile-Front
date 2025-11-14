@@ -7,27 +7,25 @@ import {
   StyleSheet,
   ActivityIndicator,
 } from 'react-native';
-import Icon from 'react-native-vector-icons/Feather';
-import {useNavigation} from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
-import {RootStackParamList} from '../App';
-import {StackNavigationProp} from '@react-navigation/stack';
 import CustomModal from '../components/Modal';
 import {Image} from 'react-native';
 import Config from 'react-native-config';
+import {AuthStackParamList} from '../types/types';
+import {Routes} from '@navigation/routes';
+import {SvgImage} from '@components/SvgImage';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 
-type NavigationProp = StackNavigationProp<RootStackParamList, 'Login'>;
-
-const LoginScreen = () => {
-  const navigation = useNavigation<NavigationProp>();
-
+const LoginScreen: React.FC<
+  NativeStackScreenProps<AuthStackParamList, Routes.login>
+> = ({navigation}) => {
   const [modalVisible, setModalVisible] = useState(false);
   const [modalTitle, setModalTitle] = useState('');
   const [modalDescription, setModalDescription] = useState('');
 
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState(__DEV__ ? 'hilalovali0501@gmail.com' : '');
+  const [password, setPassword] = useState(__DEV__ ? 'Salam123!' : '');
   const [showPassword, setShowPassword] = useState(false);
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
@@ -61,7 +59,7 @@ const LoginScreen = () => {
       ]);
       await AsyncStorage.setItem('roleName', result.data.roleName);
 
-      navigation.navigate('PinSetup');
+      navigation.replace(Routes.main as any, {screen: Routes.pinSetup} as any);
     } catch (error: any) {
       console.log(error, error?.response?.data, error?.data, 'error');
       setModalTitle('Xəta');
@@ -104,7 +102,7 @@ const LoginScreen = () => {
           onFocus={() => setFocusedInput('email')}
           onBlur={() => setFocusedInput(null)}
         />
-        <Icon name="mail" size={20} color="#aaa" />
+        <SvgImage source={require('assets/icons/svg/call.svg')} />
       </View>
       {emailError ? <Text style={styles.errorText}>{emailError}</Text> : null}
 
@@ -125,10 +123,12 @@ const LoginScreen = () => {
           onBlur={() => setFocusedInput(null)}
         />
         <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-          <Icon
-            name={showPassword ? 'eye' : 'eye-off'}
-            size={20}
-            color="#aaa"
+          <SvgImage
+            source={
+              showPassword
+                ? require('assets/icons/svg/open-eye.svg')
+                : require('assets/icons/svg/closed-eye.svg')
+            }
           />
         </TouchableOpacity>
       </View>
@@ -136,7 +136,8 @@ const LoginScreen = () => {
         <Text style={styles.errorText}>{passwordError}</Text>
       ) : null}
 
-      <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')}>
+      <TouchableOpacity
+        onPress={() => navigation.navigate(Routes.forgotPassword)}>
         <Text style={styles.forgotPassword}>Şifrəni unutmusuz?</Text>
       </TouchableOpacity>
 

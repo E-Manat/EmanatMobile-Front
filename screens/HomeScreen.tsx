@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {ScrollView, View, StyleSheet} from 'react-native';
+import {ScrollView, View, StyleSheet, SafeAreaView} from 'react-native';
 import MenuCard from '../components/MenuCard';
 import Banner from '../components/Banner';
 import {globalStyles} from '../globalStyles';
@@ -9,8 +9,13 @@ import Image1 from '../assets/icons/img1.svg';
 import Image2 from '../assets/icons/img2.svg';
 import Image3 from '../assets/icons/img3.svg';
 import {useIsFocused} from '@react-navigation/native';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
+import {MainStackParamList} from 'types/types';
+import {Routes} from '@navigation/routes';
 
-const HomeScreen = () => {
+const HomeScreen: React.FC<
+  NativeStackScreenProps<MainStackParamList, Routes.home>
+> = () => {
   useEffect(() => {
     const logAllAsyncStorage = async () => {
       try {
@@ -47,40 +52,40 @@ const HomeScreen = () => {
   }, [isFocused]);
 
   return (
-    <ScrollView
-      style={globalStyles.container}
-      contentContainerStyle={{paddingBottom: 40}}>
-      <HomeHeader />
-      <View style={styles.spacer} />
-      {taskData !== null && (
-        <MenuCard
-          title="Cari Tapşırıq"
-          description="Hal hazırda davam edən tapşırıq"
-          screenName="TaskProcess"
-          iconName={<Image3 />}
-          taskData={taskData}
-        />
-      )}
+    <SafeAreaView style={globalStyles.container}>
+      <View style={globalStyles.container}>
+        <HomeHeader />
+        <View style={styles.spacer} />
+        {taskData !== null && (
+          <MenuCard
+            title="Cari Tapşırıq"
+            description="Hal hazırda davam edən tapşırıq"
+            screenName="TaskProcess"
+            iconName={<Image3 />}
+            taskData={taskData}
+          />
+        )}
 
-      <MenuCard
-        title="Tapşırıqlar"
-        description="Cari tapşırıqların siyahısı"
-        screenName="Tapşırıqlar"
-        iconName={<Image1 />}
-      />
-      <MenuCard
-        title="Terminallar"
-        description="Ərazi üzrə terminalların siyahısı"
-        screenName="Terminallar"
-        iconName={<Image2 />}
-      />
-      <MenuCard
-        title="Hesabatlar"
-        description="Yerinə yetirilmiş tapşırıqlar üzrə hesabat"
-        screenName="Hesabatlar"
-        iconName={<Image3 />}
-      />
-    </ScrollView>
+        <MenuCard
+          title="Tapşırıqlar"
+          description="Cari tapşırıqların siyahısı"
+          screenName="Tapşırıqlar"
+          iconName={<Image1 />}
+        />
+        <MenuCard
+          title="Terminallar"
+          description="Ərazi üzrə terminalların siyahısı"
+          screenName="Terminallar"
+          iconName={<Image2 />}
+        />
+        <MenuCard
+          title="Hesabatlar"
+          description="Yerinə yetirilmiş tapşırıqlar üzrə hesabat"
+          screenName="Hesabatlar"
+          iconName={<Image3 />}
+        />
+      </View>
+    </SafeAreaView>
   );
 };
 

@@ -6,14 +6,15 @@ import OtpScreen from '../screens/OtpScreen';
 import OtpSubmitScreen from '../screens/OtpSubmitScreen';
 import NewPasswordScreen from '../screens/NewPasswordScreen';
 import {Routes} from './routes';
-import {SafeAreaView} from 'react-native-safe-area-context';
 import {authStackScreenOption} from '@utils/navigationConfig';
+import {View} from 'react-native';
+import {AuthStackParamList} from 'types/types';
 
-const AuthStack = createNativeStackNavigator();
+const AuthStack = createNativeStackNavigator<AuthStackParamList>();
 
 export const AuthRouter = () => {
   return (
-    <SafeAreaView style={{flex: 1}} edges={['top', 'bottom']}>
+    <View style={{flex: 1}}>
       <AuthStack.Navigator
         screenOptions={authStackScreenOption}
         initialRouteName={Routes.login}>
@@ -29,6 +30,6 @@ export const AuthRouter = () => {
           component={NewPasswordScreen}
         />
       </AuthStack.Navigator>
-    </SafeAreaView>
+    </View>
   );
 };

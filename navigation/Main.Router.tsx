@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import {SafeAreaView} from 'react-native-safe-area-context';
-import {DeviceEventEmitter} from 'react-native';
+import {DeviceEventEmitter, View} from 'react-native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
@@ -22,8 +22,10 @@ import CustomModal from '../components/Modal';
 import {Routes} from './routes';
 import {navigationRef} from '@utils/navigationUtils';
 import {defaultScreenOptions} from '@utils/navigationConfig';
+import {isAndroid} from 'constants/common.consts';
+import {MainStackParamList} from 'types/types';
 
-const MainStack = createNativeStackNavigator();
+const MainStack = createNativeStackNavigator<MainStackParamList>();
 
 export const MainRouter = () => {
   const [currentRouteName, setCurrentRouteName] = useState('');
@@ -107,7 +109,10 @@ export const MainRouter = () => {
   }, []);
 
   return (
-    <SafeAreaView style={{flex: 1}} edges={['bottom']}>
+    <View
+      style={{flex: 1, backgroundColor: '#fff'}}
+      // edges={isAndroid ? ['top', 'bottom'] : ['top']}>
+    >
       <CustomModal
         visible={modalVisible}
         title="Yeniləmə Mövcuddur"
@@ -117,7 +122,7 @@ export const MainRouter = () => {
       />
       <MainStack.Navigator
         screenOptions={defaultScreenOptions}
-        initialRouteName={Routes.home}>
+        initialRouteName={Routes.pinSetup}>
         <MainStack.Screen name={Routes.home} component={BottomTabNavigator} />
         <MainStack.Screen name={Routes.tasks} component={TasksScreen} />
         <MainStack.Screen name={Routes.profile} component={ProfileScreen} />
@@ -149,6 +154,6 @@ export const MainRouter = () => {
       {!['Splash', 'Login'].includes(currentRouteName) && hasCurrentTask && (
         <DraggableTaskButton />
       )}
-    </SafeAreaView>
+    </View>
   );
 };

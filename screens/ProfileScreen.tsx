@@ -1,4 +1,3 @@
-import {useNavigation} from '@react-navigation/native';
 import React, {useState, useEffect} from 'react';
 import {
   View,
@@ -9,27 +8,26 @@ import {
   Modal,
   KeyboardAvoidingView,
   TouchableWithoutFeedback,
-  ScrollView,
   Keyboard,
 } from 'react-native';
-import Icon from 'react-native-vector-icons/Feather';
-import Icon2 from 'react-native-vector-icons/Entypo';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Toast from 'react-native-toast-message';
-import {RootStackParamList} from '../App';
-import {StackNavigationProp} from '@react-navigation/stack';
 import TopHeader from '../components/TopHeader';
 import {OutIcon, SecurityIcon, UserIcon} from '../assets/icons';
 import CustomModal from '../components/Modal';
-
-type NavigationProp = StackNavigationProp<RootStackParamList, 'Profil'>;
 import Config from 'react-native-config';
 import {apiService} from '../services/apiService';
 import {API_ENDPOINTS} from '../services/api_endpoint';
+import {Routes} from '@navigation/routes';
+import {SvgImage} from '@components/SvgImage';
+import {MainStackParamList} from 'types/types';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 
 console.log(Config.API_URL, 'jdfnS');
 
-const ProfileScreen = () => {
+const ProfileScreen: React.FC<
+  NativeStackScreenProps<MainStackParamList, Routes.profile>
+> = ({navigation}) => {
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [address, setAddress] = useState('');
@@ -38,19 +36,18 @@ const ProfileScreen = () => {
   const [isEdited, setIsEdited] = useState(false);
   const [loading, setLoading] = useState(true);
   const [roleName, setRoleName] = useState('');
-  const navigation = useNavigation<NavigationProp>();
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [logoutConfirmModalVisible, setLogoutConfirmModalVisible] =
+    useState(false);
 
   useEffect(() => {
     loadProfileData();
   }, []);
 
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-
   const loadProfileData = async () => {
     try {
       setLoading(true);
-
       const token = await AsyncStorage.getItem('userToken');
       if (!token) {
         console.warn('Token tapılmadı');
@@ -58,7 +55,6 @@ const ProfileScreen = () => {
       }
 
       const result: any = await apiService.get(API_ENDPOINTS.auth.getProfile);
-
       console.log('Profil məlumatları:', result);
 
       if (result) {
@@ -98,14 +94,11 @@ const ProfileScreen = () => {
     try {
       await AsyncStorage.removeItem('userToken');
       await AsyncStorage.removeItem('isLoggedIn');
-      navigation.replace('Login');
+      navigation.replace(Routes.auth as any, {screen: Routes.login} as any);
     } catch (error) {
       console.log('Çıxış zamanı xəta:', error);
     }
   };
-
-  const [logoutConfirmModalVisible, setLogoutConfirmModalVisible] =
-    useState(false);
 
   const getInitials = (name: string, surname: string) => {
     const first = name?.trim()?.[0]?.toUpperCase() || 'A';
@@ -116,10 +109,9 @@ const ProfileScreen = () => {
   return (
     <KeyboardAvoidingView behavior="padding" style={{flex: 1}}>
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <ScrollView contentContainerStyle={{flexGrow: 1}}>
+        <View style={{flexGrow: 1}}>
           <View style={styles.container}>
             <TopHeader title="Profil" />
-
             <View style={styles.profileContainer}>
               <TouchableOpacity onPress={() => setModalVisible(true)}>
                 <View style={styles.imageContainer}>
@@ -144,48 +136,40 @@ const ProfileScreen = () => {
                 <Text style={styles.profileRoleName}>{roleName}</Text>
               </View>
             </View>
-
             <View style={styles.profileInfo}>
               <TouchableOpacity
                 style={styles.itemContainer}
-                onPress={() => navigation.navigate('ProfileDetail')}>
+                onPress={() => navigation.navigate(Routes.profileDetail)}>
                 <View style={styles.iconBox}>
                   <UserIcon color="#1269B5" />
                 </View>
                 <Text style={styles.text}>Profil məlumatları</Text>
-                <Icon
-                  name="chevron-right"
-                  size={20}
-                  color="#98A2B3"
-                  style={styles.arrowIcon}
+                <SvgImage
+                  source={require('assets/icons/svg/chevron-right.svg')}
                 />
               </TouchableOpacity>
-
               <TouchableOpacity style={styles.itemContainer}>
                 <View style={styles.iconBox}>
                   <SecurityIcon color="#1269B5" />
                 </View>
                 <Text style={styles.text}>Təhlükəsizlik</Text>
-                <Icon
-                  name="chevron-right"
-                  size={20}
-                  color="#98A2B3"
-                  style={styles.arrowIcon}
+                <SvgImage
+                  source={require('assets/icons/svg/chevron-right.svg')}
                 />
               </TouchableOpacity>
-
               <TouchableOpacity style={styles.itemContainer}>
-                <View style={styles.box}>
-                  <View style={styles.iconBox}>
-                    <Icon2 color="#1269B5" name="google-play" size={20} />
-                  </View>
+                <View style={{gap: 12, display: 'flex', flexDirection: 'row'}}>
+                  <SvgImage
+                    width={32}
+                    height={32}
+                    source={require('assets/icons/svg/app-version.svg')}
+                  />
                   <View>
                     <Text style={styles.text}>Proqram versiyası</Text>
                     <Text style={styles.textVersion}>1.0.1</Text>
                   </View>
                 </View>
               </TouchableOpacity>
-
               <TouchableOpacity
                 style={styles.itemContainer}
                 onPress={() => setLogoutConfirmModalVisible(true)}>
@@ -193,12 +177,6 @@ const ProfileScreen = () => {
                   <OutIcon color="#1269B5" />
                 </View>
                 <Text style={styles.text}>Çıxış</Text>
-                <Icon
-                  name="chevron-right"
-                  size={20}
-                  color="#98A2B3"
-                  style={styles.arrowIcon}
-                />
               </TouchableOpacity>
             </View>
             <Modal
@@ -218,7 +196,6 @@ const ProfileScreen = () => {
                 />
               </TouchableOpacity>
             </Modal>
-
             <CustomModal
               visible={logoutConfirmModalVisible}
               title="Təsdiqləmə"
@@ -231,10 +208,9 @@ const ProfileScreen = () => {
               }}
               onCancel={() => setLogoutConfirmModalVisible(false)}
             />
-
             <Toast />
           </View>
-        </ScrollView>
+        </View>
       </TouchableWithoutFeedback>
     </KeyboardAvoidingView>
   );

@@ -8,6 +8,7 @@ import {
   Modal,
   Image,
   ActivityIndicator,
+  SafeAreaView,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
 import IconCheck from 'react-native-vector-icons/Ionicons';
@@ -20,8 +21,14 @@ import {Swipeable} from 'react-native-gesture-handler';
 import Config from 'react-native-config';
 import {apiService} from '../services/apiService';
 import {API_ENDPOINTS} from '../services/api_endpoint';
-const NotificationsScreen = () => {
-  const navigation = useNavigation();
+import {SvgImage} from '@components/SvgImage';
+import {Routes} from '@navigation/routes';
+import {MainStackParamList} from 'types/types';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
+
+const NotificationsScreen: React.FC<
+  NativeStackScreenProps<MainStackParamList, Routes.newReport>
+> = ({navigation, route}) => {
   const [filter, setFilter] = useState('all');
   const [data, setData] = useState<any>([]);
   const [modalVisible, setModalVisible] = useState(false);
@@ -324,7 +331,9 @@ const NotificationsScreen = () => {
   const handleBulkDelete = async () => {
     try {
       const token = await AsyncStorage.getItem('userToken');
-      if (!token) return console.warn('Token tapılmadı');
+      if (!token) {
+        return console.warn('Token tapılmadı');
+      }
 
       const response = await fetch(
         `${Config.API_URL}/notification/Notification/DeleteSelectedIds`,
@@ -364,7 +373,9 @@ const NotificationsScreen = () => {
   const handleDeleteAll = async () => {
     try {
       const token = await AsyncStorage.getItem('userToken');
-      if (!token) return console.warn('Token tapılmadı');
+      if (!token) {
+        return console.warn('Token tapılmadı');
+      }
 
       const response = await fetch(
         `${Config.API_URL}/notification/Notification/DeleteAll`,
@@ -399,10 +410,15 @@ const NotificationsScreen = () => {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Icon name="chevron-left" size={24} color="#2D64AF" />
+        <TouchableOpacity
+          style={{marginLeft: 20}}
+          onPress={() => navigation.goBack()}>
+          <SvgImage
+            color="#2D64AF"
+            source={require('assets/icons/svg/go-back.svg')}
+          />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Bildirişlər</Text>
 
@@ -572,7 +588,7 @@ const NotificationsScreen = () => {
           </View>
         </Modal>
       )}
-    </View>
+    </SafeAreaView>
   );
 };
 

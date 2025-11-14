@@ -31,10 +31,11 @@ const BottomTabNavigator = () => {
         tabBarInactiveTintColor: 'gray',
         tabBarStyle: {
           backgroundColor: '#fff',
-          height: 60,
+          height: 70,
           elevation: 0,
           shadowOpacity: 0.1,
         },
+
         tabBarButton: props => (
           <TouchableOpacity {...(props ?? {})} activeOpacity={0.6} />
         ),

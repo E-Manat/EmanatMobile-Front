@@ -16,7 +16,6 @@ import Icon from 'react-native-vector-icons/Feather';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
-import {RootStackParamList} from '../App';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {apiService} from '../services/apiService';
 import TopHeader from '../components/TopHeader';
@@ -28,12 +27,14 @@ import {RouteProp} from '@react-navigation/native';
 import UniversalSelectModal from '../components/UniversalSelectModal';
 import CustomSelectBox from '../components/CustomSelectBox';
 import {API_ENDPOINTS} from '../services/api_endpoint';
+import {MainStackParamList} from 'types/types';
+import {Routes} from '@navigation/routes';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
+import {SvgImage} from '@components/SvgImage';
 
-type RouteProps = RouteProp<RootStackParamList, 'YeniHesabat'>;
-type NavigationProp = StackNavigationProp<RootStackParamList, 'Login'>;
-
-const NewReportScreen = () => {
-  const route = useRoute<RouteProps>();
+const NewReportScreen: React.FC<
+  NativeStackScreenProps<MainStackParamList, Routes.newReport>
+> = ({navigation, route}) => {
   const terminalIdFromRoute = route.params?.terminalId;
 
   console.log(terminalIdFromRoute, 'terminalIdFromRoute');
@@ -52,8 +53,6 @@ const NewReportScreen = () => {
 
   const [problemError, setProblemError] = useState(false);
   const [isSuccessModalVisible, setSuccessModalVisible] = useState(false);
-
-  const navigation = useNavigation<NavigationProp>();
 
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [modalMessage, setModalMessage] = useState('');
@@ -100,13 +99,17 @@ const NewReportScreen = () => {
     };
 
     launchCamera(options, response => {
-      if (response.didCancel) return;
+      if (response.didCancel) {
+        return;
+      }
       if (response.errorCode) {
         Alert.alert('Xəta', 'Kamera açılmadı');
         return;
       }
       const uri = response.assets?.[0]?.uri;
-      if (uri) setSelectedImages([...selectedImages, uri]);
+      if (uri) {
+        setSelectedImages([...selectedImages, uri]);
+      }
     });
   };
 
@@ -117,14 +120,18 @@ const NewReportScreen = () => {
     };
 
     launchImageLibrary(options, response => {
-      if (response.didCancel) return;
+      if (response.didCancel) {
+        return;
+      }
       if (response.errorCode) {
         Alert.alert('Xəta', 'Şəkil seçilə bilmədi');
         return;
       }
 
       const uri = response.assets?.[0]?.uri;
-      if (uri) setSelectedImages([...selectedImages, uri]);
+      if (uri) {
+        setSelectedImages([...selectedImages, uri]);
+      }
     });
   };
 
@@ -137,14 +144,18 @@ const NewReportScreen = () => {
     };
 
     launchImageLibrary(options, response => {
-      if (response.didCancel) return;
+      if (response.didCancel) {
+        return;
+      }
       if (response.errorCode) {
         Alert.alert('Xəta', 'Video seçilə bilmədi');
         return;
       }
 
       const uri = response.assets?.[0]?.uri;
-      if (uri) setSelectedVideos(prev => [...prev, uri]);
+      if (uri) {
+        setSelectedVideos(prev => [...prev, uri]);
+      }
     });
   };
 
@@ -158,14 +169,18 @@ const NewReportScreen = () => {
     };
 
     launchCamera(options, response => {
-      if (response.didCancel) return;
+      if (response.didCancel) {
+        return;
+      }
       if (response.errorCode) {
         Alert.alert('Xəta', 'Video çəkilə bilmədi');
         return;
       }
 
       const uri = response.assets?.[0]?.uri;
-      if (uri) setSelectedVideos(prev => [...prev, uri]);
+      if (uri) {
+        setSelectedVideos(prev => [...prev, uri]);
+      }
     });
   };
 
@@ -274,6 +289,22 @@ const NewReportScreen = () => {
         contentContainerStyle={{flexGrow: 1}}>
         <View style={styles.container}>
           <CustomSelectBox
+            label="Terminali seçin"
+            placeholder="Terminal ID"
+            value={selectedTerminalObj?.name}
+            onPress={() => {
+              const mapped =
+                terminalList &&
+                terminalList?.map(t => ({id: t?.pointId, name: t?.pointId}));
+              setModalData(mapped || []);
+              setModalTitle('Terminal seçin');
+              setModalType('terminal');
+              setSelectModalVisible(true);
+            }}
+            // error={!selectedTerminalId}
+          />
+
+          <CustomSelectBox
             label="Problem növü"
             placeholder="Problem"
             value={selectedProblemObj?.name}
@@ -291,23 +322,6 @@ const NewReportScreen = () => {
             }}
             // error={!selectedProblemId}
           />
-
-          <CustomSelectBox
-            label="Terminali seçin"
-            placeholder="Terminal ID"
-            value={selectedTerminalObj?.name}
-            onPress={() => {
-              const mapped =
-                terminalList &&
-                terminalList?.map(t => ({id: t?.pointId, name: t?.pointId}));
-              setModalData(mapped || []);
-              setModalTitle('Terminal seçin');
-              setModalType('terminal');
-              setSelectModalVisible(true);
-            }}
-            // error={!selectedTerminalId}
-          />
-
           <UniversalSelectModal
             visible={selectModalVisible}
             data={modalData}
@@ -338,7 +352,12 @@ const NewReportScreen = () => {
               <View key={index} style={{position: 'relative', marginRight: 5}}>
                 <Image
                   source={{uri: image}}
-                  style={{width: 70, height: 70, borderRadius: 15}}
+                  style={{
+                    width: 70,
+                    height: 70,
+                    borderRadius: 15,
+                    backgroundColor: 'red',
+                  }}
                 />
                 <TouchableOpacity
                   style={styles.removeImageBtn}
@@ -391,7 +410,7 @@ const NewReportScreen = () => {
                   }}>
                   <Text style={{color: 'white', fontSize: 12}}>
                     {' '}
-                    <Icon name="x" />
+                    <SvgImage source={require('assets/icons/svg/x-icon.svg')} />
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -411,7 +430,7 @@ const NewReportScreen = () => {
           <View style={styles.buttonContainer}>
             <TouchableOpacity
               style={styles.secondaryButton}
-              onPress={() => navigation.replace('Ana səhifə')}>
+              onPress={() => navigation.replace(Routes.home)}>
               <Text style={styles.secondaryButtonLabel}>Keç </Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -442,7 +461,7 @@ const NewReportScreen = () => {
           confirmText="Bağla"
           onConfirm={() => {
             setSuccessModalVisible(false);
-            navigation.replace('Hesabatlar');
+            navigation.replace(Routes.reports);
           }}
         />
 

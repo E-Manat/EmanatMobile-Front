@@ -24,13 +24,17 @@ const request = async (
   method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH',
   body?: any,
   isMultipart: boolean = false,
+  requiresAuth: boolean = true,
 ): Promise<any> => {
-  const token = await getToken();
-  if (!token) throw new Error('Token tapılmadı.');
+  const headers: Record<string, string> = {};
 
-  const headers: Record<string, string> = {
-    Authorization: `Bearer ${token}`,
-  };
+  if (requiresAuth) {
+    const token = await getToken();
+    if (!token) {
+      throw new Error('Token tapılmadı.');
+    }
+    headers.Authorization = `Bearer ${token}`;
+  }
 
   if (!isMultipart) {
     headers['Content-Type'] = 'application/json';
@@ -46,7 +50,7 @@ const request = async (
     const res = await fetch(`${Config.API_URL}${endpoint}`, options);
     console.log(res, 'geden sorgu');
 
-    if (res.status === 401) {
+    if (res.status === 401 && requiresAuth) {
       await AsyncStorage.multiRemove(['userToken', 'isLoggedIn']);
       if (navigationRef) {
         navigationRef?.current?.reset({
@@ -77,7 +81,9 @@ const request = async (
 export const apiService = {
   get: async (endpoint: string): Promise<any> => {
     const token = await getToken();
-    if (!token) throw new Error('Token tapılmadı.');
+    if (!token) {
+      throw new Error('Token tapılmadı.');
+    }
 
     const headers: Record<string, string> = {
       Authorization: `Bearer ${token}`,
@@ -101,4 +107,8 @@ export const apiService = {
   delete: (endpoint: string) => request(endpoint, 'DELETE'),
   postMultipart: (endpoint: string, formData: FormData) =>
     request(endpoint, 'POST', formData, true),
+  postWithoutAuth: (endpoint: string, body: any) =>
+    request(endpoint, 'POST', body, false, false),
+  getWithoutAuth: (endpoint: string) =>
+    request(endpoint, 'GET', undefined, false, false),
 };

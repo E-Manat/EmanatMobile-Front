@@ -4,8 +4,6 @@ import {
   Text,
   FlatList,
   StyleSheet,
-  SafeAreaView,
-  StatusBar,
   TouchableOpacity,
   Modal,
   Image,
@@ -17,9 +15,13 @@ import {LocationIcon, MapIcon, RoadIcon, TabletIcon} from '../assets/icons';
 import {apiService} from '../services/apiService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {API_ENDPOINTS} from '../services/api_endpoint';
-import axios from 'axios';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
+import {MainStackParamList} from 'types/types';
+import {Routes} from '@navigation/routes';
 
-const TerminallarScreen = () => {
+const TerminallarScreen: React.FC<
+  NativeStackScreenProps<MainStackParamList, Routes.profileDetail>
+> = ({navigation}) => {
   const [selectedTerminal, setSelectedTerminal] = useState<any>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [terminals, setTerminals] = useState<any[]>([]);
@@ -80,16 +82,16 @@ const TerminallarScreen = () => {
             <Text style={styles.terminalId}>
               Terminal ID – {terminal.pointId}
             </Text>
-            <Text style={styles.infoText}></Text>
+            <Text style={styles.infoText} />
           </View>
         </View>
-        <View style={styles.right}></View>
+        <View style={styles.right} />
       </View>
     </TouchableOpacity>
   );
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <TopHeader title="Terminallar" />
 
       <FlatList
@@ -159,7 +161,7 @@ const TerminallarScreen = () => {
           </View>
         </View>
       </Modal>
-    </SafeAreaView>
+    </View>
   );
 };
 

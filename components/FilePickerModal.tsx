@@ -3,6 +3,7 @@ import React from 'react';
 import {Modal, View, Text, TouchableOpacity, StyleSheet} from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
 import {FolderIcon, ImageIcon, VideoIcon} from '../assets/icons';
+import {SvgImage} from './SvgImage';
 
 interface Props {
   visible: boolean;
@@ -26,7 +27,7 @@ const FilePickerModal = ({
           <View style={styles.header}>
             <Text style={styles.title}>Fayl seçimi</Text>
             <TouchableOpacity onPress={onClose}>
-              <Icon name="x" size={22} color="#000" />
+              <SvgImage source={require('assets/icons/svg/x-icon.svg')} />
             </TouchableOpacity>
           </View>
 

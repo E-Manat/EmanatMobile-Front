@@ -8,23 +8,22 @@ import {
 } from 'react-native';
 import React, {useEffect, useState} from 'react';
 import TopHeader from '../components/TopHeader';
-import {useNavigation} from '@react-navigation/native';
 import {apiService} from '../services/apiService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {StackNavigationProp} from '@react-navigation/stack';
-import {RootStackParamList} from '../App';
 import {API_ENDPOINTS} from '../services/api_endpoint';
+import {MainStackParamList} from 'types/types';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
+import {Routes} from '@navigation/routes';
 
-type NavigationProp = StackNavigationProp<RootStackParamList, 'Profil'>;
-const ProfileDetailScreen = () => {
+const ProfileDetailScreen: React.FC<
+  NativeStackScreenProps<MainStackParamList, Routes.profileDetail>
+> = ({navigation}) => {
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [address, setAddress] = useState('');
   const [profileImage, setProfileImage] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [loading, setLoading] = useState(true);
-
-  const navigation = useNavigation<NavigationProp>();
 
   useEffect(() => {
     loadProfileData();

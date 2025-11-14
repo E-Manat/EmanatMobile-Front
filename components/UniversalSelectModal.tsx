@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import Modal from 'react-native-modal';
 import Icon from 'react-native-vector-icons/Feather';
+import {SvgImage} from './SvgImage';
 
 type Item = {
   id: number | string;
@@ -52,7 +53,7 @@ const UniversalSelectModal = ({
         <View style={styles.header}>
           <Text style={styles.title}>{title}</Text>
           <TouchableOpacity onPress={onClose}>
-            <Icon name="x" size={20} color="#4B5D6A" />
+            <SvgImage source={require('assets/icons/svg/x-icon.svg')} />
           </TouchableOpacity>
         </View>
 

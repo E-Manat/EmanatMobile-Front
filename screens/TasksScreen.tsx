@@ -11,19 +11,19 @@ import {
   ActivityIndicator,
   Image,
 } from 'react-native';
-import Dot from 'react-native-vector-icons/Octicons';
 
-import {RootStackParamList} from '../App';
-import {StackNavigationProp} from '@react-navigation/stack';
 import {apiService} from '../services/apiService';
 import TopHeader from '../components/TopHeader';
 import Toast from 'react-native-toast-message';
 import * as signalR from '@microsoft/signalr';
 import {RefreshIcon} from '../assets/icons';
-type NavigationProp = StackNavigationProp<RootStackParamList, 'PinSetup'>;
+
 import {API_ENDPOINTS} from '../services/api_endpoint';
 import Config from 'react-native-config';
 import {SvgImage} from '@components/SvgImage';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
+import {MainStackParamList} from 'types/types';
+import {Routes} from '@navigation/routes';
 
 export enum TaskStatus {
   NotStarted = 'NotStarted',
@@ -53,7 +53,9 @@ interface TasksPayload {
   inProgressTaskCount: number;
   completedTaskCount: number;
 }
-const TasksScreen: React.FC = () => {
+const TasksScreen: React.FC<
+  NativeStackScreenProps<MainStackParamList, Routes.tasks>
+> = ({navigation, route}) => {
   const [selectedFilter, setSelectedFilter] =
     useState<string>('İcra olunmamış');
 
@@ -85,7 +87,6 @@ const TasksScreen: React.FC = () => {
     completedTaskCount: 0,
   });
 
-  const navigation = useNavigation<NavigationProp>();
   const [filteredTasks, setFilteredTasks] = useState<any>([]);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -186,7 +187,7 @@ const TasksScreen: React.FC = () => {
           const taskDetails = await apiService.get(endpoint);
 
           console.log(taskDetails, 'taskDetails');
-          navigation.navigate('TerminalEtrafli', {taskData: taskDetails});
+          navigation.navigate(Routes.terminalDetails, {taskData: taskDetails});
         } catch (err) {
           console.error('Detalları alarkən xəta:', err);
         } finally {
@@ -511,7 +512,7 @@ const styles = StyleSheet.create({
   statusContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 10,
+    marginTop: 50,
     paddingHorizontal: 15,
     paddingVertical: 20,
     margin: 'auto',

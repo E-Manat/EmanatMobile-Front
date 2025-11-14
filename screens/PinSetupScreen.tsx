@@ -1,18 +1,21 @@
 import React, {useState, useEffect} from 'react';
 import {View, Text, TouchableOpacity, StyleSheet, Image} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {useNavigation} from '@react-navigation/native';
-import {RootStackParamList} from '../App';
-import {StackNavigationProp} from '@react-navigation/stack';
 import CustomModal from '../components/Modal';
 import {LockIcon} from '../assets/icons';
-import Icon from 'react-native-vector-icons/Feather';
-type NavigationProp = StackNavigationProp<RootStackParamList, 'PinSetup'>;
+import {Routes} from '@navigation/routes';
+import {SvgImage} from '@components/SvgImage';
+import {MainStackParamList} from 'types/types';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 
-const PinSetupScreen = () => {
+const PinSetupScreen: React.FC<
+  NativeStackScreenProps<MainStackParamList, Routes.pinSetup>
+> = ({navigation}) => {
   const [pin, setPin] = useState<string>('');
+  const [confirmPin, setConfirmPin] = useState<string>('');
+  const [isConfirming, setIsConfirming] = useState<boolean>(false);
   const [storedPin, setStoredPin] = useState<string | null>(null);
-  const navigation = useNavigation<NavigationProp>();
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   const [modalVisible, setModalVisible] = useState(false);
   const [modalTitle, setModalTitle] = useState('');
@@ -22,72 +25,122 @@ const PinSetupScreen = () => {
     const fetchStoredPin = async () => {
       const savedPin = await AsyncStorage.getItem('userPin');
       setStoredPin(savedPin);
+      setIsLoading(false);
     };
     fetchStoredPin();
   }, []);
 
   const handleForgotPin = async () => {
+    await AsyncStorage.removeItem('userPin');
     await AsyncStorage.setItem('forgotPin', 'true');
     setModalTitle('PIN sıfırlanacaq');
     setModalDescription('Zəhmət olmasa yenidən giriş edin');
     setModalVisible(true);
-    navigation.replace('Login');
   };
 
   const handlePress = async (num: string) => {
-    if (pin.length < 4) {
-      const newPin = pin + num;
-      setPin(newPin);
+    if (storedPin) {
+      if (pin.length < 4) {
+        const newPin = pin + num;
+        setPin(newPin);
 
-      if (newPin.length === 4) {
-        const forgotPin = await AsyncStorage.getItem('forgotPin');
-
-        if (storedPin && forgotPin !== 'true') {
+        if (newPin.length === 4) {
           if (newPin === storedPin) {
-            setModalTitle('PIN təsdiqləndi');
-            setModalDescription('Siz uğurla daxil oldunuz!');
-            setModalVisible(true);
             await AsyncStorage.setItem('isLoggedIn', 'true');
-            navigation.replace('Ana səhifə');
+            navigation.replace(Routes.home);
           } else {
             setModalTitle('Xəta');
             setModalDescription('Daxil etdiyiniz PIN yanlışdır!');
             setModalVisible(true);
             setPin('');
           }
-        } else {
-          await AsyncStorage.setItem('userPin', newPin);
-          await AsyncStorage.setItem('isLoggedIn', 'true');
-          await AsyncStorage.removeItem('forgotPin'); // Artıq unudulmadı
-          setModalTitle('PIN yaradıldı');
-          setModalDescription('Siz uğurla PIN kodu təyin etdiniz!');
-          setModalVisible(true);
-          navigation.replace('Ana səhifə');
+        }
+      }
+    } else {
+      if (!isConfirming) {
+        if (pin.length < 4) {
+          const newPin = pin + num;
+          setPin(newPin);
+
+          if (newPin.length === 4) {
+            setIsConfirming(true);
+          }
+        }
+      } else {
+        if (confirmPin.length < 4) {
+          const newConfirmPin = confirmPin + num;
+          setConfirmPin(newConfirmPin);
+
+          if (newConfirmPin.length === 4) {
+            if (newConfirmPin === pin) {
+              await AsyncStorage.setItem('userPin', pin);
+              await AsyncStorage.setItem('isLoggedIn', 'true');
+              await AsyncStorage.removeItem('forgotPin');
+              navigation.replace(Routes.home);
+            } else {
+              setModalTitle('Xəta');
+              setModalDescription('PIN kodları uyğun gəlmir!');
+              setModalVisible(true);
+              setPin('');
+              setConfirmPin('');
+              setIsConfirming(false);
+            }
+          }
         }
       }
     }
   };
 
   const handleDelete = () => {
-    setPin(prev => prev.slice(0, -1));
+    if (!isConfirming) {
+      setPin(prev => prev.slice(0, -1));
+    } else {
+      setConfirmPin(prev => prev.slice(0, -1));
+    }
   };
+
+  const handleGoBack = () => {
+    if (isConfirming) {
+      setPin('');
+      setConfirmPin('');
+      setIsConfirming(false);
+    } else {
+      navigation.goBack();
+    }
+  };
+
+  if (isLoading) {
+    return null;
+  }
+
+  const getTitle = () => {
+    if (storedPin) {
+      return 'PIN daxil edin';
+    }
+    return isConfirming ? 'PIN təsdiq edin' : '4 rəqəmli PIN təyin edin';
+  };
+
+  const currentPin = isConfirming ? confirmPin : pin;
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity
-        style={styles.backButton}
-        onPress={() => navigation.goBack()}>
-        <Icon name="chevron-left" size={24} color="#2D64AF" />
-      </TouchableOpacity>
+      {isConfirming && (
+        <TouchableOpacity style={styles.backButton} onPress={handleGoBack}>
+          <SvgImage
+            color={'#28303F'}
+            source={require('assets/icons/svg/go-back.svg')}
+          />
+          <Text>Sıfırla</Text>
+        </TouchableOpacity>
+      )}
+
       <Image source={require('../assets/img/tick.png')} style={styles.image} />
-      <Text style={styles.title}>
-        {storedPin ? 'PIN daxil edin' : '4 rəqəmli PIN təyin edin'}
-      </Text>
+      <Text style={styles.title}>{getTitle()}</Text>
       <View style={styles.pinDisplay}>
         {Array.from({length: 4}).map((_, index) => (
           <View
             key={index}
-            style={[styles.circle, pin[index] && styles.filledCircle]}
+            style={[styles.circle, currentPin[index] && styles.filledCircle]}
           />
         ))}
       </View>
@@ -138,26 +191,37 @@ const PinSetupScreen = () => {
         </View>
       </View>
 
-      <TouchableOpacity onPress={handleForgotPin}>
-        <View
-          style={{
-            display: 'flex',
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: 5,
-            marginTop: 10,
-          }}>
-          <LockIcon color="#989898" />
-          <Text style={styles.titlePin}>PIN kodu unutmusunuz?</Text>
-        </View>
-      </TouchableOpacity>
+      {storedPin && (
+        <TouchableOpacity onPress={handleForgotPin}>
+          <View
+            style={{
+              display: 'flex',
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 5,
+              marginTop: 10,
+            }}>
+            <LockIcon color="#989898" />
+            <Text style={styles.titlePin}>PIN kodu unutmusunuz?</Text>
+          </View>
+        </TouchableOpacity>
+      )}
 
       <CustomModal
         visible={modalVisible}
+        closeable={false}
         title={modalTitle}
         description={modalDescription}
-        confirmText="Bağla"
-        onConfirm={() => setModalVisible(false)}
+        confirmText="İrəli"
+        onConfirm={() => {
+          setModalVisible(false);
+          if (modalTitle === 'PIN sıfırlanacaq') {
+            navigation.replace(
+              Routes.auth as any,
+              {screen: Routes.login} as any,
+            );
+          }
+        }}
       />
     </View>
   );
@@ -221,14 +285,12 @@ const styles = StyleSheet.create({
     margin: 0,
     objectFit: 'cover',
   },
-
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     width: '100%',
     marginBottom: 10,
   },
-
   numButtonPlaceholder: {
     width: 60,
     height: 60,
@@ -236,7 +298,9 @@ const styles = StyleSheet.create({
   backButton: {
     position: 'absolute',
     left: 15,
-    top: 30,
+    top: 50,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
 });
 

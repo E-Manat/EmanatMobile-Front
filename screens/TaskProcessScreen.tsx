@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  SafeAreaView,
   Alert,
   Image,
   Linking,
@@ -13,20 +12,19 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {RootStackParamList} from '../App';
-import {StackNavigationProp} from '@react-navigation/stack';
-import {useNavigation} from '@react-navigation/native';
 import TopHeader from '../components/TopHeader';
 import CustomModal from '../components/Modal';
 import Config from 'react-native-config';
 import Geolocation from '@react-native-community/geolocation';
 import {HomeIcon, LocationIcon} from '../assets/icons';
 import Icon2 from 'react-native-vector-icons/Octicons';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
+import {MainStackParamList} from 'types/types';
+import {Routes} from '@navigation/routes';
 
-type NavigationProp = StackNavigationProp<RootStackParamList, 'Hesabatlar'>;
-
-const TaskProcessScreen = ({route}: any) => {
-  const navigation = useNavigation<NavigationProp>();
+const TaskProcessScreen: React.FC<
+  NativeStackScreenProps<MainStackParamList, Routes.taskProcess>
+> = ({navigation, route}) => {
   const {taskData} = route?.params || {};
 
   const [step, setStep] = useState(0);
@@ -87,7 +85,9 @@ const TaskProcessScreen = ({route}: any) => {
     loadRouteStartTime();
 
     return () => {
-      if (routeInterval) clearInterval(routeInterval);
+      if (routeInterval) {
+        clearInterval(routeInterval);
+      }
     };
   }, [step, timerActive]);
 
@@ -185,7 +185,9 @@ const TaskProcessScreen = ({route}: any) => {
         headers: {Authorization: `Bearer ${token}`},
       });
 
-      if (!response.ok) throw new Error('Server error: ' + response.status);
+      if (!response.ok) {
+        throw new Error('Server error: ' + response.status);
+      }
 
       setStep(1);
       setTimerActive(false);
@@ -291,7 +293,9 @@ const TaskProcessScreen = ({route}: any) => {
       });
 
       await AsyncStorage.multiRemove(['currentTask', 'routeStartTime']);
-      navigation.navigate('YeniHesabat', {terminalId: taskData?.terminal?.id});
+      navigation.navigate(Routes.newReport, {
+        terminalId: taskData?.terminal?.id,
+      });
     } catch (err: any) {
       console.error('Error setting task as failed:', err);
     } finally {
@@ -323,7 +327,9 @@ const TaskProcessScreen = ({route}: any) => {
         headers: {Authorization: `Bearer ${token}`},
       });
 
-      if (!response.ok) throw new Error('Server error');
+      if (!response.ok) {
+        throw new Error('Server error');
+      }
 
       setConfirmShareModalVisible(false);
       setSuccessShareModalVisible(true);
@@ -337,11 +343,11 @@ const TaskProcessScreen = ({route}: any) => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <View style={styles.container}>
         <TopHeader
           title="Tapşırıq"
-          onRightPress={() => navigation.navigate('Ana səhifə')}
+          onRightPress={() => navigation.navigate(Routes.home)}
           rightIconComponent={<HomeIcon color="#fff" />}
         />
 
@@ -393,7 +399,7 @@ const TaskProcessScreen = ({route}: any) => {
               </View>
             </View>
 
-            <View className="verticalLine" style={styles.verticalLine} />
+            <View style={styles.verticalLine} />
 
             <View style={styles.step}>
               <View style={step === 1 ? styles.circleActive1 : styles.circle1}>
@@ -441,7 +447,7 @@ const TaskProcessScreen = ({route}: any) => {
           cancelText="Bağla"
           onCancel={() => {
             setSuccessModalVisible(false);
-            navigation.navigate('YeniHesabat', {
+            navigation.navigate(Routes.newReport, {
               terminalId: taskData?.terminal?.id,
             });
           }}
@@ -479,7 +485,7 @@ const TaskProcessScreen = ({route}: any) => {
           onCancel={() => setSuccessShareModalVisible(false)}
         />
       </View>
-    </SafeAreaView>
+    </View>
   );
 };
 
