@@ -22,6 +22,7 @@ import Icon2 from 'react-native-vector-icons/Octicons';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {MainStackParamList} from 'types/types';
 import {Routes} from '@navigation/routes';
+import {SvgImage} from '@components/SvgImage';
 
 const {width: SCREEN_WIDTH, height: SCREEN_HEIGHT} = Dimensions.get('window');
 const HORIZONTAL_PADDING = SCREEN_WIDTH * 0.05;
@@ -159,7 +160,6 @@ const TaskProcessScreen: React.FC<
       setLoading(false);
     }
   };
-
   const completeTask = async () => {
     setCompleteTaskLoading(true);
     try {
@@ -167,7 +167,7 @@ const TaskProcessScreen: React.FC<
       const location = await getLocation();
 
       if (!location) {
-        console.warn('Koordinatlar tapılmadı, 0 olaraq göndərilir');
+        console.warn('Location not found, sending 0 coordinates');
       }
 
       const latitude = location?.latitude ?? 0;
@@ -178,15 +178,19 @@ const TaskProcessScreen: React.FC<
           ? `${Config.API_URL}/mobile/CollectorTask/CompleteTask?taskId=${taskData.id}&latitude=${latitude}&longitude=${longitude}`
           : `${Config.API_URL}/mobile/TechnicianTask/CompleteTask?taskId=${taskData.id}&latitude=${latitude}&longitude=${longitude}`;
 
-      console.log(url, 'url');
+      console.log('Request URL:', url);
 
       const response = await fetch(url, {
         method: 'POST',
         headers: {Authorization: `Bearer ${token}`},
       });
 
+      const responseData = await response.text();
+      console.log('Response status:', response.status);
+      console.log('Response data:', responseData);
+
       if (!response.ok) {
-        throw new Error('Server error: ' + response.status);
+        throw new Error(`Server error: ${response.status} - ${responseData}`);
       }
 
       setStep(1);
@@ -196,13 +200,11 @@ const TaskProcessScreen: React.FC<
 
       setSuccessModalVisible(true);
     } catch (error: any) {
-      console.error(
-        'Error completing task:',
-        error,
-        error?.status,
-        error?.response?.data,
-        error?.response,
-      );
+      console.error('Complete task error:', {
+        message: error.message,
+        stack: error.stack,
+        name: error.name,
+      });
     } finally {
       setCompleteTaskLoading(false);
     }
@@ -388,9 +390,17 @@ const TaskProcessScreen: React.FC<
             <View style={styles.step}>
               <View style={timerActive ? styles.circleActive : styles.circle}>
                 {step === 1 ? (
-                  <Icon2 name="check" size={20} color="#fff" />
+                  <SvgImage
+                    source={require('assets/icons/svg/check.svg')}
+                    color="#fff"
+                  />
                 ) : timerActive ? (
-                  <Icon2 name="dot-fill" size={20} color="#1269B5" />
+                  <SvgImage
+                    source={require('assets/icons/svg/dot.svg')}
+                    color="#1269B5"
+                    width={11}
+                    height={11}
+                  />
                 ) : (
                   <Text style={styles.stepNum}>01</Text>
                 )}

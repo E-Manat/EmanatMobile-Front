@@ -25,6 +25,7 @@ import {SvgImage} from '@components/SvgImage';
 import {Routes} from '@navigation/routes';
 import {MainStackParamList} from 'types/types';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 const NotificationsScreen: React.FC<
   NativeStackScreenProps<MainStackParamList, Routes.notifications>
@@ -408,9 +409,10 @@ const NotificationsScreen: React.FC<
       console.error('❌ handleDeleteAll istisna:', err);
     }
   };
+  const {top} = useSafeAreaInsets();
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={[styles.container, {paddingTop: top}]}>
       <View style={styles.header}>
         <TouchableOpacity
           style={{marginLeft: 20}}
@@ -589,7 +591,7 @@ const NotificationsScreen: React.FC<
           </View>
         </Modal>
       )}
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -599,7 +601,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F7F9FB',
-    paddingHorizontal: 16,
   },
   header: {
     flexDirection: 'row',

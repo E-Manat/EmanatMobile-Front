@@ -381,14 +381,8 @@ const TasksScreen: React.FC<
     setRefreshing(false);
   };
 
-  return (
-    <View style={styles.container}>
-      <TopHeader
-        title="Tapşırıqlar"
-        variant="tapsiriq"
-        onRightPress={() => fetchTasks(getStatusFromFilter(selectedFilter))}
-        rightIconComponent={<RefreshIcon color="#fff" width={30} />}
-      />
+  const ListHeaderComponent = () => (
+    <>
       <View style={styles.statusContainer}>
         <View style={styles.statusItem}>
           <Text style={styles.statusText}>
@@ -454,37 +448,53 @@ const TasksScreen: React.FC<
       </View>
 
       {sortedTasks?.length > 0 && <Text style={styles.currentDay}>Bu gün</Text>}
+    </>
+  );
 
-      <ScrollView contentContainerStyle={styles.mainContainer}>
-        {loading ? (
-          <View
-            style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-            <ActivityIndicator size="large" color="#2D64AF" />
-          </View>
-        ) : sortedTasks?.length > 0 ? (
-          <FlatList
-            data={[...filteredTasks].sort((a, b) => a.order - b.order)}
-            keyExtractor={item => item.id}
-            renderItem={renderTask}
-            ListFooterComponent={<View style={{height: 20}} />}
-            refreshing={refreshing}
-            onRefresh={handleRefresh}
-          />
-        ) : (
-          <View style={styles.noResult}>
-            <Image
-              source={require('../assets/img/tasks_empty.png')}
-              style={styles.noContentImage}
-            />
-            <Text style={styles.noContentLabel}>
-              Sizin heç bir tapşırığınız yoxdur
-            </Text>
-            <Text style={styles.noContentText}>
-              Yeni tapşırığlar burada görünəcək.
-            </Text>
-          </View>
-        )}
-      </ScrollView>
+  const ListEmptyComponent = () => {
+    if (loading) {
+      return (
+        <View style={styles.centerContainer}>
+          <ActivityIndicator size="large" color="#2D64AF" />
+        </View>
+      );
+    }
+
+    return (
+      <View style={styles.noResult}>
+        <Image
+          source={require('../assets/img/tasks_empty.png')}
+          style={styles.noContentImage}
+        />
+        <Text style={styles.noContentLabel}>
+          Sizin heç bir tapşırığınız yoxdur
+        </Text>
+        <Text style={styles.noContentText}>
+          Yeni tapşırığlar burada görünəcək.
+        </Text>
+      </View>
+    );
+  };
+
+  return (
+    <View style={styles.container}>
+      <TopHeader
+        title="Tapşırıqlar"
+        variant="tapsiriq"
+        onRightPress={() => fetchTasks(getStatusFromFilter(selectedFilter))}
+        rightIconComponent={<RefreshIcon color="#fff" width={30} />}
+      />
+      <FlatList
+        data={sortedTasks}
+        keyExtractor={item => item.id}
+        renderItem={renderTask}
+        ListHeaderComponent={ListHeaderComponent}
+        ListEmptyComponent={ListEmptyComponent}
+        ListFooterComponent={<View style={{height: 20}} />}
+        refreshing={refreshing}
+        onRefresh={handleRefresh}
+        contentContainerStyle={styles.flatListContent}
+      />
     </View>
   );
 };
@@ -495,6 +505,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F7F9FB',
+  },
+  flatListContent: {
+    flexGrow: 1,
+    paddingHorizontal: 15,
   },
   header: {
     backgroundColor: '#2D64AF',
@@ -513,11 +527,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginTop: 50,
-    paddingHorizontal: 15,
     paddingVertical: 20,
-    margin: 'auto',
+    marginHorizontal: 'auto',
     transform: [{translateY: -46}],
-    width: '89%',
+    width: '100%',
     zIndex: 3,
     backgroundColor: '#fff',
     borderRadius: 10,
@@ -547,7 +560,6 @@ const styles = StyleSheet.create({
     marginTop: 5,
   },
   filterContainer: {
-    paddingHorizontal: 15,
     transform: [{translateY: -20}],
   },
   filterContentContainer: {
@@ -557,10 +569,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#2D64AF',
     borderStyle: 'solid',
-  },
-  mainContainer: {
-    marginTop: 15,
-    paddingHorizontal: 15,
   },
   filterButton: {
     flexDirection: 'row',
@@ -597,7 +605,7 @@ const styles = StyleSheet.create({
   },
   taskTitle: {
     color: '#1269B5',
-    fontFamily: 'DMSans-SemiBold', // və ya əlavə etdiyin font adı
+    fontFamily: 'DMSans-SemiBold',
     fontSize: 14,
     lineHeight: 21,
   },
@@ -607,11 +615,17 @@ const styles = StyleSheet.create({
   },
   taskDistance: {
     color: '#616161',
-    fontFamily: 'DMSans-Regular', // və ya əlavə etdiyin font adı
+    fontFamily: 'DMSans-Regular',
     fontSize: 12,
     fontStyle: 'normal',
     fontWeight: '400',
     lineHeight: 18,
+  },
+  centerContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingTop: 100,
   },
   noResult: {
     color: '#A8A8A8',
@@ -622,7 +636,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 5,
     width: '100%',
-    height: '100%',
     paddingTop: 60,
   },
   noContentImage: {
@@ -654,6 +667,6 @@ const styles = StyleSheet.create({
     fontStyle: 'normal',
     fontWeight: '600',
     lineHeight: 18,
-    paddingHorizontal: 20,
+    marginBottom: 10,
   },
 });

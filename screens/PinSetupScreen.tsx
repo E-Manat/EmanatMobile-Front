@@ -1,6 +1,15 @@
 import React, {useState, useEffect} from 'react';
-import {View, Text, TouchableOpacity, StyleSheet, Image} from 'react-native';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Image,
+  Platform,
+  Dimensions,
+} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import CustomModal from '../components/Modal';
 import {LockIcon} from '../assets/icons';
 import {Routes} from '@navigation/routes';
@@ -8,9 +17,12 @@ import {SvgImage} from '@components/SvgImage';
 import {MainStackParamList} from 'types/types';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 
+const {width, height} = Dimensions.get('window');
+
 const PinSetupScreen: React.FC<
   NativeStackScreenProps<MainStackParamList, Routes.pinSetup>
 > = ({navigation}) => {
+  const insets = useSafeAreaInsets();
   const [pin, setPin] = useState<string>('');
   const [confirmPin, setConfirmPin] = useState<string>('');
   const [isConfirming, setIsConfirming] = useState<boolean>(false);
@@ -123,89 +135,94 @@ const PinSetupScreen: React.FC<
   const currentPin = isConfirming ? confirmPin : pin;
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container]}>
       {isConfirming && (
-        <TouchableOpacity style={styles.backButton} onPress={handleGoBack}>
+        <TouchableOpacity
+          style={[styles.backButton, {top: +insets.top}]}
+          onPress={handleGoBack}>
           <SvgImage
             color={'#28303F'}
             source={require('assets/icons/svg/go-back.svg')}
           />
-          <Text>Sıfırla</Text>
+          <Text style={styles.backButtonText}>Sıfırla</Text>
         </TouchableOpacity>
       )}
 
-      <Image source={require('../assets/img/tick.png')} style={styles.image} />
-      <Text style={styles.title}>{getTitle()}</Text>
-      <View style={styles.pinDisplay}>
-        {Array.from({length: 4}).map((_, index) => (
-          <View
-            key={index}
-            style={[styles.circle, currentPin[index] && styles.filledCircle]}
-          />
-        ))}
-      </View>
+      <View style={styles.content}>
+        <Image
+          source={require('../assets/img/tick.png')}
+          style={styles.image}
+        />
+        <Text style={styles.title}>{getTitle()}</Text>
+        <View style={styles.pinDisplay}>
+          {Array.from({length: 4}).map((_, index) => (
+            <View
+              key={index}
+              style={[styles.circle, currentPin[index] && styles.filledCircle]}
+            />
+          ))}
+        </View>
 
-      <View style={styles.numberPad}>
-        <View style={styles.row}>
-          {['1', '2', '3'].map(num => (
-            <TouchableOpacity
-              key={num}
-              style={styles.numButton}
-              onPress={() => handlePress(num)}>
-              <Text style={styles.numText}>{num}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-        <View style={styles.row}>
-          {['4', '5', '6'].map(num => (
-            <TouchableOpacity
-              key={num}
-              style={styles.numButton}
-              onPress={() => handlePress(num)}>
-              <Text style={styles.numText}>{num}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-        <View style={styles.row}>
-          {['7', '8', '9'].map(num => (
-            <TouchableOpacity
-              key={num}
-              style={styles.numButton}
-              onPress={() => handlePress(num)}>
-              <Text style={styles.numText}>{num}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-        <View style={styles.row}>
-          <View style={styles.numButtonPlaceholder} />
-          <TouchableOpacity
-            style={styles.numButton}
-            onPress={() => handlePress('0')}>
-            <Text style={styles.numText}>0</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.numButton, {borderWidth: 0}]}
-            onPress={handleDelete}>
-            <Text style={styles.numText}>⌫</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      {storedPin && (
-        <TouchableOpacity onPress={handleForgotPin}>
-          <View
-            style={{
-              display: 'flex',
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 5,
-              marginTop: 10,
-            }}>
-            <LockIcon color="#989898" />
-            <Text style={styles.titlePin}>PIN kodu unutmusunuz?</Text>
+        <View style={styles.numberPad}>
+          <View style={styles.row}>
+            {['1', '2', '3'].map(num => (
+              <TouchableOpacity
+                key={num}
+                style={styles.numButton}
+                onPress={() => handlePress(num)}
+                activeOpacity={0.7}>
+                <Text style={styles.numText}>{num}</Text>
+              </TouchableOpacity>
+            ))}
           </View>
-        </TouchableOpacity>
-      )}
+          <View style={styles.row}>
+            {['4', '5', '6'].map(num => (
+              <TouchableOpacity
+                key={num}
+                style={styles.numButton}
+                onPress={() => handlePress(num)}
+                activeOpacity={0.7}>
+                <Text style={styles.numText}>{num}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+          <View style={styles.row}>
+            {['7', '8', '9'].map(num => (
+              <TouchableOpacity
+                key={num}
+                style={styles.numButton}
+                onPress={() => handlePress(num)}
+                activeOpacity={0.7}>
+                <Text style={styles.numText}>{num}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+          <View style={styles.row}>
+            <View style={styles.numButtonPlaceholder} />
+            <TouchableOpacity
+              style={styles.numButton}
+              onPress={() => handlePress('0')}
+              activeOpacity={0.7}>
+              <Text style={styles.numText}>0</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.deleteButton}
+              onPress={handleDelete}
+              activeOpacity={0.7}>
+              <Text style={styles.numText}>⌫</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {storedPin && (
+          <TouchableOpacity
+            onPress={handleForgotPin}
+            style={styles.forgotPinButton}>
+            <LockIcon color="#989898" />
+            <Text style={styles.forgotPinText}>PIN kodu unutmusunuz?</Text>
+          </TouchableOpacity>
+        )}
+      </View>
 
       <CustomModal
         visible={modalVisible}
@@ -227,80 +244,114 @@ const PinSetupScreen: React.FC<
   );
 };
 
+const buttonSize = Math.min(width * 0.18, 70);
+const circleSize = width * 0.045;
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
     backgroundColor: '#fff',
     width: '100%',
-    position: 'relative',
   },
-  title: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 15,
-    marginTop: 15,
-    color: '#5D5D5D',
-    fontFamily: 'DMSans-Regular',
-  },
-  titlePin: {
-    fontSize: 12,
-    fontWeight: '500',
-    fontFamily: 'DMSans-Regular',
-    color: '#5D5D5D',
-  },
-  pinDisplay: {flexDirection: 'row', marginBottom: 10},
-  circle: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#1269B5',
-    margin: 5,
-  },
-  filledCircle: {backgroundColor: '#1269B5'},
-  numberPad: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    width: '60%',
-    justifyContent: 'center',
-    gap: 5,
-    marginTop: 10,
-  },
-  numButton: {
-    width: 62,
-    height: 62,
+  content: {
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    margin: 5,
-    borderWidth: 1,
-    borderRadius: 30,
-    borderColor: '#2D64AF',
+    paddingHorizontal: 20,
   },
-  numText: {fontSize: 24, color: '#5D5D5D'},
-  image: {
-    height: 100,
-    width: 100,
-    margin: 0,
-    objectFit: 'cover',
+  title: {
+    fontSize: width * 0.045,
+    fontWeight: '700',
+    marginVertical: height * 0.02,
+    color: '#5D5D5D',
+    fontFamily: 'DMSans-Regular',
+    textAlign: 'center',
+  },
+  pinDisplay: {
+    flexDirection: 'row',
+    marginBottom: height * 0.04,
+    gap: width * 0.03,
+  },
+  circle: {
+    width: circleSize,
+    height: circleSize,
+    borderRadius: circleSize / 2,
+    borderWidth: 1.5,
+    borderColor: '#1269B5',
+  },
+  filledCircle: {
+    backgroundColor: '#1269B5',
+  },
+  numberPad: {
+    width: '100%',
+    maxWidth: 350,
+    alignItems: 'center',
+    marginTop: height * 0.02,
   },
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     width: '100%',
-    marginBottom: 10,
+    marginBottom: height * 0.015,
+    paddingHorizontal: width * 0.1,
+  },
+  numButton: {
+    width: buttonSize,
+    height: buttonSize,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderRadius: buttonSize / 2,
+    borderColor: '#2D64AF',
+    backgroundColor: '#fff',
+  },
+  deleteButton: {
+    width: buttonSize,
+    height: buttonSize,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  numText: {
+    fontSize: width * 0.06,
+    color: '#5D5D5D',
+    fontWeight: '600',
+  },
+  image: {
+    height: width * 0.25,
+    width: width * 0.25,
+    resizeMode: 'contain',
   },
   numButtonPlaceholder: {
-    width: 60,
-    height: 60,
+    width: buttonSize,
+    height: buttonSize,
   },
   backButton: {
     position: 'absolute',
     left: 15,
-    top: 50,
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 8,
+    zIndex: 10,
+    padding: 10,
+  },
+  backButtonText: {
+    fontSize: width * 0.038,
+    fontWeight: '500',
+    fontFamily: 'DMSans-Regular',
+    color: '#28303F',
+  },
+  forgotPinButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: height * 0.025,
+    padding: 10,
+  },
+  forgotPinText: {
+    fontSize: width * 0.032,
+    fontWeight: '500',
+    fontFamily: 'DMSans-Regular',
+    color: '#5D5D5D',
   },
 });
 

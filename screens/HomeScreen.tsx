@@ -1,5 +1,5 @@
-import React, {useEffect, useState} from 'react';
-import {ScrollView, View, StyleSheet, SafeAreaView} from 'react-native';
+import React, {use, useEffect, useState} from 'react';
+import {ScrollView, View, StyleSheet} from 'react-native';
 import MenuCard from '../components/MenuCard';
 import Banner from '../components/Banner';
 import {globalStyles} from '../globalStyles';
@@ -12,6 +12,7 @@ import {useIsFocused} from '@react-navigation/native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {MainStackParamList} from 'types/types';
 import {Routes} from '@navigation/routes';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 const HomeScreen: React.FC<
   NativeStackScreenProps<MainStackParamList, Routes.home>
@@ -50,42 +51,41 @@ const HomeScreen: React.FC<
       fetchTaskData();
     }
   }, [isFocused]);
+  const {top} = useSafeAreaInsets();
 
   return (
-    <SafeAreaView style={globalStyles.container}>
-      <View style={globalStyles.container}>
-        <HomeHeader />
-        <View style={styles.spacer} />
-        {taskData !== null && (
-          <MenuCard
-            title="Cari Tapşırıq"
-            description="Hal hazırda davam edən tapşırıq"
-            screenName="TaskProcess"
-            iconName={<Image3 />}
-            taskData={taskData}
-          />
-        )}
-
+    <View style={[globalStyles.container, {paddingTop: top}]}>
+      <HomeHeader />
+      <View style={styles.spacer} />
+      {taskData !== null && (
         <MenuCard
-          title="Tapşırıqlar"
-          description="Cari tapşırıqların siyahısı"
-          screenName="Tapşırıqlar"
-          iconName={<Image1 />}
-        />
-        <MenuCard
-          title="Terminallar"
-          description="Ərazi üzrə terminalların siyahısı"
-          screenName="Terminallar"
-          iconName={<Image2 />}
-        />
-        <MenuCard
-          title="Hesabatlar"
-          description="Yerinə yetirilmiş tapşırıqlar üzrə hesabat"
-          screenName="Hesabatlar"
+          title="Cari Tapşırıq"
+          description="Hal hazırda davam edən tapşırıq"
+          screenName="TaskProcess"
           iconName={<Image3 />}
+          taskData={taskData}
         />
-      </View>
-    </SafeAreaView>
+      )}
+
+      <MenuCard
+        title="Tapşırıqlar"
+        description="Cari tapşırıqların siyahısı"
+        screenName="Tapşırıqlar"
+        iconName={<Image1 />}
+      />
+      <MenuCard
+        title="Terminallar"
+        description="Ərazi üzrə terminalların siyahısı"
+        screenName="Terminallar"
+        iconName={<Image2 />}
+      />
+      <MenuCard
+        title="Hesabatlar"
+        description="Yerinə yetirilmiş tapşırıqlar üzrə hesabat"
+        screenName="Hesabatlar"
+        iconName={<Image3 />}
+      />
+    </View>
   );
 };
 

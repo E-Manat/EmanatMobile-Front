@@ -11,6 +11,7 @@ export type AuthStackParamList = {
   [Routes.forgotPassword]: undefined;
   [Routes.otp]: undefined;
   [Routes.otpSubmit]: {email?: string};
+  [Routes.onboarding]: undefined;
   [Routes.newPassword]: {email: string};
 };
 

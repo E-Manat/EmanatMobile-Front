@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   View,
   Text,
@@ -23,6 +23,19 @@ const LoginScreen: React.FC<
   const [modalVisible, setModalVisible] = useState(false);
   const [modalTitle, setModalTitle] = useState('');
   const [modalDescription, setModalDescription] = useState('');
+  const ONBOARDING_KEY = '@hasSeenOnboarding';
+
+  // const clearOnboardingStatus = async () => {
+  //   try {
+  //     await AsyncStorage.removeItem(ONBOARDING_KEY);
+  //     console.log('Onboarding key removed');
+  //   } catch (error) {
+  //     console.error('Error removing onboarding key:', error);
+  //   }
+  // };
+  // useEffect(() => {
+  //   clearOnboardingStatus();
+  // }, []);
 
   const [email, setEmail] = useState(__DEV__ ? 'hilalovali0501@gmail.com' : '');
   const [password, setPassword] = useState(__DEV__ ? 'Salam123!' : '');
@@ -74,6 +87,34 @@ const LoginScreen: React.FC<
     }
   };
 
+  const fillTestLoginData = async () => {
+    try {
+      const fakeToken =
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.fake-test.jwt.token';
+      const fakeUserId = 'test-user-123';
+      const fakeExpires = (Date.now() + 7 * 24 * 60 * 60 * 1000).toString(); // 7 days later
+      const fakeRoleName = 'Collector';
+
+      await AsyncStorage.multiSet([
+        ['userToken', fakeToken],
+        ['userId', fakeUserId],
+        ['expiresAt', fakeExpires],
+        ['isLoggedIn', 'true'],
+      ]);
+
+      await AsyncStorage.setItem('roleName', fakeRoleName);
+
+      console.log('📌 Test login data filled to AsyncStorage');
+    } catch (err) {
+      console.log('Error filling test data:', err);
+    }
+  };
+
+  useEffect(() => {
+    if (__DEV__) {
+      fillTestLoginData();
+    }
+  }, []);
   return (
     <View style={styles.container}>
       <Image

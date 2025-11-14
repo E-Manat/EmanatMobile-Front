@@ -5,25 +5,19 @@ import {
   TextInput,
   TouchableOpacity,
   Image,
-  Button,
   Alert,
   StyleSheet,
   ActivityIndicator,
   ScrollView,
 } from 'react-native';
-import {Picker} from '@react-native-picker/picker';
 import Icon from 'react-native-vector-icons/Feather';
-import {useNavigation, useRoute} from '@react-navigation/native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
-import {StackNavigationProp} from '@react-navigation/stack';
 import {apiService} from '../services/apiService';
 import TopHeader from '../components/TopHeader';
 import {ImageIcon, VideoIcon} from '../assets/icons';
 import VideoPickerModal from '../components/VideoPickerModal';
 import FilePickerModal from '../components/FilePickerModal';
 import CustomModal from '../components/Modal';
-import {RouteProp} from '@react-navigation/native';
 import UniversalSelectModal from '../components/UniversalSelectModal';
 import CustomSelectBox from '../components/CustomSelectBox';
 import {API_ENDPOINTS} from '../services/api_endpoint';

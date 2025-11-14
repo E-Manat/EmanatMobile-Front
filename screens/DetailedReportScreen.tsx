@@ -25,6 +25,8 @@ import {API_ENDPOINTS} from '../services/api_endpoint';
 import {Routes} from '@navigation/routes';
 import {MainStackParamList} from 'types/types';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import {SvgImage} from '@components/SvgImage';
 
 const DetailedReportScreen: React.FC<
   NativeStackScreenProps<MainStackParamList, Routes.detailedReport>
@@ -103,11 +105,15 @@ const DetailedReportScreen: React.FC<
     return `${day}.${month}.${year} ${hours}:${minutes}`;
   };
 
+  const {top} = useSafeAreaInsets();
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, {paddingTop: top}]}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Icon name="chevron-left" size={24} color="#2D64AF" />
+          <SvgImage
+            source={require('assets/icons/svg/go-back.svg')}
+            color="#2D64AF"
+          />
         </TouchableOpacity>
         <Text style={styles.headerText}>Hesabat</Text>
         <View style={{width: 24}} />
@@ -169,7 +175,10 @@ const DetailedReportScreen: React.FC<
         <TouchableWithoutFeedback onPress={closeModal}>
           <View style={styles.modalBackground}>
             <View style={styles.modalContent}>
-              <Image source={selectedImage || ''} style={styles.modalImage} />
+              <Image
+                source={selectedImage ? {uri: selectedImage} : undefined}
+                style={styles.modalImage}
+              />
               <TouchableOpacity style={styles.closeButton} onPress={closeModal}>
                 <Text style={styles.closeButtonText}>Bağla</Text>
               </TouchableOpacity>

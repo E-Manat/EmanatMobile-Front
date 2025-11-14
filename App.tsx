@@ -9,7 +9,7 @@ enableScreens();
 const App = () => {
   return (
     <>
-      <StatusBar />
+      <StatusBar barStyle="dark-content" />
       <Router />
     </>
   );

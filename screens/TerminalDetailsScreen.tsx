@@ -19,6 +19,7 @@ import {HomeIcon} from '../assets/icons';
 import {MainStackParamList} from 'types/types';
 import {Routes} from '@navigation/routes';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
+import {SvgImage} from '@components/SvgImage';
 
 const TerminalDetailsScreen: React.FC<
   NativeStackScreenProps<MainStackParamList, Routes.terminalDetails>
@@ -217,7 +218,10 @@ const TerminalDetailsScreen: React.FC<
                 flexDirection: 'row',
                 alignItems: 'center',
               }}>
-              <Icon name="location-dot" size={20} color="#1976D2" />{' '}
+              <SvgImage
+                source={require('assets/icons/svg/location.svg')}
+                color="#1976D2"
+              />{' '}
               <Text style={styles.terminalCode}>
                 {' '}
                 Terminal ID: {taskData?.terminal?.pointId}
@@ -256,7 +260,10 @@ const TerminalDetailsScreen: React.FC<
 
           <View style={styles.timelineItem}>
             <View style={styles.iconWrapper}>
-              <Icon name="location-dot" size={15} color="white" />
+              <SvgImage
+                source={require('assets/icons/svg/location.svg')}
+                color="white"
+              />
             </View>
             <View style={styles.textWrapper}>
               <Text style={styles.detailText}>
@@ -272,7 +279,12 @@ const TerminalDetailsScreen: React.FC<
 
           <View style={styles.timelineItem}>
             <View style={styles.iconWrapper}>
-              <Icon1 name="watch-later" size={15} color="white" />
+              <SvgImage
+                source={require('assets/icons/svg/clock.svg')}
+                color="white"
+                width={15}
+                height={15}
+              />
             </View>
             <View style={styles.textWrapper}>
               <Text style={styles.detailText}>
@@ -289,7 +301,12 @@ const TerminalDetailsScreen: React.FC<
 
           <View style={styles.timelineItem}>
             <View style={styles.iconWrapper}>
-              <Icon name="phone" size={15} color="white" />
+              <SvgImage
+                source={require('assets/icons/svg/called.svg')}
+                color="white"
+                width={15}
+                height={15}
+              />
             </View>
             <View style={styles.textWrapper}>
               <Text style={styles.detailText}>

@@ -3,66 +3,24 @@ import {
   View,
   StyleSheet,
   Image,
-  Alert,
   Linking,
   AppState,
-  Button,
   TouchableOpacity,
+  Text,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {checkAndForceLocation} from '../utils/locationPermissionHandler';
 import CustomModal from '../components/Modal';
-import {Text} from 'react-native-gesture-handler';
+import {AuthStackParamList} from 'types/types';
+import {Routes} from '@navigation/routes';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 
-const SplashScreen = ({navigation}: any) => {
+const ONBOARDING_KEY = '@hasSeenOnboarding';
+
+const OnBoardingScreen: React.FC<
+  NativeStackScreenProps<AuthStackParamList, Routes.onboarding>
+> = ({navigation}) => {
   const [modalVisible, setModalVisible] = useState(false);
-  const [newVersionCode, setNewVersionCode] = useState(0);
-  const [downloadUrl, setDownloadUrl] = useState('');
-
-  // useEffect(() => {
-  //   const init = async () => {
-  //     const gpsAllowed = await checkAndForceLocation();
-  //     console.log(gpsAllowed, 'gps');
-  //     if (!gpsAllowed) {
-  //       setModalVisible(true);
-  //       return;
-  //     }
-
-  //     const userToken = await AsyncStorage.getItem('userToken');
-  //     const userPin = await AsyncStorage.getItem('userPin');
-  //     const isLoggedIn = await AsyncStorage.getItem('isLoggedIn');
-
-  //     if (userToken && userPin && isLoggedIn) {
-  //       navigation.replace('Ana səhifə');
-  //     } else if (userToken) {
-  //       navigation.replace('PinSetup');
-  //     } else {
-  //       navigation.replace('Login');
-  //     }
-  //   };
-
-  //   init();
-  // }, []);
-
-  const handleStart = async () => {
-    const gpsAllowed = await checkAndForceLocation();
-    if (!gpsAllowed) {
-      setModalVisible(true);
-      return;
-    }
-
-    const userToken = await AsyncStorage.getItem('userToken');
-    const userPin = await AsyncStorage.getItem('userPin');
-    const isLoggedIn = await AsyncStorage.getItem('isLoggedIn');
-
-    if (userToken && userPin && isLoggedIn) {
-      navigation.replace('Ana səhifə');
-    } else if (userToken) {
-      navigation.replace('PinSetup');
-    } else {
-      navigation.replace('Login');
-    }
-  };
 
   useEffect(() => {
     const subscription = AppState.addEventListener(
@@ -72,7 +30,6 @@ const SplashScreen = ({navigation}: any) => {
           const gpsAllowed = await checkAndForceLocation();
           if (gpsAllowed) {
             setModalVisible(false);
-            // navigation.replace('SplashScreen');
           }
         }
       },
@@ -83,22 +40,24 @@ const SplashScreen = ({navigation}: any) => {
     };
   }, []);
 
-  useEffect(() => {
-    const logAllAsyncStorage = async () => {
-      try {
-        const keys = await AsyncStorage.getAllKeys();
-        const result = await AsyncStorage.multiGet(keys);
-        console.log('AsyncStorage content:');
-        result.forEach(([key, value]) => {
-          console.log(`${key}: ${value}`);
-        });
-      } catch (error) {
-        console.error('Error reading AsyncStorage:', error);
-      }
-    };
+  const navigateToNextScreen = async () => {
+    const gpsAllowed = await checkAndForceLocation();
+    if (!gpsAllowed) {
+      setModalVisible(true);
+      return;
+    }
 
-    logAllAsyncStorage();
-  }, []);
+    navigation.replace(Routes.login);
+  };
+
+  const handleStart = async () => {
+    try {
+      await AsyncStorage.setItem(ONBOARDING_KEY, 'true');
+      await navigateToNextScreen();
+    } catch (error) {
+      console.error('Error saving onboarding status:', error);
+    }
+  };
 
   return (
     <>
@@ -125,7 +84,7 @@ const SplashScreen = ({navigation}: any) => {
             </TouchableOpacity>
           </View>
         </View>
-      </View>{' '}
+      </View>
       <CustomModal
         visible={modalVisible}
         title="Diqqət"
@@ -214,4 +173,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default SplashScreen;
+export default OnBoardingScreen;

@@ -18,4 +18,5 @@ export enum Routes {
   detailedReport = 'HesabatEtrafli',
   taskProcess = 'TaskProcess',
   pinSetup = 'PinSetup',
+  onboarding = 'OnBoarding',
 }
