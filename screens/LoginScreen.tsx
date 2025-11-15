@@ -28,7 +28,6 @@ const LoginScreen: React.FC<
   // const clearOnboardingStatus = async () => {
   //   try {
   //     await AsyncStorage.removeItem(ONBOARDING_KEY);
-  //     console.log('Onboarding key removed');
   //   } catch (error) {
   //     console.error('Error removing onboarding key:', error);
   //   }
@@ -56,14 +55,13 @@ const LoginScreen: React.FC<
       return;
     }
 
-    console.log('re1');
     setLoading(true);
     try {
       const result: any = await axios.post(
-        `${Config.API_URL}/auth/Auth/Login`,
+        'https://ekassa-api.e-portal.az/auth/Auth/Login',
         {email, password},
       );
-      console.log(result, 'res');
+
       await AsyncStorage.multiSet([
         ['userToken', result.data.accessToken],
         ['userId', result.data.userId],
@@ -74,7 +72,6 @@ const LoginScreen: React.FC<
 
       navigation.replace(Routes.main as any, {screen: Routes.pinSetup} as any);
     } catch (error: any) {
-      console.log(error, error?.response?.data, error?.data, 'error');
       setModalTitle('Xəta');
       setModalDescription(
         error?.response?.status === 400
@@ -103,18 +100,14 @@ const LoginScreen: React.FC<
       ]);
 
       await AsyncStorage.setItem('roleName', fakeRoleName);
-
-      console.log('📌 Test login data filled to AsyncStorage');
-    } catch (err) {
-      console.log('Error filling test data:', err);
-    }
+    } catch (err) {}
   };
 
-  useEffect(() => {
-    if (__DEV__) {
-      fillTestLoginData();
-    }
-  }, []);
+  // useEffect(() => {
+  //   if (__DEV__) {
+  //     fillTestLoginData();
+  //   }
+  // }, []);
   return (
     <View style={styles.container}>
       <Image

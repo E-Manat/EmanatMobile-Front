@@ -37,7 +37,6 @@ const ProfileDetailScreen: React.FC<
       setLoading(true);
 
       const result: any = await apiService.get(API_ENDPOINTS.auth.getProfile);
-      console.log('Profil məlumatları:', result);
 
       if (result) {
         setFirstName(result.firstName || 'Ad yoxdur');
@@ -58,11 +57,8 @@ const ProfileDetailScreen: React.FC<
 
         await AsyncStorage.setItem('profileData', JSON.stringify(profileData));
         setLoading(false);
-      } else {
-        console.log('API-dən uğursuz cavab:', result);
       }
     } catch (error) {
-      console.log('Məlumat yükləmə xətası:', error);
     }
   };
   return (

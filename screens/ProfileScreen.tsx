@@ -23,8 +23,6 @@ import {SvgImage} from '@components/SvgImage';
 import {MainStackParamList} from 'types/types';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 
-console.log(Config.API_URL, 'jdfnS');
-
 const ProfileScreen: React.FC<
   NativeStackScreenProps<MainStackParamList, Routes.profile>
 > = ({navigation}) => {
@@ -55,7 +53,6 @@ const ProfileScreen: React.FC<
       }
 
       const result: any = await apiService.get(API_ENDPOINTS.auth.getProfile);
-      console.log('Profil məlumatları:', result);
 
       if (result) {
         const profileData = {
@@ -84,7 +81,6 @@ const ProfileScreen: React.FC<
         await AsyncStorage.setItem('profileData', JSON.stringify(profileData));
       }
     } catch (error) {
-      console.log('Məlumat yükləmə xətası:', error);
     } finally {
       setLoading(false);
     }
@@ -96,7 +92,6 @@ const ProfileScreen: React.FC<
       await AsyncStorage.removeItem('isLoggedIn');
       navigation.replace(Routes.auth as any, {screen: Routes.login} as any);
     } catch (error) {
-      console.log('Çıxış zamanı xəta:', error);
     }
   };
 

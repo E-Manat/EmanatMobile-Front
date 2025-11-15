@@ -34,7 +34,6 @@ const TerminallarScreen: React.FC<
       const details: any = await apiService.get(
         API_ENDPOINTS.mobile.terminal.getById(terminal.id),
       );
-      console.log(details, 'Terminal details');
       setSelectedTerminal(details);
     } catch (error) {
       console.error('Terminal details alınarkən xəta:', error);

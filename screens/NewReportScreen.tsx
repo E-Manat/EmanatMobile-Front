@@ -31,8 +31,6 @@ const NewReportScreen: React.FC<
 > = ({navigation, route}) => {
   const terminalIdFromRoute = route.params?.terminalId;
 
-  console.log(terminalIdFromRoute, 'terminalIdFromRoute');
-
   const [selectedImages, setSelectedImages] = useState<any>([]);
   const [selectedVideos, setSelectedVideos] = useState<string[]>([]);
 
@@ -189,7 +187,6 @@ const NewReportScreen: React.FC<
     const fetchTerminals = async () => {
       try {
         const data = await apiService.get(API_ENDPOINTS.mobile.terminal.getAll);
-        console.log(data, 'data');
         setTerminalList(data);
       } catch (error) {
         setTerminalList([]);
@@ -204,7 +201,6 @@ const NewReportScreen: React.FC<
     const fetchProblems = async () => {
       try {
         const data = await apiService.get(API_ENDPOINTS.mobile.problem.getAll);
-        console.log(data);
         setProblemList(data);
       } catch (error) {
         console.error('Problem siyahısı alınmadı:', error);
@@ -274,7 +270,6 @@ const NewReportScreen: React.FC<
     }
   }, [terminalList, terminalIdFromRoute]);
 
-  console.log(terminalList, 'tmrnl');
   return (
     <>
       <TopHeader title="Yeni hesabat" />

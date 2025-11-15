@@ -104,7 +104,6 @@ const TerminalDetailsScreen: React.FC<
   };
 
   const getStatusText = (status: number) => {
-    console.log(roleName, 'r');
     if (roleName === 'Collector') {
       switch (status) {
         case 0:
@@ -188,7 +187,6 @@ const TerminalDetailsScreen: React.FC<
           `${Config.API_URL}/mobile/CollectorTask/GetById?id=${taskData.id}`,
           {headers: {Authorization: `Bearer ${token}`}},
         );
-        console.log(res, 'r');
         const updated = await res.json();
         setTaskDetails(updated);
       } catch (e) {

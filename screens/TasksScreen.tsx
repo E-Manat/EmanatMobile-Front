@@ -186,7 +186,6 @@ const TasksScreen: React.FC<
 
           const taskDetails = await apiService.get(endpoint);
 
-          console.log(taskDetails, 'taskDetails');
           navigation.navigate(Routes.terminalDetails, {taskData: taskDetails});
         } catch (err) {
           console.error('Detalları alarkən xəta:', err);
@@ -233,15 +232,12 @@ const TasksScreen: React.FC<
           .configureLogging(signalR.LogLevel.Information)
           .build();
 
-        console.log(connection, 'connection');
-
         const createdEvent =
           roleName === 'Collector' ? 'TaskCreated' : 'TechnicianTaskCreated';
         const deletedEvent =
           roleName === 'Collector' ? 'TaskDeleted' : 'TechnicianTaskDeleted';
 
         connection.on('TaskCreated', (notification: any) => {
-          console.log(notification, 'TaskCreated');
           const {taskId, status, pointName, pointId, order} = notification;
 
           if (status === TaskStatus.Canceled) {

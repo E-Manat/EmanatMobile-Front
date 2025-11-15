@@ -44,7 +44,6 @@ const DetailedReportScreen: React.FC<
           API_ENDPOINTS.mobile.report.getById(report.id),
         );
         setDetailedReport(data);
-        console.log(data, 'detailedReport');
       } catch (error) {
         console.error('Hesabat detalları alınarkən xəta:', error);
       } finally {
@@ -54,8 +53,6 @@ const DetailedReportScreen: React.FC<
 
     fetchReportById();
   }, [report.id]);
-
-  console.log(detailedReport, 'rpt');
 
   const renderDetail = (
     icon: any,

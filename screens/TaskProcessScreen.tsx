@@ -178,16 +178,12 @@ const TaskProcessScreen: React.FC<
           ? `${Config.API_URL}/mobile/CollectorTask/CompleteTask?taskId=${taskData.id}&latitude=${latitude}&longitude=${longitude}`
           : `${Config.API_URL}/mobile/TechnicianTask/CompleteTask?taskId=${taskData.id}&latitude=${latitude}&longitude=${longitude}`;
 
-      console.log('Request URL:', url);
-
       const response = await fetch(url, {
         method: 'POST',
         headers: {Authorization: `Bearer ${token}`},
       });
 
       const responseData = await response.text();
-      console.log('Response status:', response.status);
-      console.log('Response data:', responseData);
 
       if (!response.ok) {
         throw new Error(`Server error: ${response.status} - ${responseData}`);

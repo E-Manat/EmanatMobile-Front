@@ -28,9 +28,7 @@ const HomeHeader = () => {
         setFirstName(parsedData.firstName || '');
         setLastName(parsedData.lastName || '');
       }
-    } catch (error) {
-      console.log('Məlumat oxuma xətası:', error);
-    }
+    } catch (error) {}
   };
 
   const [firstName, setFirstName] = useState('');

@@ -86,7 +86,6 @@ const NotificationsScreen: React.FC<
     setLoading(true);
     try {
       const raw: any[] = await apiService.get(API_ENDPOINTS.notification.get);
-      console.log(raw, 'raw');
       const formatted = raw?.map(item => ({
         id: item.id,
         title: item.title,
@@ -122,7 +121,6 @@ const NotificationsScreen: React.FC<
         }
 
         if (connectionRef.current) {
-          console.log('⚠️ Mövcud bağlantı var, yenidən qurulmur');
           return;
         }
 
@@ -137,7 +135,6 @@ const NotificationsScreen: React.FC<
         connection.off('ReceiveNotification');
 
         connection.on('ReceiveNotification', (notification: any) => {
-          console.log('📩 Yeni real-time bildiriş:', notification);
 
           const newNotification = {
             id: notification.id,
@@ -164,12 +161,10 @@ const NotificationsScreen: React.FC<
             Sound.MAIN_BUNDLE,
             error => {
               if (error) {
-                console.log('❌ Səs yükləmə xətası:', error);
                 return;
               }
               ding.play(success => {
                 if (!success) {
-                  console.log('🔇 Səs çalınmadı');
                 }
               });
             },
@@ -178,8 +173,6 @@ const NotificationsScreen: React.FC<
 
         await connection.start();
         connectionRef.current = connection;
-
-        console.log('✅ SignalR bağlantısı quruldu');
       } catch (err) {
         console.error('❌ SignalR bağlantı xətası:', err);
       }
@@ -190,7 +183,6 @@ const NotificationsScreen: React.FC<
     return () => {
       if (connectionRef.current) {
         connectionRef.current.stop();
-        console.log('🔌 SignalR bağlantısı dayandırıldı');
         connectionRef.current = null;
       }
     };
@@ -202,7 +194,6 @@ const NotificationsScreen: React.FC<
       const raw: any[] = await apiService.get(
         API_ENDPOINTS.notification.getUnreads,
       );
-      console.log(raw, 'raw');
       const formatted = raw?.map(item => ({
         id: item.id,
         title: item.title,
@@ -258,7 +249,6 @@ const NotificationsScreen: React.FC<
         return;
       }
 
-      console.log(id);
 
       const response: any = await fetch(
         `${Config.API_URL}/notification/Notification/Delete`,
@@ -389,7 +379,6 @@ const NotificationsScreen: React.FC<
           body: JSON.stringify({}),
         },
       );
-      console.log(response, 'response');
       if (response) {
         setData([]);
         setSelectedIds([]);

@@ -1,8 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Config from 'react-native-config';
 
-console.log(Config.API_URL, 'API_URL');
-
 let navigationRef: any = null;
 
 export const setNavigation = (nav: any) => {
@@ -48,7 +46,6 @@ const request = async (
 
   try {
     const res = await fetch(`${Config.API_URL}${endpoint}`, options);
-    console.log(res, 'geden sorgu');
 
     if (res.status === 401 && requiresAuth) {
       await AsyncStorage.multiRemove(['userToken', 'isLoggedIn']);
