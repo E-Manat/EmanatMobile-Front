@@ -1,19 +1,11 @@
-import {
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-  StatusBar,
-} from 'react-native';
-import React, {useEffect} from 'react';
-import Icon from 'react-native-vector-icons/Feather';
+import {StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import React from 'react';
 import {useNavigation} from '@react-navigation/native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {SvgImage} from './SvgImage';
 
 type TopHeaderProps = {
   title: string;
-  rightIconName?: string;
   onRightPress?: () => void;
   rightIconComponent?: React.ReactNode;
   variant?: 'default' | 'tapsiriq';
@@ -21,7 +13,6 @@ type TopHeaderProps = {
 
 const TopHeader = ({
   title,
-  rightIconName,
   onRightPress,
   rightIconComponent,
   variant = 'default',
@@ -47,16 +38,10 @@ const TopHeader = ({
           color={'white'}
         />
       </TouchableOpacity>
-
       <Text style={styles.headerText}>{title}</Text>
-
       {rightIconComponent ? (
         <TouchableOpacity onPress={onRightPress}>
           {rightIconComponent}
-        </TouchableOpacity>
-      ) : rightIconName ? (
-        <TouchableOpacity onPress={onRightPress}>
-          <Icon name={rightIconName} size={28} color="#fff" />
         </TouchableOpacity>
       ) : (
         <View style={{width: 28}} />

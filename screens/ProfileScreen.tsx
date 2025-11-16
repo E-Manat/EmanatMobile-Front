@@ -53,6 +53,9 @@ const ProfileScreen: React.FC<
       }
 
       const result: any = await apiService.get(API_ENDPOINTS.auth.getProfile);
+      console.log('====================================');
+      console.log(result);
+      console.log('====================================');
 
       if (result) {
         const profileData = {
@@ -91,8 +94,7 @@ const ProfileScreen: React.FC<
       await AsyncStorage.removeItem('userToken');
       await AsyncStorage.removeItem('isLoggedIn');
       navigation.replace(Routes.auth as any, {screen: Routes.login} as any);
-    } catch (error) {
-    }
+    } catch (error) {}
   };
 
   const getInitials = (name: string, surname: string) => {

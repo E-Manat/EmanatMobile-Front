@@ -10,8 +10,6 @@ import {
   ActivityIndicator,
   SafeAreaView,
 } from 'react-native';
-import Icon from 'react-native-vector-icons/Feather';
-import IconCheck from 'react-native-vector-icons/Ionicons';
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Sound from 'react-native-sound';
@@ -135,7 +133,6 @@ const NotificationsScreen: React.FC<
         connection.off('ReceiveNotification');
 
         connection.on('ReceiveNotification', (notification: any) => {
-
           const newNotification = {
             id: notification.id,
             title: notification.title,
@@ -248,7 +245,6 @@ const NotificationsScreen: React.FC<
         console.warn('Token tapılmadı');
         return;
       }
-
 
       const response: any = await fetch(
         `${Config.API_URL}/notification/Notification/Delete`,
@@ -418,11 +414,7 @@ const NotificationsScreen: React.FC<
             <TouchableOpacity
               onPress={() => setModalVisible(true)}
               style={{marginRight: 12}}>
-              <IconCheck
-                name="checkmark-done-sharp"
-                size={20}
-                color="#2D64AF"
-              />
+              <SvgImage source={require('assets/icons/svg/seen.svg')} />
             </TouchableOpacity>
           ) : (
             <View style={{width: 20, marginRight: 12}} />
@@ -432,7 +424,10 @@ const NotificationsScreen: React.FC<
             <TouchableOpacity
               onPress={handleBulkDelete}
               style={styles.bulkDeleteButton}>
-              <Icon name="trash" size={20} color="#FF3B30" />
+              <SvgImage
+                source={require('assets/icons/svg/trash.svg')}
+                color="#FF3B30"
+              />
             </TouchableOpacity>
           )}
         </View>

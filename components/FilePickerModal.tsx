@@ -1,7 +1,6 @@
 // components/FilePickerModal.tsx
 import React from 'react';
 import {Modal, View, Text, TouchableOpacity, StyleSheet} from 'react-native';
-import Icon from 'react-native-vector-icons/Feather';
 import {FolderIcon, ImageIcon, VideoIcon} from '../assets/icons';
 import {SvgImage} from './SvgImage';
 

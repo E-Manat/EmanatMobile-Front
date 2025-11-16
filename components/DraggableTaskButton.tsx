@@ -7,7 +7,6 @@ import {
   Dimensions,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import Icon from 'react-native-vector-icons/Ionicons';
 import {navigationRef, reset} from '@utils/navigationUtils';
 import {SvgImage} from './SvgImage';
 

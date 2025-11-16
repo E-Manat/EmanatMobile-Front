@@ -7,16 +7,12 @@ import {
   TouchableOpacity,
   Text,
 } from 'react-native';
-import Icon from 'react-native-vector-icons/Feather';
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {RootStackParamList} from '../App';
-import {StackNavigationProp} from '@react-navigation/stack';
 import {SvgImage} from './SvgImage';
 
-type NavigationProp = StackNavigationProp<RootStackParamList, 'Ana səhifə'>;
 const HomeHeader = () => {
-  const navigation = useNavigation<NavigationProp>();
+  const navigation = useNavigation<any>();
   const [profileImage, setProfileImage] = useState(null);
 
   const loadProfileData = async () => {

@@ -8,7 +8,6 @@ import {
   TextInput,
 } from 'react-native';
 import Modal from 'react-native-modal';
-import Icon from 'react-native-vector-icons/Feather';
 import {SvgImage} from './SvgImage';
 
 type Item = {
@@ -70,7 +69,12 @@ const UniversalSelectModal = ({
             <TouchableOpacity
               onPress={() => setSearchText('')}
               style={styles.clearButton}>
-              <Icon name="x" size={16} color="#4B5D6A" />
+              <SvgImage
+                source={require('assets/icons/svg/x-icon.svg')}
+                width={16}
+                height={16}
+                color="#4B5D6A"
+              />
             </TouchableOpacity>
           )}
         </View>

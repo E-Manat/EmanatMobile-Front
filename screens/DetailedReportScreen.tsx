@@ -8,10 +8,8 @@ import {
   FlatList,
   Modal,
   TouchableWithoutFeedback,
-  Button,
   TextStyle,
 } from 'react-native';
-import Icon from 'react-native-vector-icons/Feather';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {apiService} from '../services/apiService';
 import {

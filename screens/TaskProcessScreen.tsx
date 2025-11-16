@@ -18,7 +18,6 @@ import CustomModal from '../components/Modal';
 import Config from 'react-native-config';
 import Geolocation from '@react-native-community/geolocation';
 import {HomeIcon, LocationIcon} from '../assets/icons';
-import Icon2 from 'react-native-vector-icons/Octicons';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {MainStackParamList} from 'types/types';
 import {Routes} from '@navigation/routes';
@@ -412,7 +411,7 @@ const TaskProcessScreen: React.FC<
             <View style={styles.step}>
               <View style={step === 1 ? styles.circleActive1 : styles.circle1}>
                 {step === 1 ? (
-                  <Icon2 name="check" size={20} color="#fff" />
+                  <SvgImage source={require('assets/icons/svg/check.svg')} />
                 ) : (
                   <Text style={styles.stepNum1}>02</Text>
                 )}

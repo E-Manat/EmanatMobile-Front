@@ -10,7 +10,6 @@ import {
   ScrollView,
 } from 'react-native';
 import TopHeader from '../components/TopHeader';
-import Icon from 'react-native-vector-icons/Ionicons';
 import {LocationIcon, MapIcon, RoadIcon, TabletIcon} from '../assets/icons';
 import {apiService} from '../services/apiService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -18,6 +17,7 @@ import {API_ENDPOINTS} from '../services/api_endpoint';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {MainStackParamList} from 'types/types';
 import {Routes} from '@navigation/routes';
+import {SvgImage} from '@components/SvgImage';
 
 const TerminallarScreen: React.FC<
   NativeStackScreenProps<MainStackParamList, Routes.terminals>
@@ -57,6 +57,9 @@ const TerminallarScreen: React.FC<
         const data = await apiService.get(
           API_ENDPOINTS.mobile.terminal.getCollectorAreaTerminals,
         );
+        console.log('====================================');
+        console.log('Fetched terminals data:', data);
+        console.log('====================================');
 
         setTerminals(data);
       } catch (error) {
@@ -113,14 +116,13 @@ const TerminallarScreen: React.FC<
           </View>
         }
       />
-
       <Modal visible={modalVisible} transparent animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <Text style={styles.title}>Digər məlumatlar</Text>
               <TouchableOpacity onPress={closeModal}>
-                <Icon name="close" size={24} color="#555" />
+                <SvgImage source={require('assets/icons/svg/x-icon.svg')} />
               </TouchableOpacity>
             </View>
 

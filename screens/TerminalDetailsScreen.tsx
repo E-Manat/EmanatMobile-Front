@@ -7,9 +7,6 @@ import {
   StyleSheet,
   DeviceEventEmitter,
 } from 'react-native';
-import Icon from 'react-native-vector-icons/FontAwesome6';
-import Icon1 from 'react-native-vector-icons/MaterialIcons';
-import Icon2 from 'react-native-vector-icons/Octicons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useIsFocused} from '@react-navigation/native';
 import TopHeader from '../components/TopHeader';
@@ -331,14 +328,15 @@ const TerminalDetailsScreen: React.FC<
             </View>
           )} */}
 
-          {taskData.totalProcessDuration && (
-            <View style={styles.verticalLine} />
-          )}
+          {true && <View style={styles.verticalLine} />}
 
-          {taskData.totalProcessDuration && (
+          {true && (
             <View style={styles.timelineItem}>
               <View style={styles.iconWrapper}>
-                <Icon2 name="check-circle-fill" size={15} color="white" />
+                <SvgImage
+                  source={require('assets/icons/svg/check-fill.svg')}
+                  color="white"
+                />
               </View>
               <View style={styles.textWrapper}>
                 <Text style={styles.detailText}>

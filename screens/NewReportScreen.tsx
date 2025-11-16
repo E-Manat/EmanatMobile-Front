@@ -10,7 +10,6 @@ import {
   ActivityIndicator,
   ScrollView,
 } from 'react-native';
-import Icon from 'react-native-vector-icons/Feather';
 import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
 import {apiService} from '../services/apiService';
 import TopHeader from '../components/TopHeader';
@@ -352,7 +351,7 @@ const NewReportScreen: React.FC<
                   style={styles.removeImageBtn}
                   onPress={() => removeImage(index)}>
                   <Text style={{color: 'white', fontSize: 12}}>
-                    <Icon name="x" />
+                    <SvgImage source={require('assets/icons/svg/x-icon.svg')} />
                   </Text>
                 </TouchableOpacity>
               </View>

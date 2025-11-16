@@ -13,7 +13,6 @@ import {
   ActivityIndicator,
   Image,
 } from 'react-native';
-import Icon from 'react-native-vector-icons/Feather';
 import Modal from 'react-native-modal';
 
 import moment from 'moment';
