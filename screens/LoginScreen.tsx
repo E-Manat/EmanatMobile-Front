@@ -57,10 +57,14 @@ const LoginScreen: React.FC<
 
     setLoading(true);
     try {
+      console.log('Login attempt:', {email});
+
       const result: any = await axios.post(
         'https://ekassa-api.e-portal.az/auth/Auth/Login',
         {email, password},
       );
+
+      console.log('Login success:', result.data);
 
       await AsyncStorage.multiSet([
         ['userToken', result.data.accessToken],
@@ -72,6 +76,12 @@ const LoginScreen: React.FC<
 
       navigation.replace(Routes.main as any, {screen: Routes.pinSetup} as any);
     } catch (error: any) {
+      console.log('Login failed - Full error:', error);
+      console.log('Error response:', error?.response);
+      console.log('Error status:', error?.response?.status);
+      console.log('Error data:', error?.response?.data);
+      console.log('Error message:', error?.message);
+
       setModalTitle('Xəta');
       setModalDescription(
         error?.response?.status === 400
