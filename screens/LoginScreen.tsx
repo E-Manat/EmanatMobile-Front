@@ -99,7 +99,7 @@ const LoginScreen: React.FC<
       const fakeToken =
         'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.fake-test.jwt.token';
       const fakeUserId = 'test-user-123';
-      const fakeExpires = (Date.now() + 7 * 24 * 60 * 60 * 1000).toString(); // 7 days later
+      const fakeExpires = (Date.now() + 7 * 24 * 60 * 60 * 1000).toString();
       const fakeRoleName = 'Collector';
 
       await AsyncStorage.multiSet([
