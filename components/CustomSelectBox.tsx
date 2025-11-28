@@ -26,7 +26,10 @@ const CustomSelectBox = ({
         <Text style={[styles.value, !value && styles.placeholder]}>
           {value || placeholder}
         </Text>
-        <SvgImage source={require('assets/icons/svg/chevron-down.svg')} />
+        <SvgImage
+          style={{position: 'absolute', right: 10}}
+          source={require('assets/icons/svg/chevron-down.svg')}
+        />
       </TouchableOpacity>
     </View>
   );

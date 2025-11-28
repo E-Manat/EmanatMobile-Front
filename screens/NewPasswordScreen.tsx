@@ -6,6 +6,9 @@ import {
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
 } from 'react-native';
 import CustomModal from '../components/Modal';
 import {useRoute} from '@react-navigation/native';
@@ -136,91 +139,101 @@ const NewPasswordScreen: React.FC<
   );
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Yeni şifrənin təyini</Text>
-      <Text style={styles.subtitle}>
-        Zəhmət olmasa, təhlükəsizliyiniz üçün yeni bir şifrə yaradın və yadda
-        saxladığınıza əmin olun
-      </Text>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}>
+        <Text style={styles.title}>Yeni şifrənin təyini</Text>
+        <Text style={styles.subtitle}>
+          Zəhmət olmasa, təhlükəsizliyiniz üçün yeni bir şifrə yaradın və yadda
+          saxladığınıza əmin olun
+        </Text>
 
-      <Text style={styles.label}>Yeni şifrə</Text>
-      <View style={styles.inputContainer}>
-        <TextInput
-          style={styles.input}
-          secureTextEntry={!showPassword}
-          placeholder="Yeni şifrə"
-          value={password}
-          onChangeText={setPassword}
-        />
-        <TouchableOpacity
-          style={styles.eyeIcon}
-          onPress={() => setShowPassword(!showPassword)}>
-          <SvgImage
-            source={
-              showPassword
-                ? require('assets/icons/svg/open-eye.svg')
-                : require('assets/icons/svg/closed-eye.svg')
-            }
+        <Text style={styles.label}>Yeni şifrə</Text>
+        <View style={styles.inputContainer}>
+          <TextInput
+            style={styles.input}
+            secureTextEntry={!showPassword}
+            placeholder="Yeni şifrə"
+            placeholderTextColor="#9E9E9E"
+            value={password}
+            onChangeText={setPassword}
           />
-        </TouchableOpacity>
-      </View>
+          <TouchableOpacity
+            style={styles.eyeIcon}
+            onPress={() => setShowPassword(!showPassword)}>
+            <SvgImage
+              source={
+                showPassword
+                  ? require('assets/icons/svg/open-eye.svg')
+                  : require('assets/icons/svg/closed-eye.svg')
+              }
+            />
+          </TouchableOpacity>
+        </View>
 
-      <Text style={styles.label}>Yeni şifrə təkrar</Text>
-      <View style={styles.inputContainer}>
-        <TextInput
-          style={styles.input}
-          secureTextEntry={!showConfirmPassword}
-          placeholder="Yeni şifrə təkrar"
-          placeholderTextColor="#bbb"
-          value={confirmPassword}
-          onChangeText={setConfirmPassword}
-        />
-        <TouchableOpacity
-          style={styles.eyeIcon}
-          onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
-          <SvgImage
-            source={
-              showConfirmPassword
-                ? require('assets/icons/svg/open-eye.svg')
-                : require('assets/icons/svg/closed-eye.svg')
-            }
+        <Text style={styles.label}>Yeni şifrə təkrar</Text>
+        <View style={styles.inputContainer}>
+          <TextInput
+            style={styles.input}
+            secureTextEntry={!showConfirmPassword}
+            placeholder="Yeni şifrə təkrar"
+            placeholderTextColor="#9E9E9E"
+            value={confirmPassword}
+            onChangeText={setConfirmPassword}
           />
-        </TouchableOpacity>
-      </View>
+          <TouchableOpacity
+            style={styles.eyeIcon}
+            onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
+            <SvgImage
+              source={
+                showConfirmPassword
+                  ? require('assets/icons/svg/open-eye.svg')
+                  : require('assets/icons/svg/closed-eye.svg')
+              }
+            />
+          </TouchableOpacity>
+        </View>
 
-      <TouchableOpacity
-        style={styles.button}
-        onPress={handleSubmit}
-        disabled={loading}>
-        {loading ? (
-          <ActivityIndicator size="small" color="#fff" />
-        ) : (
-          <Text style={styles.buttonText}>Təsdiqlə</Text>
-        )}
-      </TouchableOpacity>
-      <View style={styles.validationContainer}>
-        <Text style={styles.validationTitle}>Şifrə tələbləri:</Text>
-        <ValidationItem
-          isValid={passwordValidation.hasMinLength}
-          text="Ən azı 8 simvol"
-        />
-        <ValidationItem
-          isValid={passwordValidation.hasUpperCase}
-          text="Ən azı 1 böyük hərf"
-        />
-        <ValidationItem
-          isValid={passwordValidation.hasLowerCase}
-          text="Ən azı 1 kiçik hərf"
-        />
-        <ValidationItem
-          isValid={passwordValidation.hasNumber}
-          text="Ən azı 1 rəqəm"
-        />
-        <ValidationItem
-          isValid={passwordValidation.hasSpecialChar}
-          text="Ən azı 1 xüsusi simvol (!@#$%)"
-        />
-      </View>
+        <TouchableOpacity
+          style={styles.button}
+          onPress={handleSubmit}
+          disabled={loading}>
+          {loading ? (
+            <ActivityIndicator size="small" color="#fff" />
+          ) : (
+            <Text style={styles.buttonText}>Təsdiqlə</Text>
+          )}
+        </TouchableOpacity>
+
+        <View style={styles.validationContainer}>
+          <Text style={styles.validationTitle}>Şifrə tələbləri:</Text>
+          <ValidationItem
+            isValid={passwordValidation.hasMinLength}
+            text="Ən azı 8 simvol"
+          />
+          <ValidationItem
+            isValid={passwordValidation.hasUpperCase}
+            text="Ən azı 1 böyük hərf"
+          />
+          <ValidationItem
+            isValid={passwordValidation.hasLowerCase}
+            text="Ən azı 1 kiçik hərf"
+          />
+          <ValidationItem
+            isValid={passwordValidation.hasNumber}
+            text="Ən azı 1 rəqəm"
+          />
+          <ValidationItem
+            isValid={passwordValidation.hasSpecialChar}
+            text="Ən azı 1 xüsusi simvol (!@#$%)"
+          />
+        </View>
+      </ScrollView>
 
       <CustomModal
         visible={modalVisible}
@@ -231,19 +244,20 @@ const NewPasswordScreen: React.FC<
         onConfirm={modalInfo.onConfirm}
         onCancel={modalInfo.onCancel}
       />
-    </View>
+    </KeyboardAvoidingView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 24,
     backgroundColor: '#fff',
+  },
+  scrollContent: {
+    flexGrow: 1,
+    padding: 24,
     justifyContent: 'flex-start',
     gap: 10,
-    height: '100%',
-    position: 'relative',
     paddingTop: 115,
   },
   title: {
@@ -313,6 +327,7 @@ const styles = StyleSheet.create({
     borderColor: '#FEF5E7',
     borderRadius: 8,
     borderWidth: 1,
+    color: '#212121',
   },
   eyeIcon: {
     position: 'absolute',

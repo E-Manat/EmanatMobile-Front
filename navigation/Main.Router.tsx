@@ -1,6 +1,12 @@
 import React, {useEffect, useState} from 'react';
-import {SafeAreaView} from 'react-native-safe-area-context';
-import {DeviceEventEmitter, View} from 'react-native';
+import {
+  View,
+  Platform,
+  Linking,
+  DeviceEventEmitter,
+  Alert,
+  BackHandler,
+} from 'react-native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
@@ -22,18 +28,23 @@ import CustomModal from '../components/Modal';
 import {Routes} from './routes';
 import {navigationRef} from '@utils/navigationUtils';
 import {defaultScreenOptions} from '@utils/navigationConfig';
-import {isAndroid} from 'constants/common.consts';
 import {MainStackParamList} from 'types/types';
+import {SafeAreaView} from 'react-native-safe-area-context';
+import {isAndroid} from 'constants/common.consts';
 
 const MainStack = createNativeStackNavigator<MainStackParamList>();
 
-export const MainRouter = () => {
+const UPDATE_URLS = {
+  ios: 'https://testflight.apple.com/join/YmPsxJaq',
+  android:
+    'https://drive.google.com/drive/folders/1ndnxNUn1Bn1LZM28RBzxhiT1MccvGoRp?usp=drive_link',
+};
+
+export const MainRouter: React.FC = () => {
   const [currentRouteName, setCurrentRouteName] = useState('');
   const [hasCurrentTask, setHasCurrentTask] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
-  const [downloadUrl] = useState(
-    'https://drive.google.com/drive/folders/1ndnxNUn1Bn1LZM28RBzxhiT1MccvGoRp?usp=drive_link',
-  );
+  const [updateRequired, setUpdateRequired] = useState(false);
 
   const version = 2;
 
@@ -53,6 +64,7 @@ export const MainRouter = () => {
       );
 
       if (response.data.isUpdateAvailable) {
+        setUpdateRequired(true);
         setModalVisible(true);
       }
     } catch (error) {
@@ -61,11 +73,14 @@ export const MainRouter = () => {
   };
 
   const handleUpdate = async () => {
-    if (downloadUrl) {
-      const {Linking} = await import('react-native');
-      await Linking.openURL(downloadUrl);
+    try {
+      const updateUrl =
+        Platform.OS === 'ios' ? UPDATE_URLS.ios : UPDATE_URLS.android;
+      await Linking.openURL(updateUrl);
+    } catch (error) {
+      console.error('Update URL error:', error);
+      Alert.alert('Xəta', 'Yeniləmə səhifəsi açıla bilmədi');
     }
-    setModalVisible(false);
   };
 
   const checkCurrentTask = async () => {
@@ -76,6 +91,38 @@ export const MainRouter = () => {
   useEffect(() => {
     checkForUpdate();
   }, []);
+
+  useEffect(() => {
+    if (updateRequired) {
+      const backHandler = BackHandler.addEventListener(
+        'hardwareBackPress',
+        () => {
+          if (modalVisible) {
+            BackHandler.exitApp();
+            return true;
+          }
+          return false;
+        },
+      );
+
+      return () => backHandler.remove();
+    }
+  }, [updateRequired, modalVisible]);
+
+  useEffect(() => {
+    const handleAppStateChange = async (state: string) => {
+      if (state === 'active' && updateRequired) {
+        setModalVisible(true);
+      }
+    };
+
+    const subscription = require('react-native').AppState.addEventListener(
+      'change',
+      handleAppStateChange,
+    );
+
+    return () => subscription?.remove();
+  }, [updateRequired]);
 
   useEffect(() => {
     const sub = DeviceEventEmitter.addListener('taskStarted', () => {
@@ -109,10 +156,7 @@ export const MainRouter = () => {
   }, []);
 
   return (
-    <View
-      style={{flex: 1, backgroundColor: '#fff'}}
-      // edges={isAndroid ? ['top', 'bottom'] : ['top']}>
-    >
+    <SafeAreaView style={{flex: 1}} edges={isAndroid ? ['bottom'] : []}>
       <CustomModal
         visible={modalVisible}
         title="Yeniləmə Mövcuddur"
@@ -154,6 +198,6 @@ export const MainRouter = () => {
       {!['Splash', 'Login'].includes(currentRouteName) && hasCurrentTask && (
         <DraggableTaskButton />
       )}
-    </View>
+    </SafeAreaView>
   );
 };

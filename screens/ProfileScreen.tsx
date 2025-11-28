@@ -53,9 +53,6 @@ const ProfileScreen: React.FC<
       }
 
       const result: any = await apiService.get(API_ENDPOINTS.auth.getProfile);
-      console.log('====================================');
-      console.log(result);
-      console.log('====================================');
 
       if (result) {
         const profileData = {
@@ -93,6 +90,8 @@ const ProfileScreen: React.FC<
     try {
       await AsyncStorage.removeItem('userToken');
       await AsyncStorage.removeItem('isLoggedIn');
+      await AsyncStorage.removeItem('userPin');
+
       navigation.replace(Routes.auth as any, {screen: Routes.login} as any);
     } catch (error) {}
   };
@@ -161,7 +160,7 @@ const ProfileScreen: React.FC<
                     height={32}
                     source={require('assets/icons/svg/app-version.svg')}
                   />
-                  <View>
+                  <View style={styles.gap}>
                     <Text style={styles.text}>Proqram versiyası</Text>
                     <Text style={styles.textVersion}>1.0.1</Text>
                   </View>
@@ -345,7 +344,6 @@ const styles = StyleSheet.create({
     fontFamily: 'DMSans-Medium',
     fontSize: 14,
     fontWeight: '500',
-    lineHeight: 21,
     fontStyle: 'normal',
     flex: 1,
   },
@@ -374,10 +372,10 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontStyle: 'normal',
     fontWeight: '400',
-    lineHeight: 15,
   },
   box: {
     display: 'flex',
     flexDirection: 'row',
   },
+  gap: {},
 });

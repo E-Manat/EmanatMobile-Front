@@ -32,7 +32,7 @@
 		<true/>
 	</dict>
 	<key>NSCameraUsageDescription</key>
-	<string>Tətbiq işləməsi üçün kamera icazəsinə ehtiyac var. Şəkil və video çəkmək üçün kamera icazəsi lazımdır.</string>
+	<string>Terminalın şəklini və ya videosunu çəkmək üçün kameraya giriş lazımdır</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>Tətbiq işləməsi üçün GPS icazəsinə ehtiyac var. Zəhmət olmasa aktiv edin.</string>
 	<key>NSLocationAlwaysUsageDescription</key>
@@ -40,11 +40,11 @@
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Tətbiq işləməsi üçün GPS icazəsinə ehtiyac var. Zəhmət olmasa aktiv edin.</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>Tətbiq işləməsi üçün mikrofon icazəsinə ehtiyac var. Video çəkmək üçün səs yazma icazəsi lazımdır.</string>
+	<string>Video çəkmək üçün mikrofona giriş lazımdır</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>Tətbiq işləməsi üçün foto qalereyasına şəkil yükləmə icazəsinə ehtiyac var. Çəkdiyiniz şəkilləri qalereyaya yükləmək üçün icazə lazımdır.</string>
+	<string>Çəkilən şəkil və videoları saxlamaq üçün foto kitabxanasına giriş lazımdır</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Tətbiq işləməsi üçün foto qalereyasına giriş icazəsinə ehtiyac var. Şəkil və video seçmək üçün qalereyaya giriş lazımdır.</string>
+	<string>Şəkil və ya video seçmək üçün foto kitabxanasına giriş lazımdır</string>
 	<key>UIAppFonts</key>
 	<array>
 		<string>DMSans-Bold.ttf</string>

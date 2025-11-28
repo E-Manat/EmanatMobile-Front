@@ -8,7 +8,6 @@ import {
   Modal,
   Image,
   ActivityIndicator,
-  SafeAreaView,
 } from 'react-native';
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';

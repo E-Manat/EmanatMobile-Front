@@ -9,6 +9,7 @@ import {
   StyleSheet,
   ActivityIndicator,
   ScrollView,
+  Platform,
 } from 'react-native';
 import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
 import {apiService} from '../services/apiService';
@@ -24,39 +25,29 @@ import {MainStackParamList} from 'types/types';
 import {Routes} from '@navigation/routes';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {SvgImage} from '@components/SvgImage';
+import {request, PERMISSIONS, RESULTS} from 'react-native-permissions';
 
 const NewReportScreen: React.FC<
   NativeStackScreenProps<MainStackParamList, Routes.newReport>
 > = ({navigation, route}) => {
   const terminalIdFromRoute = route.params?.terminalId;
 
-  const [selectedImages, setSelectedImages] = useState<any>([]);
+  const [selectedImages, setSelectedImages] = useState<string[]>([]);
   const [selectedVideos, setSelectedVideos] = useState<string[]>([]);
-
-  const [selectedVideo, setSelectedVideo] = useState<any>(null);
   const [comment, setComment] = useState('');
   const [loading, setLoading] = useState(false);
   const [problemList, setProblemList] = useState<any[]>([]);
   const [terminalList, setTerminalList] = useState<any[]>([]);
-
   const [isImageModalVisible, setImageModalVisible] = useState(false);
   const [isVideoModalVisible, setVideoModalVisible] = useState(false);
-
-  const [problemError, setProblemError] = useState(false);
   const [isSuccessModalVisible, setSuccessModalVisible] = useState(false);
-
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [modalMessage, setModalMessage] = useState('');
-
   const [selectModalVisible, setSelectModalVisible] = useState(false);
   const [modalData, setModalData] = useState<
     {id: number | string; name: string}[]
   >([]);
   const [modalTitle, setModalTitle] = useState('');
-  const [selectedItem, setSelectedItem] = useState<{
-    id: number | string;
-    name: string;
-  } | null>(null);
   const [selectedTerminalId, setSelectedTerminalId] = useState<string | null>(
     null,
   );
@@ -74,19 +65,91 @@ const NewReportScreen: React.FC<
   const [modalType, setModalType] = useState<'problem' | 'terminal' | null>(
     null,
   );
+  const [dataLoading, setDataLoading] = useState(true);
 
   useEffect(() => {
-    if (terminalIdFromRoute) {
-      setSelectedTerminalId(terminalIdFromRoute);
-    }
+    const fetchInitialData = async () => {
+      setDataLoading(true);
+      try {
+        const [terminals, problems] = await Promise.all([
+          apiService.get(API_ENDPOINTS.mobile.terminal.getAll),
+          apiService.get(API_ENDPOINTS.mobile.problem.getAll),
+        ]);
+        setTerminalList(terminals);
+        setProblemList(problems);
+
+        if (terminalIdFromRoute && terminals.length) {
+          const matchedTerminal = terminals.find(
+            (t: any) => String(t.id) === String(terminalIdFromRoute),
+          );
+          if (matchedTerminal) {
+            setSelectedTerminalId(matchedTerminal.pointId);
+            setSelectedTerminalObj({
+              id: matchedTerminal.id,
+              name: String(matchedTerminal.pointId),
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Data fetch error:', error);
+        setTerminalList([]);
+        setProblemList([]);
+      } finally {
+        setDataLoading(false);
+      }
+    };
+
+    fetchInitialData();
   }, [terminalIdFromRoute]);
 
-  const takePhoto = () => {
+  const requestCameraPermission = async () => {
+    try {
+      if (Platform.OS === 'android') {
+        const result = await request(PERMISSIONS.ANDROID.CAMERA);
+        return result === RESULTS.GRANTED;
+      } else {
+        const result = await request(PERMISSIONS.IOS.CAMERA);
+        return result === RESULTS.GRANTED;
+      }
+    } catch (error) {
+      console.error('Permission error:', error);
+      return false;
+    }
+  };
+
+  // Fayl adını URI-dən çıxarır - dublikat yoxlaması üçün
+  const getFileName = (uri: string): string => {
+    return uri.split('/').pop() || uri;
+  };
+
+  // Dublikat yoxlaması - fayl adına görə
+  const isDuplicateImage = (newUri: string): boolean => {
+    const newFileName = getFileName(newUri);
+    return selectedImages.some(
+      existingUri => getFileName(existingUri) === newFileName,
+    );
+  };
+
+  const isDuplicateVideo = (newUri: string): boolean => {
+    const newFileName = getFileName(newUri);
+    return selectedVideos.some(
+      existingUri => getFileName(existingUri) === newFileName,
+    );
+  };
+
+  const takePhoto = async () => {
+    const hasPermission = await requestCameraPermission();
+    if (!hasPermission) {
+      Alert.alert('İcazə', 'Kamera istifadə etmək üçün icazə verin');
+      return;
+    }
+
     const options: any = {
       mediaType: 'photo',
       cameraType: 'back',
-      quality: 1,
+      quality: 0.8,
       saveToPhotos: true,
+      includeBase64: false,
     };
 
     launchCamera(options, response => {
@@ -99,7 +162,11 @@ const NewReportScreen: React.FC<
       }
       const uri = response.assets?.[0]?.uri;
       if (uri) {
-        setSelectedImages([...selectedImages, uri]);
+        if (isDuplicateImage(uri)) {
+          Alert.alert('Xəta', 'Bu şəkil artıq əlavə edilib');
+          return;
+        }
+        setSelectedImages(prev => [...prev, uri]);
       }
     });
   };
@@ -107,7 +174,8 @@ const NewReportScreen: React.FC<
   const pickImageFromGallery = () => {
     const options: any = {
       mediaType: 'photo',
-      quality: 1,
+      quality: 0.8,
+      selectionLimit: 1,
     };
 
     launchImageLibrary(options, response => {
@@ -121,7 +189,11 @@ const NewReportScreen: React.FC<
 
       const uri = response.assets?.[0]?.uri;
       if (uri) {
-        setSelectedImages([...selectedImages, uri]);
+        if (isDuplicateImage(uri)) {
+          Alert.alert('Xəta', 'Bu şəkil artıq əlavə edilib');
+          return;
+        }
+        setSelectedImages(prev => [...prev, uri]);
       }
     });
   };
@@ -129,7 +201,7 @@ const NewReportScreen: React.FC<
   const pickVideoFromGallery = () => {
     const options: any = {
       mediaType: 'video',
-      quality: 1,
+      quality: 0.8,
       videoQuality: 'high',
       selectionLimit: 1,
     };
@@ -145,17 +217,27 @@ const NewReportScreen: React.FC<
 
       const uri = response.assets?.[0]?.uri;
       if (uri) {
+        if (isDuplicateVideo(uri)) {
+          Alert.alert('Xəta', 'Bu video artıq əlavə edilib');
+          return;
+        }
         setSelectedVideos(prev => [...prev, uri]);
       }
     });
   };
 
-  const recordVideo = () => {
+  const recordVideo = async () => {
+    const hasPermission = await requestCameraPermission();
+    if (!hasPermission) {
+      Alert.alert('İcazə', 'Kamera istifadə etmək üçün icazə verin');
+      return;
+    }
+
     const options: any = {
       mediaType: 'video',
-      quality: 1,
+      quality: 0.8,
       videoQuality: 'high',
-      durationLimit: 60, // Max 1 dəqiqə
+      durationLimit: 60,
       saveToPhotos: true,
     };
 
@@ -170,44 +252,22 @@ const NewReportScreen: React.FC<
 
       const uri = response.assets?.[0]?.uri;
       if (uri) {
+        if (isDuplicateVideo(uri)) {
+          Alert.alert('Xəta', 'Bu video artıq əlavə edilib');
+          return;
+        }
         setSelectedVideos(prev => [...prev, uri]);
       }
     });
   };
 
-  const removeImage = (index: any) => {
-    const updatedImages = selectedImages.filter(
-      (_: any, i: any) => i !== index,
-    );
-    setSelectedImages(updatedImages);
+  const removeImage = (index: number) => {
+    setSelectedImages(prev => prev.filter((_, i) => i !== index));
   };
 
-  useEffect(() => {
-    const fetchTerminals = async () => {
-      try {
-        const data = await apiService.get(API_ENDPOINTS.mobile.terminal.getAll);
-        setTerminalList(data);
-      } catch (error) {
-        setTerminalList([]);
-        console.error('Terminals could not be fetched:', error);
-      }
-    };
-
-    fetchTerminals();
-  }, []);
-
-  useEffect(() => {
-    const fetchProblems = async () => {
-      try {
-        const data = await apiService.get(API_ENDPOINTS.mobile.problem.getAll);
-        setProblemList(data);
-      } catch (error) {
-        console.error('Problem siyahısı alınmadı:', error);
-      }
-    };
-
-    fetchProblems();
-  }, []);
+  const removeVideo = (index: number) => {
+    setSelectedVideos(prev => prev.filter((_, i) => i !== index));
+  };
 
   const handleSubmit = async () => {
     if (!selectedProblemId || !selectedProblemObj) {
@@ -225,7 +285,7 @@ const NewReportScreen: React.FC<
       formData.append('ProblemId', selectedProblemId);
       formData.append('Description', comment);
 
-      selectedImages.forEach((uri: any, index: any) => {
+      selectedImages.forEach((uri, index) => {
         formData.append('Images', {
           uri,
           name: `image_${index}.jpg`,
@@ -233,48 +293,52 @@ const NewReportScreen: React.FC<
         } as any);
       });
 
-      if (selectedVideo) {
+      // Bütün videoları göndər
+      selectedVideos.forEach((uri, index) => {
         formData.append('Video', {
-          uri: selectedVideo,
-          name: 'video.mp4',
+          uri,
+          name: `video_${index}.mp4`,
           type: 'video/mp4',
         } as any);
-      }
+      });
 
       await apiService.postMultipart(
         API_ENDPOINTS.mobile.report.create,
         formData,
       );
       setSuccessModalVisible(true);
-    } catch (error) {
-      setModalMessage('Hesabat yaradılarkən xəta baş verdi.');
+    } catch (error: any) {
+      const errorMessage =
+        error?.response?.data?.message ||
+        error?.message ||
+        'Hesabat yaradılarkən xəta baş verdi.';
+      setModalMessage(errorMessage);
       setIsModalVisible(true);
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    if (terminalList.length && terminalIdFromRoute != null) {
-      const matchedTerminal = terminalList.find(
-        t => String(t.id) === String(terminalIdFromRoute),
-      );
-      if (matchedTerminal) {
-        setSelectedTerminalId(matchedTerminal.pointId);
-        setSelectedTerminalObj({
-          id: matchedTerminal.id,
-          name: String(matchedTerminal.pointId),
-        });
-      }
-    }
-  }, [terminalList, terminalIdFromRoute]);
+  if (dataLoading) {
+    return (
+      <>
+        <TopHeader title="Yeni hesabat" />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#1269B5" />
+          <Text style={styles.loadingText}>Məlumatlar yüklənir...</Text>
+        </View>
+      </>
+    );
+  }
 
   return (
     <>
       <TopHeader title="Yeni hesabat" />
       <ScrollView
-        style={{backgroundColor: '#fff'}}
-        contentContainerStyle={{flexGrow: 1}}>
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}>
         <View style={styles.container}>
           <CustomSelectBox
             label="Terminali seçin"
@@ -289,7 +353,6 @@ const NewReportScreen: React.FC<
               setModalType('terminal');
               setSelectModalVisible(true);
             }}
-            // error={!selectedTerminalId}
           />
 
           <CustomSelectBox
@@ -308,7 +371,6 @@ const NewReportScreen: React.FC<
               setModalType('problem');
               setSelectModalVisible(true);
             }}
-            // error={!selectedProblemId}
           />
           <UniversalSelectModal
             visible={selectModalVisible}
@@ -334,35 +396,24 @@ const NewReportScreen: React.FC<
           <Text style={styles.imageContentLabel}>
             Terminalın şəklini yükləyin *
           </Text>
-          <View
-            style={{flexDirection: 'row', flexWrap: 'wrap', marginBottom: 10}}>
-            {selectedImages.map((image: any, index: any) => (
-              <View key={index} style={{position: 'relative', marginRight: 5}}>
-                <Image
-                  source={{uri: image}}
-                  style={{
-                    width: 70,
-                    height: 70,
-                    borderRadius: 15,
-                    backgroundColor: 'red',
-                  }}
-                />
+          <View style={styles.imageContainer}>
+            {selectedImages.map((image, index) => (
+              <View
+                key={`img-${index}-${getFileName(image)}`}
+                style={styles.imageWrapper}>
+                <Image source={{uri: image}} style={styles.imagePreview} />
                 <TouchableOpacity
                   style={styles.removeImageBtn}
                   onPress={() => removeImage(index)}>
-                  <Text style={{color: 'white', fontSize: 12}}>
-                    <SvgImage source={require('assets/icons/svg/x-icon.svg')} />
-                  </Text>
+                  <SvgImage source={require('assets/icons/svg/x-icon.svg')} />
                 </TouchableOpacity>
               </View>
             ))}
             <TouchableOpacity
               onPress={() => setImageModalVisible(true)}
               style={styles.imageContent}>
-              <Text>
-                <ImageIcon color="#1269B5" />
-              </Text>
-            </TouchableOpacity>{' '}
+              <ImageIcon color="#1269B5" />
+            </TouchableOpacity>
           </View>
 
           <TouchableOpacity
@@ -371,39 +422,26 @@ const NewReportScreen: React.FC<
             <VideoIcon />
             <View>
               <Text style={styles.videoContentText}>Video əlavə et *</Text>
-              <Text style={styles.videoContentTextSize}>Max 20 MB</Text>
+              <Text style={styles.videoContentTextSize}>Max 10 MB</Text>
             </View>
           </TouchableOpacity>
 
-          <View style={{flexDirection: 'row', flexWrap: 'wrap'}}>
-            {selectedVideos.map((videoUri, index) => (
-              <View
-                key={index}
-                style={{
-                  position: 'relative',
-                  marginRight: 5,
-                  marginBottom: 10,
-                }}>
-                <Image
-                  source={{uri: videoUri}}
-                  style={{width: 70, height: 70, borderRadius: 15}}
-                />
-                <TouchableOpacity
-                  style={styles.removeImageBtn}
-                  onPress={() => {
-                    const updatedVideos = selectedVideos.filter(
-                      (_, i) => i !== index,
-                    );
-                    setSelectedVideos(updatedVideos);
-                  }}>
-                  <Text style={{color: 'white', fontSize: 12}}>
-                    {' '}
+          {selectedVideos.length > 0 && (
+            <View style={styles.videoContainer}>
+              {selectedVideos.map((videoUri, index) => (
+                <View
+                  key={`vid-${index}-${getFileName(videoUri)}`}
+                  style={styles.videoWrapper}>
+                  <Image source={{uri: videoUri}} style={styles.videoPreview} />
+                  <TouchableOpacity
+                    style={styles.removeImageBtn}
+                    onPress={() => removeVideo(index)}>
                     <SvgImage source={require('assets/icons/svg/x-icon.svg')} />
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            ))}
-          </View>
+                  </TouchableOpacity>
+                </View>
+              ))}
+            </View>
+          )}
 
           <Text style={styles.noteLabel}>Şərh əlavə edin *</Text>
           <TextInput
@@ -419,7 +457,7 @@ const NewReportScreen: React.FC<
             <TouchableOpacity
               style={styles.secondaryButton}
               onPress={() => navigation.replace(Routes.home)}>
-              <Text style={styles.secondaryButtonLabel}>Keç </Text>
+              <Text style={styles.secondaryButtonLabel}>Keç</Text>
             </TouchableOpacity>
             <TouchableOpacity
               onPress={handleSubmit}
@@ -490,13 +528,31 @@ const NewReportScreen: React.FC<
 export default NewReportScreen;
 
 const styles = StyleSheet.create({
+  scrollView: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingBottom: 120,
+  },
   container: {
     flex: 1,
     backgroundColor: '#fff',
     paddingHorizontal: 20,
-    gap: 10,
     paddingTop: 25,
-    position: 'relative',
+  },
+  loadingContainer: {
+    flex: 1,
+    backgroundColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: '#666',
+    fontFamily: 'DMSans-Regular',
   },
   header: {
     backgroundColor: '#2D64AF',
@@ -507,14 +563,14 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   headerText: {fontSize: 18, fontWeight: 'bold', color: '#fff'},
-
   noteLabel: {
     color: '#063A66',
     fontFamily: 'DMSans-SemiBold',
     fontSize: 14,
     fontWeight: '500',
-    lineHeight: 21, // 150% of 14px
+    lineHeight: 21,
     fontStyle: 'normal',
+    marginTop: 10,
   },
   noteInput: {
     borderRadius: 15,
@@ -524,20 +580,20 @@ const styles = StyleSheet.create({
     height: 90,
     padding: 12,
     textAlignVertical: 'top',
+    marginTop: 8,
   },
   videoContent: {
     display: 'flex',
     padding: 10,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
     alignSelf: 'stretch',
-
     borderRadius: 8,
     borderWidth: 1,
     borderStyle: 'dashed',
     backgroundColor: '#F6F6F6',
     borderColor: '#E5E5E5',
+    marginTop: 10,
   },
   videoContentText: {
     color: '#333',
@@ -545,7 +601,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontStyle: 'normal',
     fontWeight: '600',
-    lineHeight: 20, // 125% of 16px
+    lineHeight: 20,
+    marginLeft: 10,
   },
   videoContentTextSize: {
     color: '#666',
@@ -554,14 +611,33 @@ const styles = StyleSheet.create({
     fontStyle: 'normal',
     fontWeight: '500',
     lineHeight: 15,
+    marginLeft: 10,
   },
   imageContentLabel: {
-    color: '#063A66', // var(--Primary-primary-800, #063A66)
+    color: '#063A66',
     fontFamily: 'DMSans-SemiBold',
     fontSize: 14,
     fontStyle: 'normal',
     fontWeight: '500',
-    lineHeight: 21, // 150% of 14px
+    lineHeight: 21,
+    marginTop: 10,
+  },
+  imageContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginTop: 8,
+    marginBottom: 10,
+  },
+  imageWrapper: {
+    position: 'relative',
+    marginRight: 8,
+    marginBottom: 8,
+  },
+  imagePreview: {
+    width: 70,
+    height: 70,
+    borderRadius: 15,
+    backgroundColor: '#F5F5F5',
   },
   imageContent: {
     borderRadius: 15,
@@ -570,7 +646,22 @@ const styles = StyleSheet.create({
     width: 70,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 5,
+  },
+  videoContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginTop: 10,
+  },
+  videoWrapper: {
+    position: 'relative',
+    marginRight: 8,
+    marginBottom: 8,
+  },
+  videoPreview: {
+    width: 70,
+    height: 70,
+    borderRadius: 15,
+    backgroundColor: '#F5F5F5',
   },
   removeImageBtn: {
     position: 'absolute',
@@ -595,7 +686,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#333',
     fontFamily: 'DMSans-Medium',
-    overflow: 'hidden', // Bu vacibdir!
+    overflow: 'hidden',
   },
   customPickerLabel: {
     fontFamily: 'DMSans-Medium',
@@ -613,38 +704,37 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     flexDirection: 'row',
-    gap: 10,
-    position: 'absolute',
-    left: 20,
-    bottom: 0,
-    marginTop: 10,
+    marginTop: 20,
+    marginBottom: 20,
   },
   primaryButton: {
     backgroundColor: '#1269B5',
     borderRadius: 12,
     paddingVertical: 15,
     alignItems: 'center',
-    marginBottom: 12,
-    width: '49%',
+    width: '48%',
     height: 48,
+    justifyContent: 'center',
   },
   primaryButtonText: {
     color: '#fff',
+    fontFamily: 'DMSans-SemiBold',
+    fontSize: 14,
   },
   secondaryButton: {
     backgroundColor: '#fff',
     borderRadius: 12,
     paddingVertical: 14,
     alignItems: 'center',
-    marginBottom: 12,
     borderWidth: 1,
     borderColor: '#1269B5',
-    width: '49%',
+    width: '48%',
     height: 48,
+    justifyContent: 'center',
   },
   secondaryButtonLabel: {
     color: '#1269B5',
-    fontFamily: 'DM Sans',
+    fontFamily: 'DMSans-SemiBold',
     paddingHorizontal: 16,
     fontSize: 14,
   },

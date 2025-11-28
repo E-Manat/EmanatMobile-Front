@@ -1,10 +1,10 @@
 import React from 'react';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
+import {Platform, TouchableOpacity} from 'react-native';
 import HomeScreen from '../screens/HomeScreen';
 import TasksScreen from '../screens/TasksScreen';
 import ReportsScreen from '../screens/ReportsScreen';
 import ProfileScreen from '../screens/ProfileScreen';
-import {TouchableOpacity} from 'react-native';
 import {HomeIcon, ReportIcon, TaskIcon, UserIcon} from '../assets/icons';
 
 const Tab = createBottomTabNavigator();
@@ -14,7 +14,7 @@ const BottomTabNavigator = () => {
     <Tab.Navigator
       screenOptions={({route}) => ({
         headerShown: false,
-        tabBarIcon: ({color, size}) => {
+        tabBarIcon: ({color}) => {
           switch (route.name) {
             case 'Ana səhifə':
               return <HomeIcon color={color} />;
@@ -31,11 +31,12 @@ const BottomTabNavigator = () => {
         tabBarInactiveTintColor: 'gray',
         tabBarStyle: {
           backgroundColor: '#fff',
-          height: 70,
+          height: Platform.OS === 'android' ? 60 : 70,
           elevation: 0,
           shadowOpacity: 0.1,
+          position: 'absolute',
         },
-
+        tabBarHideOnKeyboard: Platform.OS === 'android',
         tabBarButton: props => (
           <TouchableOpacity {...(props ?? {})} activeOpacity={0.6} />
         ),

@@ -60,6 +60,7 @@ const UniversalSelectModal = ({
           <TextInput
             placeholder="Axtar..."
             value={searchText}
+            placeholderTextColor={'#4F4F4F'}
             onChangeText={setSearchText}
             style={styles.searchInput}
             autoCorrect={false}
@@ -133,6 +134,10 @@ const styles = StyleSheet.create({
   searchWrapper: {
     position: 'relative',
     marginBottom: 12,
+    borderWidth: 1,
+    paddingHorizontal: 10,
+    borderRadius: 10,
+    borderColor: '#E0E3E6',
   },
   searchInput: {
     height: 40,
