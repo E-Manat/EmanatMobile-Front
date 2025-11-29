@@ -1,5 +1,12 @@
 import React from 'react';
-import {Modal, StyleSheet, Text, View, TouchableOpacity} from 'react-native';
+import {
+  Modal,
+  StyleSheet,
+  Text,
+  View,
+  TouchableOpacity,
+  ActivityIndicator,
+} from 'react-native';
 
 interface CustomModalProps {
   visible: boolean;
@@ -10,6 +17,7 @@ interface CustomModalProps {
   onConfirm?: () => void;
   onCancel?: () => void;
   closeable?: boolean;
+  loading?: boolean;
 }
 
 const CustomModal: React.FC<CustomModalProps> = ({
@@ -21,9 +29,10 @@ const CustomModal: React.FC<CustomModalProps> = ({
   onConfirm,
   onCancel,
   closeable = false,
+  loading = false,
 }) => {
   const handleOverlayPress = () => {
-    if (closeable && onCancel) {
+    if (closeable && onCancel && !loading) {
       onCancel();
     }
   };
@@ -33,7 +42,8 @@ const CustomModal: React.FC<CustomModalProps> = ({
       <TouchableOpacity
         style={styles.overlay}
         activeOpacity={1}
-        onPress={handleOverlayPress}>
+        onPress={handleOverlayPress}
+        disabled={loading}>
         <TouchableOpacity activeOpacity={1} onPress={e => e.stopPropagation()}>
           <View style={styles.modalContainer}>
             <Text style={styles.title}>{title}</Text>
@@ -42,15 +52,24 @@ const CustomModal: React.FC<CustomModalProps> = ({
               {cancelText && (
                 <TouchableOpacity
                   style={styles.cancelButton}
-                  onPress={onCancel}>
+                  onPress={onCancel}
+                  disabled={loading}>
                   <Text style={styles.cancelText}>{cancelText}</Text>
                 </TouchableOpacity>
               )}
               {confirmText && (
                 <TouchableOpacity
-                  style={styles.confirmButton}
-                  onPress={onConfirm}>
-                  <Text style={styles.confirmText}>{confirmText}</Text>
+                  style={[
+                    styles.confirmButton,
+                    loading && styles.confirmButtonDisabled,
+                  ]}
+                  onPress={onConfirm}
+                  disabled={loading}>
+                  {loading ? (
+                    <ActivityIndicator color="#fff" size="small" />
+                  ) : (
+                    <Text style={styles.confirmText}>{confirmText}</Text>
+                  )}
                 </TouchableOpacity>
               )}
             </View>
@@ -130,6 +149,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     backgroundColor: '#1269B5',
     width: '48%',
+  },
+  confirmButtonDisabled: {
+    opacity: 0.7,
   },
   confirmText: {
     color: '#fff',

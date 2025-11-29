@@ -23,13 +23,13 @@ type Props = {
   onSelect: (item: Item) => void;
 };
 
-const UniversalSelectModal = ({
+const UniversalSelectModal: React.FC<Props> = ({
   visible,
   onClose,
   data,
   title,
   onSelect,
-}: Props) => {
+}) => {
   const [searchText, setSearchText] = useState('');
 
   const filteredData = useMemo(
@@ -42,16 +42,27 @@ const UniversalSelectModal = ({
     [data, searchText],
   );
 
+  const handleSelect = (item: Item) => {
+    onSelect(item);
+    setSearchText('');
+    onClose();
+  };
+
+  const handleClose = () => {
+    setSearchText('');
+    onClose();
+  };
+
   return (
     <Modal
       isVisible={visible}
-      onBackdropPress={onClose}
+      onBackdropPress={handleClose}
       backdropOpacity={0.4}
       style={styles.modalWrapper}>
       <View style={styles.modalContainer}>
         <View style={styles.header}>
           <Text style={styles.title}>{title}</Text>
-          <TouchableOpacity onPress={onClose}>
+          <TouchableOpacity onPress={handleClose}>
             <SvgImage source={require('assets/icons/svg/x-icon.svg')} />
           </TouchableOpacity>
         </View>
@@ -87,10 +98,7 @@ const UniversalSelectModal = ({
             renderItem={({item}) => (
               <TouchableOpacity
                 style={styles.option}
-                onPress={() => {
-                  onSelect(item);
-                  onClose();
-                }}>
+                onPress={() => handleSelect(item)}>
                 <Text style={styles.optionText}>{String(item.name)}</Text>
               </TouchableOpacity>
             )}
@@ -141,11 +149,9 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     height: 40,
-    // borderBottomWidth: 1,
     borderColor: '#E0E3E6',
     borderRadius: 8,
-    // paddingHorizontal: 10,
-    paddingRight: 36, // space for clear button
+    paddingRight: 36,
     fontFamily: 'DMSans-Regular',
     fontSize: 14,
   },

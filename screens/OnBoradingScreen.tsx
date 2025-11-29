@@ -120,7 +120,7 @@ const styles = StyleSheet.create({
     resizeMode: 'contain',
     alignSelf: 'center',
     position: 'absolute',
-    top: 20,
+    top: 40,
   },
   splashImage: {
     width: '94%',

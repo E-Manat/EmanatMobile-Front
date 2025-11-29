@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
   ScrollView,
   Platform,
+  KeyboardAvoidingView,
 } from 'react-native';
 import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
 import {apiService} from '../services/apiService';
@@ -31,7 +32,6 @@ const NewReportScreen: React.FC<
   NativeStackScreenProps<MainStackParamList, Routes.newReport>
 > = ({navigation, route}) => {
   const terminalIdFromRoute = route.params?.terminalId;
-
   const [selectedImages, setSelectedImages] = useState<string[]>([]);
   const [selectedVideos, setSelectedVideos] = useState<string[]>([]);
   const [comment, setComment] = useState('');
@@ -117,12 +117,10 @@ const NewReportScreen: React.FC<
     }
   };
 
-  // Fayl adını URI-dən çıxarır - dublikat yoxlaması üçün
   const getFileName = (uri: string): string => {
     return uri.split('/').pop() || uri;
   };
 
-  // Dublikat yoxlaması - fayl adına görə
   const isDuplicateImage = (newUri: string): boolean => {
     const newFileName = getFileName(newUri);
     return selectedImages.some(
@@ -270,11 +268,24 @@ const NewReportScreen: React.FC<
   };
 
   const handleSubmit = async () => {
-    if (!selectedProblemId || !selectedProblemObj) {
-      setModalMessage('Zəhmət olmasa problem növünü və uyğun terminalı seçin.');
+    if (!selectedTerminalId || !selectedTerminalObj) {
+      setModalMessage('Zəhmət olmasa terminal seçin.');
       setIsModalVisible(true);
       return;
     }
+
+    if (!selectedProblemId || !selectedProblemObj) {
+      setModalMessage('Zəhmət olmasa problem növünü seçin.');
+      setIsModalVisible(true);
+      return;
+    }
+
+    if (!comment.trim()) {
+      setModalMessage('Zəhmət olmasa şərh əlavə edin.');
+      setIsModalVisible(true);
+      return;
+    }
+
     try {
       setLoading(true);
 
@@ -283,7 +294,7 @@ const NewReportScreen: React.FC<
 
       formData.append('PointId', terminalId);
       formData.append('ProblemId', selectedProblemId);
-      formData.append('Description', comment);
+      formData.append('Description', comment.trim());
 
       selectedImages.forEach((uri, index) => {
         formData.append('Images', {
@@ -293,7 +304,6 @@ const NewReportScreen: React.FC<
         } as any);
       });
 
-      // Bütün videoları göndər
       selectedVideos.forEach((uri, index) => {
         formData.append('Video', {
           uri,
@@ -334,193 +344,210 @@ const NewReportScreen: React.FC<
   return (
     <>
       <TopHeader title="Yeni hesabat" />
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}>
-        <View style={styles.container}>
-          <CustomSelectBox
-            label="Terminali seçin"
-            placeholder="Terminal ID"
-            value={selectedTerminalObj?.name}
-            onPress={() => {
-              const mapped =
-                terminalList &&
-                terminalList?.map(t => ({id: t?.pointId, name: t?.pointId}));
-              setModalData(mapped || []);
-              setModalTitle('Terminal seçin');
-              setModalType('terminal');
-              setSelectModalVisible(true);
-            }}
-          />
+      <KeyboardAvoidingView
+        style={{flex: 1}}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}>
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}>
+          <View style={styles.container}>
+            <CustomSelectBox
+              label="Terminali seçin *"
+              placeholder="Terminal ID"
+              value={selectedTerminalObj?.name}
+              onPress={() => {
+                const mapped =
+                  terminalList &&
+                  terminalList?.map(t => ({id: t?.pointId, name: t?.pointId}));
+                setModalData(mapped || []);
+                setModalTitle('Terminal seçin');
+                setModalType('terminal');
+                setSelectModalVisible(true);
+              }}
+            />
 
-          <CustomSelectBox
-            label="Problem növü"
-            placeholder="Problem"
-            value={selectedProblemObj?.name}
-            onPress={() => {
-              const mapped =
-                problemList &&
-                problemList?.map(p => ({
-                  id: p?.id,
-                  name: p?.description,
-                }));
-              setModalData(mapped || []);
-              setModalTitle('Problem növü');
-              setModalType('problem');
-              setSelectModalVisible(true);
-            }}
-          />
-          <UniversalSelectModal
-            visible={selectModalVisible}
-            data={modalData}
-            title={modalTitle}
-            onClose={() => {
-              setSelectModalVisible(false);
-              setModalType(null);
-            }}
-            onSelect={(item: any) => {
-              if (modalType === 'problem') {
-                setSelectedProblemId(item.id);
-                setSelectedProblemObj(item);
-              } else if (modalType === 'terminal') {
-                setSelectedTerminalId(item.id);
-                setSelectedTerminalObj(item);
-              }
-              setSelectModalVisible(false);
-              setModalType(null);
-            }}
-          />
+            <CustomSelectBox
+              label="Problem növü *"
+              placeholder="Problem"
+              value={selectedProblemObj?.name}
+              onPress={() => {
+                const mapped =
+                  problemList &&
+                  problemList?.map(p => ({
+                    id: p?.id,
+                    name: p?.description,
+                  }));
+                setModalData(mapped || []);
+                setModalTitle('Problem növü');
+                setModalType('problem');
+                setSelectModalVisible(true);
+              }}
+            />
+            <UniversalSelectModal
+              visible={selectModalVisible}
+              data={modalData}
+              title={modalTitle}
+              onClose={() => {
+                setSelectModalVisible(false);
+                setModalType(null);
+              }}
+              onSelect={(item: any) => {
+                if (modalType === 'problem') {
+                  setSelectedProblemId(item.id);
+                  setSelectedProblemObj(item);
+                } else if (modalType === 'terminal') {
+                  setSelectedTerminalId(item.id);
+                  setSelectedTerminalObj(item);
+                }
+                setSelectModalVisible(false);
+                setModalType(null);
+              }}
+            />
 
-          <Text style={styles.imageContentLabel}>
-            Terminalın şəklini yükləyin *
-          </Text>
-          <View style={styles.imageContainer}>
-            {selectedImages.map((image, index) => (
-              <View
-                key={`img-${index}-${getFileName(image)}`}
-                style={styles.imageWrapper}>
-                <Image source={{uri: image}} style={styles.imagePreview} />
-                <TouchableOpacity
-                  style={styles.removeImageBtn}
-                  onPress={() => removeImage(index)}>
-                  <SvgImage source={require('assets/icons/svg/x-icon.svg')} />
-                </TouchableOpacity>
-              </View>
-            ))}
-            <TouchableOpacity
-              onPress={() => setImageModalVisible(true)}
-              style={styles.imageContent}>
-              <ImageIcon color="#1269B5" />
-            </TouchableOpacity>
-          </View>
-
-          <TouchableOpacity
-            onPress={() => setVideoModalVisible(true)}
-            style={styles.videoContent}>
-            <VideoIcon />
-            <View>
-              <Text style={styles.videoContentText}>Video əlavə et *</Text>
-              <Text style={styles.videoContentTextSize}>Max 10 MB</Text>
-            </View>
-          </TouchableOpacity>
-
-          {selectedVideos.length > 0 && (
-            <View style={styles.videoContainer}>
-              {selectedVideos.map((videoUri, index) => (
+            <Text style={styles.imageContentLabel}>
+              Terminalın şəklini yükləyin
+            </Text>
+            <View style={styles.imageContainer}>
+              {selectedImages.map((image, index) => (
                 <View
-                  key={`vid-${index}-${getFileName(videoUri)}`}
-                  style={styles.videoWrapper}>
-                  <Image source={{uri: videoUri}} style={styles.videoPreview} />
+                  key={`img-${index}-${getFileName(image)}`}
+                  style={styles.imageWrapper}>
+                  <Image source={{uri: image}} style={styles.imagePreview} />
                   <TouchableOpacity
                     style={styles.removeImageBtn}
-                    onPress={() => removeVideo(index)}>
-                    <SvgImage source={require('assets/icons/svg/x-icon.svg')} />
+                    onPress={() => removeImage(index)}>
+                    <SvgImage
+                      style={{alignSelf: 'center'}}
+                      source={require('assets/icons/svg/x-icon.svg')}
+                    />
                   </TouchableOpacity>
                 </View>
               ))}
+              <TouchableOpacity
+                onPress={() => setImageModalVisible(true)}
+                style={styles.imageContent}>
+                <ImageIcon color="#1269B5" />
+              </TouchableOpacity>
             </View>
-          )}
 
-          <Text style={styles.noteLabel}>Şərh əlavə edin *</Text>
-          <TextInput
-            placeholder="Şərhinizi bura yazın..."
-            style={styles.noteInput}
-            value={comment}
-            onChangeText={setComment}
-            multiline
-            textAlignVertical="top"
+            <TouchableOpacity
+              onPress={() => setVideoModalVisible(true)}
+              style={styles.videoContent}>
+              <VideoIcon />
+              <View>
+                <Text style={styles.videoContentText}>Video əlavə et</Text>
+                <Text style={styles.videoContentTextSize}>Max 10 MB</Text>
+              </View>
+            </TouchableOpacity>
+
+            {selectedVideos.length > 0 && (
+              <View style={styles.videoContainer}>
+                {selectedVideos.map((videoUri, index) => (
+                  <View
+                    key={`vid-${index}-${getFileName(videoUri)}`}
+                    style={styles.videoWrapper}>
+                    <Image
+                      source={{uri: videoUri}}
+                      style={styles.videoPreview}
+                    />
+                    <TouchableOpacity
+                      style={styles.removeImageBtn}
+                      onPress={() => removeVideo(index)}>
+                      <SvgImage
+                        source={require('assets/icons/svg/x-icon.svg')}
+                      />
+                    </TouchableOpacity>
+                  </View>
+                ))}
+              </View>
+            )}
+
+            <Text style={styles.noteLabel}>Şərh əlavə edin *</Text>
+            <TextInput
+              placeholder="Şərhinizi bura yazın..."
+              style={styles.noteInput}
+              value={comment}
+              onChangeText={setComment}
+              multiline
+              textAlignVertical="top"
+            />
+
+            <View style={styles.buttonContainer}>
+              <TouchableOpacity
+                style={styles.secondaryButton}
+                onPress={() => {
+                  navigation.navigate(Routes.home, {
+                    screen: 'Hesabatlar',
+                  });
+                }}>
+                <Text style={styles.secondaryButtonLabel}>Keç</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={handleSubmit}
+                style={styles.primaryButton}
+                disabled={loading}>
+                {loading ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <Text style={styles.primaryButtonText}>Göndər</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          <CustomModal
+            visible={isModalVisible}
+            title="Xəta"
+            description={modalMessage}
+            onConfirm={() => setIsModalVisible(false)}
+            confirmText="Bağla"
           />
 
-          <View style={styles.buttonContainer}>
-            <TouchableOpacity
-              style={styles.secondaryButton}
-              onPress={() => navigation.replace(Routes.home)}>
-              <Text style={styles.secondaryButtonLabel}>Keç</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={handleSubmit}
-              style={styles.primaryButton}
-              disabled={loading}>
-              {loading ? (
-                <ActivityIndicator size="small" color="#fff" />
-              ) : (
-                <Text style={styles.primaryButtonText}>Göndər</Text>
-              )}
-            </TouchableOpacity>
-          </View>
-        </View>
+          <CustomModal
+            visible={isSuccessModalVisible}
+            title="Bildiriş"
+            description="Hesabatınız uğurla göndərildi."
+            confirmText="Bağla"
+            onConfirm={() => {
+              setSuccessModalVisible(false);
+              navigation.replace(Routes.reports);
+            }}
+          />
 
-        <CustomModal
-          visible={isModalVisible}
-          title="Xəta"
-          description={modalMessage}
-          onConfirm={() => setIsModalVisible(false)}
-          confirmText="Bağla"
-        />
+          <FilePickerModal
+            visible={isImageModalVisible}
+            onClose={() => setImageModalVisible(false)}
+            onPickGallery={() => {
+              setImageModalVisible(false);
+              pickImageFromGallery();
+            }}
+            onPickFile={() => {
+              setImageModalVisible(false);
+              Alert.alert('Qeyd', 'Bu funksiya hələlik aktiv deyil.');
+            }}
+            onTakePhoto={() => {
+              setImageModalVisible(false);
+              takePhoto();
+            }}
+          />
 
-        <CustomModal
-          visible={isSuccessModalVisible}
-          title="Bildiriş"
-          description="Hesabatınız uğurla göndərildi."
-          confirmText="Bağla"
-          onConfirm={() => {
-            setSuccessModalVisible(false);
-            navigation.replace(Routes.reports);
-          }}
-        />
-
-        <FilePickerModal
-          visible={isImageModalVisible}
-          onClose={() => setImageModalVisible(false)}
-          onPickGallery={() => {
-            setImageModalVisible(false);
-            pickImageFromGallery();
-          }}
-          onPickFile={() => {
-            setImageModalVisible(false);
-            Alert.alert('Qeyd', 'Bu funksiya hələlik aktiv deyil.');
-          }}
-          onTakePhoto={() => {
-            setImageModalVisible(false);
-            takePhoto();
-          }}
-        />
-
-        <VideoPickerModal
-          visible={isVideoModalVisible}
-          onClose={() => setVideoModalVisible(false)}
-          onPickGallery={() => {
-            setVideoModalVisible(false);
-            pickVideoFromGallery();
-          }}
-          onRecordVideo={() => {
-            setVideoModalVisible(false);
-            recordVideo();
-          }}
-        />
-      </ScrollView>
+          <VideoPickerModal
+            visible={isVideoModalVisible}
+            onClose={() => setVideoModalVisible(false)}
+            onPickGallery={() => {
+              setVideoModalVisible(false);
+              pickVideoFromGallery();
+            }}
+            onRecordVideo={() => {
+              setVideoModalVisible(false);
+              recordVideo();
+            }}
+          />
+        </ScrollView>
+      </KeyboardAvoidingView>
     </>
   );
 };
@@ -665,15 +692,14 @@ const styles = StyleSheet.create({
   },
   removeImageBtn: {
     position: 'absolute',
-    top: -5,
-    right: -5,
+    top: -8,
+    right: -8,
     backgroundColor: '#2D64AF',
-    borderRadius: 12,
+    borderRadius: 10,
     width: 20,
-    display: 'flex',
+    height: 20,
     justifyContent: 'center',
     alignItems: 'center',
-    height: 20,
   },
   customPicker: {
     height: 50,

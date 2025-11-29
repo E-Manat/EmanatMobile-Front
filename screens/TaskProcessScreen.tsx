@@ -46,6 +46,7 @@ const TaskProcessScreen: React.FC<
     useState(false);
   const [successShareModalVisible, setSuccessShareModalVisible] =
     useState(false);
+  const [shareLocationLoading, setShareLocationLoading] = useState(false);
 
   useEffect(() => {
     const restore = async () => {
@@ -91,59 +92,6 @@ const TaskProcessScreen: React.FC<
     };
   }, [step, timerActive]);
 
-  const getLocation = async (): Promise<{
-    latitude: number;
-    longitude: number;
-  } | null> => {
-    return new Promise(async resolve => {
-      const success = (position: any) => {
-        const {latitude, longitude} = position.coords;
-        resolve({latitude, longitude});
-      };
-
-      const error = (err: any) => {
-        console.error('❌ Koordinat xətası:', err.message);
-        resolve(null);
-      };
-
-      try {
-        if (Platform.OS === 'android') {
-          const granted = await PermissionsAndroid.requestMultiple([
-            PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-            PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION,
-          ]);
-
-          const fineGranted =
-            granted['android.permission.ACCESS_FINE_LOCATION'] ===
-            PermissionsAndroid.RESULTS.GRANTED;
-          const coarseGranted =
-            granted['android.permission.ACCESS_COARSE_LOCATION'] ===
-            PermissionsAndroid.RESULTS.GRANTED;
-
-          if (fineGranted || coarseGranted) {
-            Geolocation.getCurrentPosition(success, error, {
-              enableHighAccuracy: true,
-              timeout: 15000,
-              maximumAge: 1000,
-            });
-          } else {
-            Alert.alert('❗ GPS icazəsi verilməyib');
-            resolve(null);
-          }
-        } else {
-          Geolocation.getCurrentPosition(success, error, {
-            enableHighAccuracy: true,
-            timeout: 15000,
-            maximumAge: 1000,
-          });
-        }
-      } catch (e) {
-        console.error('❌ getLocation funksiyasında xəta:', e);
-        resolve(null);
-      }
-    });
-  };
-
   const startRoute = async () => {
     try {
       setLoading(true);
@@ -159,6 +107,7 @@ const TaskProcessScreen: React.FC<
       setLoading(false);
     }
   };
+
   const completeTask = async () => {
     setCompleteTaskLoading(true);
     try {
@@ -229,11 +178,61 @@ const TaskProcessScreen: React.FC<
     const wazeUrl = `waze://?q=${encodedAddress}&navigate=yes`;
     const fallbackUrl = `https://waze.com/ul?q=${encodedAddress}`;
 
-    const canOpen = await Linking.canOpenURL(wazeUrl);
-    if (canOpen) {
-      Linking.openURL(wazeUrl);
-    } else {
-      Linking.openURL(fallbackUrl);
+    try {
+      await Linking.openURL(wazeUrl);
+    } catch (error) {
+      await Linking.openURL(fallbackUrl);
+    }
+  };
+
+  const getLocation = async (): Promise<{
+    latitude: number;
+    longitude: number;
+  } | null> => {
+    try {
+      if (Platform.OS === 'android') {
+        const granted = await PermissionsAndroid.requestMultiple([
+          PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+          PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION,
+        ]);
+
+        const fineGranted =
+          granted['android.permission.ACCESS_FINE_LOCATION'] ===
+          PermissionsAndroid.RESULTS.GRANTED;
+        const coarseGranted =
+          granted['android.permission.ACCESS_COARSE_LOCATION'] ===
+          PermissionsAndroid.RESULTS.GRANTED;
+
+        if (!fineGranted && !coarseGranted) {
+          Alert.alert('GPS icazəsi verilməyib');
+          return null;
+        }
+      }
+
+      return new Promise(resolve => {
+        Geolocation.getCurrentPosition(
+          position => {
+            const {latitude, longitude} = position.coords;
+            resolve({latitude, longitude});
+          },
+          error => {
+            console.error('Koordinat xətası:', error.message);
+            Alert.alert(
+              'Konum Xətası',
+              'GPS koordinatları əldə edilə bilmədi. Zəhmət olmasa GPS-in aktiv olduğundan əmin olun.',
+            );
+            resolve(null);
+          },
+          {
+            enableHighAccuracy: true,
+            timeout: 20000,
+            maximumAge: 10000,
+          },
+        );
+      });
+    } catch (error) {
+      console.error('getLocation xətası:', error);
+      return null;
     }
   };
 
@@ -301,13 +300,15 @@ const TaskProcessScreen: React.FC<
   };
 
   const sendShareLocation = async () => {
-    setLoading(true);
+    setShareLocationLoading(true);
+    setConfirmShareModalVisible(false);
+
     try {
       const token = await AsyncStorage.getItem('userToken');
       const location = await getLocation();
 
       if (!location) {
-        setConfirmShareModalVisible(false);
+        Alert.alert('Xəta', 'Konum məlumatı əldə edilə bilmədi.');
         return;
       }
 
@@ -328,14 +329,12 @@ const TaskProcessScreen: React.FC<
         throw new Error('Server error');
       }
 
-      setConfirmShareModalVisible(false);
       setSuccessShareModalVisible(true);
     } catch (error) {
       console.error('Konum paylaşma xətası:', error);
-      setConfirmShareModalVisible(false);
       Alert.alert('Xəta', 'Konum paylaşılarkən xəta baş verdi.');
     } finally {
-      setLoading(false);
+      setShareLocationLoading(false);
     }
   };
 
@@ -359,8 +358,13 @@ const TaskProcessScreen: React.FC<
 
           <TouchableOpacity
             style={styles.actionButton}
-            onPress={() => setConfirmShareModalVisible(true)}>
-            <LocationIcon color="#1269B5" width={20} height={20} />
+            onPress={() => setConfirmShareModalVisible(true)}
+            disabled={shareLocationLoading}>
+            {shareLocationLoading ? (
+              <ActivityIndicator color="#1269B5" size="small" />
+            ) : (
+              <LocationIcon color="#1269B5" width={20} height={20} />
+            )}
             <Text style={styles.actionButtonText}>Konumu paylaş</Text>
           </TouchableOpacity>
         </View>
@@ -472,7 +476,6 @@ const TaskProcessScreen: React.FC<
           setFailModalVisible(false);
           await failTask();
         }}
-        // loading={failTaskLoading}
       />
 
       <CustomModal
@@ -483,6 +486,7 @@ const TaskProcessScreen: React.FC<
         cancelText="Xeyr"
         onCancel={() => setConfirmShareModalVisible(false)}
         onConfirm={sendShareLocation}
+        loading={shareLocationLoading}
       />
 
       <CustomModal

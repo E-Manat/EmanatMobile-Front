@@ -1,50 +1,29 @@
-import React, {useCallback, useEffect, useState} from 'react';
-import {
-  View,
-  TextInput,
-  Image,
-  StyleSheet,
-  TouchableOpacity,
-  Text,
-} from 'react-native';
+/* eslint-disable react-hooks/exhaustive-deps */
+import React, {useCallback, useEffect} from 'react';
+import {View, Image, StyleSheet, TouchableOpacity, Text} from 'react-native';
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import {SvgImage} from './SvgImage';
+import {useProfileStore} from 'stores/useProfileStore';
 
 const HomeHeader = () => {
   const navigation = useNavigation<any>();
-  const [profileImage, setProfileImage] = useState(null);
-
-  const loadProfileData = async () => {
-    try {
-      const storedData = await AsyncStorage.getItem('profileData');
-      if (storedData) {
-        const parsedData = JSON.parse(storedData);
-        setProfileImage(parsedData.profileImage);
-        setFirstName(parsedData.firstName || '');
-        setLastName(parsedData.lastName || '');
-      }
-    } catch (error) {}
-  };
-
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
+  const {profile, loadProfile} = useProfileStore();
 
   useEffect(() => {
-    loadProfileData();
+    loadProfile();
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadProfile();
+    }, []),
+  );
 
   const getInitials = (firstName: string, lastName: string) => {
     const first = firstName?.trim()?.[0]?.toUpperCase() || 'S';
     const last = lastName?.trim()?.[0]?.toUpperCase() || 'A';
     return `${first}${last}`;
   };
-
-  useFocusEffect(
-    useCallback(() => {
-      loadProfileData();
-    }, []),
-  );
 
   return (
     <View style={styles.container}>
@@ -59,22 +38,18 @@ const HomeHeader = () => {
         <TouchableOpacity
           style={styles.notificationContainer}
           onPress={() => navigation.navigate('Bildirişlər')}>
-          {/* <Icon name="bell" size={22} color="#2D64AF" /> */}
           <SvgImage source={require('assets/icons/svg/ring.svg')} />
-          {/* <View style={styles.badge}>
-            <Text style={styles.badgeText}>3</Text>
-          </View> */}
         </TouchableOpacity>
       </View>
 
       <View style={styles.box}>
         <TouchableOpacity onPress={() => navigation.navigate('Profil')}>
-          {profileImage ? (
-            <Image source={{uri: profileImage}} style={styles.avatar} />
+          {profile?.profileImage ? (
+            <Image source={{uri: profile.profileImage}} style={styles.avatar} />
           ) : (
             <View style={styles.initialsPlaceholder}>
               <Text style={styles.initialsText}>
-                {getInitials(firstName, lastName)}
+                {getInitials(profile?.firstName || '', profile?.lastName || '')}
               </Text>
             </View>
           )}
@@ -104,32 +79,8 @@ const styles = StyleSheet.create({
     height: 40,
     color: '#2D64AF',
   },
-  searchIcon: {
-    marginRight: 8,
-  },
-  input: {
-    fontSize: 14,
-    color: '#2D64AF',
-    flex: 1,
-  },
   notificationContainer: {
     position: 'relative',
-  },
-  badge: {
-    position: 'absolute',
-    top: -5,
-    right: -5,
-    backgroundColor: '#2D64AF',
-    width: 18,
-    height: 18,
-    borderRadius: '50%',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  badgeText: {
-    color: '#FFF',
-    fontSize: 12,
-    fontWeight: 'bold',
   },
   avatar: {
     width: 40,

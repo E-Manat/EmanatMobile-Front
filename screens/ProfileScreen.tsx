@@ -1,4 +1,5 @@
-import React, {useState, useEffect} from 'react';
+/* eslint-disable react-hooks/exhaustive-deps */
+import React, {useEffect, useState} from 'react';
 import {
   View,
   Text,
@@ -15,83 +16,31 @@ import Toast from 'react-native-toast-message';
 import TopHeader from '../components/TopHeader';
 import {OutIcon, SecurityIcon, UserIcon} from '../assets/icons';
 import CustomModal from '../components/Modal';
-import Config from 'react-native-config';
-import {apiService} from '../services/apiService';
-import {API_ENDPOINTS} from '../services/api_endpoint';
 import {Routes} from '@navigation/routes';
 import {SvgImage} from '@components/SvgImage';
 import {MainStackParamList} from 'types/types';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
+import {useProfileStore} from 'stores/useProfileStore';
 
 const ProfileScreen: React.FC<
   NativeStackScreenProps<MainStackParamList, Routes.profile>
 > = ({navigation}) => {
-  const [phone, setPhone] = useState('');
-  const [email, setEmail] = useState('');
-  const [address, setAddress] = useState('');
-  const [profileImage, setProfileImage] = useState(null);
+  const {profile, loadProfile, clearProfile} = useProfileStore();
   const [modalVisible, setModalVisible] = useState(false);
-  const [isEdited, setIsEdited] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [roleName, setRoleName] = useState('');
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
   const [logoutConfirmModalVisible, setLogoutConfirmModalVisible] =
     useState(false);
 
   useEffect(() => {
-    loadProfileData();
+    loadProfile();
   }, []);
-
-  const loadProfileData = async () => {
-    try {
-      setLoading(true);
-      const token = await AsyncStorage.getItem('userToken');
-      if (!token) {
-        console.warn('Token tapılmadı');
-        return;
-      }
-
-      const result: any = await apiService.get(API_ENDPOINTS.auth.getProfile);
-
-      if (result) {
-        const profileData = {
-          firstName: result.firstName || 'Ad yoxdur',
-          lastName: result.lastName || 'Soyad yoxdur',
-          phone: result.phone || 'N/A',
-          email: result.email || 'example@example.com',
-          address: result.address || 'Ünvan daxil edilməyib',
-          profileImage: result.profileImage || null,
-        };
-
-        setFirstName(profileData.firstName);
-        setLastName(profileData.lastName);
-        setPhone(profileData.phone);
-        setEmail(profileData.email);
-        setAddress(profileData.address);
-        setProfileImage(profileData.profileImage);
-
-        const savedRole = await AsyncStorage.getItem('roleName');
-        if (savedRole === 'Technician') {
-          setRoleName('Texnik');
-        } else {
-          setRoleName('Inkassator');
-        }
-
-        await AsyncStorage.setItem('profileData', JSON.stringify(profileData));
-      }
-    } catch (error) {
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const confirmLogout = async () => {
     try {
+      await clearProfile();
       await AsyncStorage.removeItem('userToken');
       await AsyncStorage.removeItem('isLoggedIn');
       await AsyncStorage.removeItem('userPin');
-
+      await AsyncStorage.removeItem('roleName');
       navigation.replace(Routes.auth as any, {screen: Routes.login} as any);
     } catch (error) {}
   };
@@ -111,15 +60,18 @@ const ProfileScreen: React.FC<
             <View style={styles.profileContainer}>
               <TouchableOpacity onPress={() => setModalVisible(true)}>
                 <View style={styles.imageContainer}>
-                  {profileImage ? (
+                  {profile?.profileImage ? (
                     <Image
-                      source={{uri: profileImage}}
+                      source={{uri: profile.profileImage}}
                       style={styles.profileImage}
                     />
                   ) : (
                     <View style={styles.initialsPlaceholder}>
                       <Text style={styles.initialsText}>
-                        {getInitials(firstName, lastName)}
+                        {getInitials(
+                          profile?.firstName || '',
+                          profile?.lastName || '',
+                        )}
                       </Text>
                     </View>
                   )}
@@ -127,9 +79,9 @@ const ProfileScreen: React.FC<
               </TouchableOpacity>
               <View>
                 <Text style={styles.profileName}>
-                  {firstName} {lastName}
+                  {profile?.firstName} {profile?.lastName}
                 </Text>
-                <Text style={styles.profileRoleName}>{roleName}</Text>
+                <Text style={styles.profileRoleName}>{profile?.roleName}</Text>
               </View>
             </View>
             <View style={styles.profileInfo}>
@@ -184,8 +136,8 @@ const ProfileScreen: React.FC<
                 onPress={() => setModalVisible(false)}>
                 <Image
                   source={
-                    profileImage
-                      ? {uri: profileImage}
+                    profile?.profileImage
+                      ? {uri: profile.profileImage}
                       : require('../assets/img/default.jpg')
                   }
                   style={styles.modalImage}
@@ -221,19 +173,6 @@ const styles = StyleSheet.create({
     gap: 15,
     flexDirection: 'column',
     fontFamily: 'DM Sans',
-  },
-  header: {
-    backgroundColor: '#2D64AF',
-    height: 80,
-    paddingHorizontal: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  headerText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#fff',
   },
   profileContainer: {
     width: '100%',
@@ -273,14 +212,6 @@ const styles = StyleSheet.create({
     fontWeight: '400',
     lineHeight: 21,
   },
-  cameraIcon: {
-    position: 'absolute',
-    bottom: 10,
-    right: -7,
-    backgroundColor: '#2D64AF',
-    borderRadius: 15,
-    padding: 8,
-  },
   profileName: {
     color: '#063A66',
     fontFamily: 'DMSans-Bold',
@@ -288,36 +219,6 @@ const styles = StyleSheet.create({
     fontStyle: 'normal',
     fontWeight: '600',
     lineHeight: 24,
-  },
-  inputContainer: {
-    marginHorizontal: 20,
-    marginTop: 15,
-  },
-  label: {
-    fontSize: 14,
-    color: '#555',
-  },
-  inputWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderBottomWidth: 1,
-    borderBottomColor: '#F5F5F5',
-  },
-  input: {
-    flex: 1,
-    fontSize: 16,
-  },
-  saveButton: {
-    backgroundColor: '#1269B5',
-    padding: 15,
-    borderRadius: 10,
-    margin: 20,
-    alignItems: 'center',
-  },
-  saveButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
   },
   modalContainer: {
     flex: 1,
@@ -347,9 +248,6 @@ const styles = StyleSheet.create({
     fontStyle: 'normal',
     flex: 1,
   },
-  arrowIcon: {
-    marginLeft: 8,
-  },
   profileInfo: {
     width: '100%',
     display: 'flex',
@@ -372,10 +270,6 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontStyle: 'normal',
     fontWeight: '400',
-  },
-  box: {
-    display: 'flex',
-    flexDirection: 'row',
   },
   gap: {},
 });
