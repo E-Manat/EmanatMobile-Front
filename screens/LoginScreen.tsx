@@ -25,8 +25,8 @@ const LoginScreen: React.FC<
   const [modalVisible, setModalVisible] = useState(false);
   const [modalTitle, setModalTitle] = useState('');
   const [modalDescription, setModalDescription] = useState('');
-  const [email, setEmail] = useState(__DEV__ ? 'majacik824@docsfy.com' : '');
-  const [password, setPassword] = useState(__DEV__ ? 'Emanat2025!' : '');
+  const [email, setEmail] = useState(__DEV__ ? 'hilalovali0501@gmail.com' : '');
+  const [password, setPassword] = useState(__DEV__ ? 'Salam123!' : '');
   const [showPassword, setShowPassword] = useState(false);
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');

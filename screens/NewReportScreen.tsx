@@ -12,7 +12,12 @@ import {
   Platform,
   KeyboardAvoidingView,
 } from 'react-native';
-import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
+import {
+  CameraOptions,
+  ImageLibraryOptions,
+  launchCamera,
+  launchImageLibrary,
+} from 'react-native-image-picker';
 import {apiService} from '../services/apiService';
 import TopHeader from '../components/TopHeader';
 import {ImageIcon, VideoIcon} from '../assets/icons';
@@ -26,7 +31,13 @@ import {MainStackParamList} from 'types/types';
 import {Routes} from '@navigation/routes';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {SvgImage} from '@components/SvgImage';
-import {request, PERMISSIONS, RESULTS} from 'react-native-permissions';
+import {
+  request,
+  PERMISSIONS,
+  RESULTS,
+  check,
+  openSettings,
+} from 'react-native-permissions';
 
 const NewReportScreen: React.FC<
   NativeStackScreenProps<MainStackParamList, Routes.newReport>
@@ -106,10 +117,99 @@ const NewReportScreen: React.FC<
     try {
       if (Platform.OS === 'android') {
         const result = await request(PERMISSIONS.ANDROID.CAMERA);
+        if (result === RESULTS.BLOCKED || result === RESULTS.DENIED) {
+          Alert.alert(
+            'İcazə tələb olunur',
+            'Kamera istifadə etmək üçün Parametrlər > eManat > Kamera bölməsindən icazə verin',
+            [
+              {text: 'Ləğv et', style: 'cancel'},
+              {text: 'Parametrlərə keç', onPress: () => openSettings()},
+            ],
+          );
+          return false;
+        }
         return result === RESULTS.GRANTED;
       } else {
-        const result = await request(PERMISSIONS.IOS.CAMERA);
+        const cameraResult = await check(PERMISSIONS.IOS.CAMERA);
+
+        if (cameraResult === RESULTS.DENIED) {
+          const requestResult = await request(PERMISSIONS.IOS.CAMERA);
+          return requestResult === RESULTS.GRANTED;
+        }
+
+        if (cameraResult === RESULTS.BLOCKED) {
+          Alert.alert(
+            'İcazə tələb olunur',
+            'Kamera istifadə etmək üçün Parametrlər > eManat > Kamera bölməsindən icazə verin',
+            [
+              {text: 'Ləğv et', style: 'cancel'},
+              {text: 'Parametrlərə keç', onPress: () => openSettings()},
+            ],
+          );
+          return false;
+        }
+
+        return cameraResult === RESULTS.GRANTED;
+      }
+    } catch (error) {
+      console.error('Permission error:', error);
+      return false;
+    }
+  };
+
+  const requestPhotoLibraryPermission = async () => {
+    try {
+      if (Platform.OS === 'android') {
+        const result = await request(PERMISSIONS.ANDROID.READ_MEDIA_IMAGES);
+        if (result === RESULTS.BLOCKED || result === RESULTS.DENIED) {
+          Alert.alert(
+            'İcazə tələb olunur',
+            'Qalereya istifadə etmək üçün Parametrlər > eManat > Foto və videolar bölməsindən icazə verin',
+            [
+              {text: 'Ləğv et', style: 'cancel'},
+              {text: 'Parametrlərə keç', onPress: () => openSettings()},
+            ],
+          );
+          return false;
+        }
         return result === RESULTS.GRANTED;
+      } else {
+        const photoResult = await check(PERMISSIONS.IOS.PHOTO_LIBRARY);
+
+        if (photoResult === RESULTS.DENIED) {
+          const requestResult = await request(PERMISSIONS.IOS.PHOTO_LIBRARY);
+          if (requestResult === RESULTS.BLOCKED) {
+            Alert.alert(
+              'İcazə tələb olunur',
+              'Qalereya istifadə etmək üçün Parametrlər > eManat > Fotolar bölməsindən icazə verin',
+              [
+                {text: 'Ləğv et', style: 'cancel'},
+                {text: 'Parametrlərə keç', onPress: () => openSettings()},
+              ],
+            );
+            return false;
+          }
+          return (
+            requestResult === RESULTS.GRANTED ||
+            requestResult === RESULTS.LIMITED
+          );
+        }
+
+        if (photoResult === RESULTS.BLOCKED) {
+          Alert.alert(
+            'İcazə tələb olunur',
+            'Qalereya istifadə etmək üçün Parametrlər > eManat > Fotolar bölməsindən icazə verin',
+            [
+              {text: 'Ləğv et', style: 'cancel'},
+              {text: 'Parametrlərə keç', onPress: () => openSettings()},
+            ],
+          );
+          return false;
+        }
+
+        return (
+          photoResult === RESULTS.GRANTED || photoResult === RESULTS.LIMITED
+        );
       }
     } catch (error) {
       console.error('Permission error:', error);
@@ -142,11 +242,11 @@ const NewReportScreen: React.FC<
       return;
     }
 
-    const options: any = {
+    const options: CameraOptions = {
       mediaType: 'photo',
       cameraType: 'back',
       quality: 0.8,
-      saveToPhotos: true,
+      saveToPhotos: false,
       includeBase64: false,
     };
 
@@ -155,7 +255,8 @@ const NewReportScreen: React.FC<
         return;
       }
       if (response.errorCode) {
-        Alert.alert('Xəta', 'Kamera açılmadı');
+        Alert.alert('Xəta', response.errorMessage || 'Kamera açılmadı');
+        console.log('Camera error:', response.errorCode, response.errorMessage);
         return;
       }
       const uri = response.assets?.[0]?.uri;
@@ -169,8 +270,14 @@ const NewReportScreen: React.FC<
     });
   };
 
-  const pickImageFromGallery = () => {
-    const options: any = {
+  const pickImageFromGallery = async () => {
+    const hasPermission = await requestPhotoLibraryPermission();
+    if (!hasPermission) {
+      Alert.alert('İcazə', 'Qalereya istifadə etmək üçün icazə verin');
+      return;
+    }
+
+    const options: ImageLibraryOptions = {
       mediaType: 'photo',
       quality: 0.8,
       selectionLimit: 1,
@@ -181,7 +288,12 @@ const NewReportScreen: React.FC<
         return;
       }
       if (response.errorCode) {
-        Alert.alert('Xəta', 'Şəkil seçilə bilmədi');
+        Alert.alert('Xəta', response.errorMessage || 'Şəkil seçilə bilmədi');
+        console.log(
+          'Gallery error:',
+          response.errorCode,
+          response.errorMessage,
+        );
         return;
       }
 
@@ -196,8 +308,14 @@ const NewReportScreen: React.FC<
     });
   };
 
-  const pickVideoFromGallery = () => {
-    const options: any = {
+  const pickVideoFromGallery = async () => {
+    const hasPermission = await requestPhotoLibraryPermission();
+    if (!hasPermission) {
+      Alert.alert('İcazə', 'Qalereya istifadə etmək üçün icazə verin');
+      return;
+    }
+
+    const options: ImageLibraryOptions = {
       mediaType: 'video',
       quality: 0.8,
       videoQuality: 'high',
@@ -209,7 +327,8 @@ const NewReportScreen: React.FC<
         return;
       }
       if (response.errorCode) {
-        Alert.alert('Xəta', 'Video seçilə bilmədi');
+        Alert.alert('Xəta', response.errorMessage || 'Video seçilə bilmədi');
+        console.log('Video error:', response.errorCode, response.errorMessage);
         return;
       }
 
@@ -231,12 +350,12 @@ const NewReportScreen: React.FC<
       return;
     }
 
-    const options: any = {
+    const options: CameraOptions = {
       mediaType: 'video',
       quality: 0.8,
       videoQuality: 'high',
       durationLimit: 60,
-      saveToPhotos: true,
+      saveToPhotos: false,
     };
 
     launchCamera(options, response => {
@@ -244,7 +363,12 @@ const NewReportScreen: React.FC<
         return;
       }
       if (response.errorCode) {
-        Alert.alert('Xəta', 'Video çəkilə bilmədi');
+        Alert.alert('Xəta', response.errorMessage || 'Video çəkilə bilmədi');
+        console.log(
+          'Video record error:',
+          response.errorCode,
+          response.errorMessage,
+        );
         return;
       }
 

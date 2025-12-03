@@ -10,7 +10,7 @@ import {
   TouchableWithoutFeedback,
   TextStyle,
 } from 'react-native';
-import {useNavigation, useRoute} from '@react-navigation/native';
+import {useRoute} from '@react-navigation/native';
 import {apiService} from '../services/apiService';
 import {
   BriefCaseIcon,
@@ -34,6 +34,8 @@ const DetailedReportScreen: React.FC<
 
   const [detailedReport, setDetailedReport] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchReportById = async () => {
@@ -67,10 +69,8 @@ const DetailedReportScreen: React.FC<
     </View>
   );
 
-  const [modalVisible, setModalVisible] = useState(false);
-  const [selectedImage, setSelectedImage] = useState(null);
-  const openModal = (image: any) => {
-    setSelectedImage(image);
+  const openModal = (imageUrl: string) => {
+    setSelectedImage(imageUrl);
     setModalVisible(true);
   };
 
@@ -89,6 +89,7 @@ const DetailedReportScreen: React.FC<
         return 'Naməlum';
     }
   };
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     const day = String(date.getDate()).padStart(2, '0');
@@ -101,6 +102,7 @@ const DetailedReportScreen: React.FC<
   };
 
   const {top} = useSafeAreaInsets();
+
   return (
     <View style={[styles.container, {paddingTop: top}]}>
       <View style={styles.header}>
@@ -135,7 +137,7 @@ const DetailedReportScreen: React.FC<
           'Status',
           getStatusText(detailedReport?.reportStatus),
           {
-            color: detailedReport?.status === 0 ? 'red' : '#29C0B9',
+            color: detailedReport?.reportStatus === 0 ? 'red' : '#29C0B9',
             fontWeight: 'bold',
             fontFamily: 'DMSans-Regular',
           },
@@ -155,7 +157,7 @@ const DetailedReportScreen: React.FC<
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={{gap: 10, marginTop: 10}}
           renderItem={({item}) => (
-            <TouchableOpacity onPress={() => openModal({uri: item.imageUrl})}>
+            <TouchableOpacity onPress={() => openModal(item.imageUrl)}>
               <Image source={{uri: item.imageUrl}} style={styles.image} />
             </TouchableOpacity>
           )}
@@ -170,10 +172,12 @@ const DetailedReportScreen: React.FC<
         <TouchableWithoutFeedback onPress={closeModal}>
           <View style={styles.modalBackground}>
             <View style={styles.modalContent}>
-              <Image
-                source={selectedImage ? {uri: selectedImage} : undefined}
-                style={styles.modalImage}
-              />
+              {selectedImage && (
+                <Image
+                  source={{uri: selectedImage}}
+                  style={styles.modalImage}
+                />
+              )}
               <TouchableOpacity style={styles.closeButton} onPress={closeModal}>
                 <Text style={styles.closeButtonText}>Bağla</Text>
               </TouchableOpacity>
@@ -254,7 +258,7 @@ const styles = StyleSheet.create({
   closeButtonText: {
     color: '#fff',
     fontSize: 14,
-    fontFamily: 'DMSans-Regula',
+    fontFamily: 'DMSans-Regular',
   },
   modalContent: {
     backgroundColor: '#fff',
