@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import {
   View,
   Text,
@@ -25,19 +25,43 @@ const LoginScreen: React.FC<
   const [modalVisible, setModalVisible] = useState(false);
   const [modalTitle, setModalTitle] = useState('');
   const [modalDescription, setModalDescription] = useState('');
-  const [email, setEmail] = useState(__DEV__ ? 'hilalovali0501@gmail.com' : '');
-  const [password, setPassword] = useState(__DEV__ ? 'Salam123!' : '');
+  const [email, setEmail] = useState(__DEV__ ? '' : '');
+  const [password, setPassword] = useState(__DEV__ ? '' : '');
   const [showPassword, setShowPassword] = useState(false);
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [focusedInput, setFocusedInput] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      const remembered = await AsyncStorage.getItem('rememberMe');
+      if (remembered === 'true') {
+        const savedEmail = await AsyncStorage.getItem('rememberedEmail');
+        const savedPassword = await AsyncStorage.getItem('rememberedPassword');
+        if (savedEmail) {
+          setEmail(savedEmail);
+        }
+        if (savedPassword) {
+          setPassword(savedPassword);
+        }
+        setRememberMe(true);
+      }
+    })();
+  }, []);
 
   const handleLogin = async () => {
     setEmailError('');
     setPasswordError('');
 
+    console.log('=== LOGIN BAŞLADI ===');
+    console.log('Email:', email);
+    console.log('Password length:', password.length);
+    console.log('Remember Me:', rememberMe);
+
     if (!email || !password) {
+      console.log('XƏTA: Boş sahələr');
       setModalTitle('Xəta');
       setModalDescription('Zəhmət olmasa bütün sahələri doldurun!');
       setModalVisible(true);
@@ -46,30 +70,65 @@ const LoginScreen: React.FC<
 
     setLoading(true);
     try {
+      console.log('API çağırışı göndərilir...');
+      console.log('URL:', 'https://ekassa-api.e-portal.az/auth/Auth/Login');
+      console.log('Request body:', JSON.stringify({email, password}));
+
       const result: any = await axios.post(
         'https://ekassa-api.e-portal.az/auth/Auth/Login',
         {email, password},
       );
 
+      console.log('API cavabı alındı:', result.status);
+      console.log('Response data:', JSON.stringify(result.data, null, 2));
+
+      if (rememberMe) {
+        console.log('Məlumatlar yadda saxlanılır...');
+        await AsyncStorage.multiSet([
+          ['rememberMe', 'true'],
+          ['rememberedEmail', email],
+          ['rememberedPassword', password],
+        ]);
+      } else {
+        console.log('Yadda saxlanmış məlumatlar silinir...');
+        await AsyncStorage.multiRemove([
+          'rememberMe',
+          'rememberedEmail',
+          'rememberedPassword',
+        ]);
+      }
+
+      console.log('Token və user məlumatları saxlanılır...');
       await AsyncStorage.multiSet([
         ['userToken', result.data.accessToken],
+        ['refreshToken', result.data.refreshToken],
         ['userId', result.data.userId],
         ['expiresAt', result.data.expires],
         ['isLoggedIn', 'true'],
       ]);
       await AsyncStorage.setItem('roleName', result.data.roleName);
 
+      console.log('Naviqasiya edilir...');
       navigation.replace(Routes.main as any, {screen: Routes.pinSetup} as any);
+      console.log('=== LOGIN UĞURLU ===');
     } catch (error: any) {
+      console.log('=== LOGIN XƏTASI ===');
+      console.log('Error full:', error);
+      console.log('Error response:', error?.response);
+      console.log('Error status:', error?.response?.status);
+      console.log('Error data:', error?.response?.data);
+      console.log('Error message:', error?.message);
+
       setModalTitle('Xəta');
       setModalDescription(
         error?.response?.status === 400
           ? 'Email və ya şifrə yanlışdır.'
-          : 'Şəbəkə xətası baş verdi.',
+          : `Şəbəkə xətası: ${error?.message || 'Naməlum xəta'}`,
       );
       setModalVisible(true);
     } finally {
       setLoading(false);
+      console.log('=== LOGIN PROSESI TAMAMLANDI ===');
     }
   };
 
@@ -143,6 +202,20 @@ const LoginScreen: React.FC<
         ) : null}
 
         <TouchableOpacity
+          style={styles.rememberRow}
+          onPress={() => setRememberMe(prev => !prev)}
+          activeOpacity={0.8}>
+          <SvgImage
+            source={
+              rememberMe
+                ? require('assets/icons/svg/checkbox-checked.svg')
+                : require('assets/icons/svg/checkbox-unchecked.svg')
+            }
+          />
+          <Text style={styles.rememberText}>Məni xatırla</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
           onPress={() => navigation.navigate(Routes.forgotPassword)}>
           <Text style={styles.forgotPassword}>Şifrəni unutmusuz?</Text>
         </TouchableOpacity>
@@ -169,7 +242,6 @@ const LoginScreen: React.FC<
     </KeyboardAvoidingView>
   );
 };
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -218,6 +290,17 @@ const styles = StyleSheet.create({
     paddingRight: 12,
     alignItems: 'center',
     alignSelf: 'stretch',
+  },
+  rememberRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 16,
+    gap: 10,
+  },
+  rememberText: {
+    color: '#424242',
+    fontSize: 14,
+    fontFamily: 'DMSans-Regular',
   },
   forgotPassword: {
     alignSelf: 'flex-end',

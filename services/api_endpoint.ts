@@ -7,11 +7,14 @@ const NOTİFİCATİON_BASE = '/notification';
 export const API_ENDPOINTS = {
   auth: {
     login: `${AUTH_BASE}/Auth/Login`,
+    refreshToken: `${AUTH_BASE}/Auth/RefreshToken`,
+    logout: `${AUTH_BASE}/Auth/Logout`,
     getProfile: `${AUTH_BASE}/User/GetProfile`,
     sendEmail: `${AUTH_BASE}/Auth/SendEmail`,
     confirmPassword: `${AUTH_BASE}/Auth/ConfirmPassword`,
     confirmOtp: `${AUTH_BASE}/Auth/ConfirmOtp`,
   },
+
   mobile: {
     collector: {
       getAll: `${MOBILE_BASE}/CollectorTask/GetAll`,

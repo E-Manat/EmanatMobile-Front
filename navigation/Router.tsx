@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {View, StyleSheet} from 'react-native';
+import {View, StyleSheet, AppState} from 'react-native';
 import {NavigationContainer} from '@react-navigation/native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
@@ -8,7 +8,7 @@ import Toast from 'react-native-toast-message';
 import {AuthRouter} from './Auth.Router';
 import {MainRouter} from './Main.Router';
 import {checkTokenExpiry} from '../utils/checkTokenExpiry';
-import {setNavigation} from '../services/apiService';
+import {setNavigation, validateTokenWithBackend} from '../services/apiService';
 import {navigationRef} from '@utils/navigationUtils';
 import {defaultScreenOptions} from '@utils/navigationConfig';
 
@@ -20,19 +20,32 @@ const Router = () => {
 
   const checkAuth = async () => {
     try {
-      const isExpired = await checkTokenExpiry();
-      if (isExpired) {
-        await AsyncStorage.multiRemove([
-          'userToken',
-          'expiresAt',
-          'isLoggedIn',
-        ]);
+      const token = await AsyncStorage.getItem('userToken');
+      const refreshToken = await AsyncStorage.getItem('refreshToken');
+      
+      if (!token || !refreshToken) {
         setIsAuthenticated(false);
+        setLoading(false);
+        return;
+      }
+
+      // First check local expiry
+      const isExpired = await checkTokenExpiry();
+      
+      // If expired or close to expiry, validate with backend
+      // This will catch cases where token was deleted from backend
+      if (isExpired) {
+        console.log('Token expired locally, backend ilə yoxlanılır...');
+        const isValid = await validateTokenWithBackend();
+        setIsAuthenticated(isValid);
       } else {
-        const token = await AsyncStorage.getItem('userToken');
-        setIsAuthenticated(!!token);
+        // Even if not expired, validate with backend to catch deleted tokens
+        console.log('Token backend ilə yoxlanılır...');
+        const isValid = await validateTokenWithBackend();
+        setIsAuthenticated(isValid);
       }
     } catch (error) {
+      console.error('Auth check xətası:', error);
       setIsAuthenticated(false);
     } finally {
       setLoading(false);
@@ -41,6 +54,26 @@ const Router = () => {
 
   useEffect(() => {
     checkAuth();
+
+    // Listen for app state changes to validate token when app comes to foreground
+    const subscription = AppState.addEventListener('change', async nextAppState => {
+      if (nextAppState === 'active') {
+        const token = await AsyncStorage.getItem('userToken');
+        const refreshToken = await AsyncStorage.getItem('refreshToken');
+        
+        if (token && refreshToken) {
+          console.log('App foreground-a gəldi, token yoxlanılır...');
+          const isValid = await validateTokenWithBackend();
+          if (!isValid) {
+            setIsAuthenticated(false);
+          }
+        }
+      }
+    });
+
+    return () => {
+      subscription.remove();
+    };
   }, []);
 
   useEffect(() => {

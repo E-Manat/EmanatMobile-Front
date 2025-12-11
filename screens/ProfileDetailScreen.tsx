@@ -8,59 +8,28 @@ import {
 } from 'react-native';
 import React, {useEffect, useState} from 'react';
 import TopHeader from '../components/TopHeader';
-import {apiService} from '../services/apiService';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import {API_ENDPOINTS} from '../services/api_endpoint';
-import {MainStackParamList} from 'types/types';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
+import {MainStackParamList} from 'types/types';
 import {Routes} from '@navigation/routes';
+import {useProfileStore} from 'stores/useProfileStore';
 
 const ProfileDetailScreen: React.FC<
   NativeStackScreenProps<MainStackParamList, Routes.profileDetail>
 > = ({navigation}) => {
-  const [phone, setPhone] = useState('');
-  const [email, setEmail] = useState('');
-  const [address, setAddress] = useState('');
-  const [profileImage, setProfileImage] = useState(null);
+  const {profile, loading, loadProfile} = useProfileStore();
+
   const [modalVisible, setModalVisible] = useState(false);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadProfileData();
+    if (!profile) {
+      loadProfile();
+    }
   }, []);
 
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
+  if (loading || !profile) {
+    return <View style={styles.container} />;
+  }
 
-  const loadProfileData = async () => {
-    try {
-      setLoading(true);
-
-      const result: any = await apiService.get(API_ENDPOINTS.auth.getProfile);
-
-      if (result) {
-        setFirstName(result.firstName || 'Ad yoxdur');
-        setLastName(result.lastName || 'Soyad yoxdur');
-        setPhone(result.phone || 'N/A');
-        setEmail(result.email || 'example@example.com');
-        setAddress(result.address || 'Ünvan daxil edilməyib');
-        setProfileImage(result.profileImage || null);
-
-        const profileData = {
-          firstName: result.firstName || 'Ad yoxdur',
-          lastName: result.lastName || 'Soyad yoxdur',
-          phone: result.phone || 'N/A',
-          email: result.email || 'example@example.com',
-          address: result.address || 'Ünvan daxil edilməyib',
-          profileImage: result.profileImage || null,
-        };
-
-        await AsyncStorage.setItem('profileData', JSON.stringify(profileData));
-        setLoading(false);
-      }
-    } catch (error) {
-    }
-  };
   return (
     <>
       <View style={styles.container}>
@@ -71,35 +40,41 @@ const ProfileDetailScreen: React.FC<
             <View style={styles.imageContainer}>
               <Image
                 source={
-                  profileImage
-                    ? {uri: profileImage}
+                  profile.profileImage
+                    ? {uri: profile.profileImage}
                     : require('../assets/img/default.jpg')
                 }
                 style={styles.profileImage}
               />
             </View>
           </TouchableOpacity>
+
           <View>
             <Text style={styles.profileName}>
-              {firstName} {lastName}
+              {profile.firstName} {profile.lastName}
             </Text>
-            {/* <Text style={styles.profileRoleName}>Inkassator</Text> */}
           </View>
         </View>
 
         <View style={styles.inputContainer}>
           <Text style={styles.label}>Əlaqə nömrəsi</Text>
           <View style={styles.inputWrapper}>
-            <TextInput style={styles.input} placeholder="Nömrə" value={phone} />
-            {/* <Icon name="edit-2" size={20} color="gray" /> */}
+            <TextInput
+              style={styles.input}
+              value={profile.phone}
+              editable={false}
+            />
           </View>
         </View>
 
         <View style={styles.inputContainer}>
           <Text style={styles.label}>Email</Text>
           <View style={styles.inputWrapper}>
-            <TextInput style={styles.input} placeholder="Email" value={email} />
-            {/* <Icon name="edit-2" size={20} color="gray" /> */}
+            <TextInput
+              style={styles.input}
+              value={profile.email}
+              editable={false}
+            />
           </View>
         </View>
 
@@ -108,10 +83,9 @@ const ProfileDetailScreen: React.FC<
           <View style={styles.inputWrapper}>
             <TextInput
               style={styles.input}
-              placeholder="Ünvan"
-              value={address}
+              value={profile.address}
+              editable={false}
             />
-            {/* <Icon name="edit-2" size={20} color="gray" /> */}
           </View>
         </View>
       </View>

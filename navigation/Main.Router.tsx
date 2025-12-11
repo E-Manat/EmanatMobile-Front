@@ -46,7 +46,7 @@ export const MainRouter: React.FC = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [updateRequired, setUpdateRequired] = useState(false);
 
-  const version = 2;
+  const version = 3;
 
   const checkForUpdate = async () => {
     try {

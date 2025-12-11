@@ -181,7 +181,6 @@ const ReportsScreen: React.FC<
             navigation.navigate(Routes.newReport, {terminalId: null})
           }
         />
-
         <View style={styles.searchContainer}>
           <SvgImage
             style={styles.searchIcon}
