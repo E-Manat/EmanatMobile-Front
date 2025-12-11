@@ -55,13 +55,7 @@ const LoginScreen: React.FC<
     setEmailError('');
     setPasswordError('');
 
-    console.log('=== LOGIN BAŞLADI ===');
-    console.log('Email:', email);
-    console.log('Password length:', password.length);
-    console.log('Remember Me:', rememberMe);
-
     if (!email || !password) {
-      console.log('XƏTA: Boş sahələr');
       setModalTitle('Xəta');
       setModalDescription('Zəhmət olmasa bütün sahələri doldurun!');
       setModalVisible(true);
@@ -70,27 +64,18 @@ const LoginScreen: React.FC<
 
     setLoading(true);
     try {
-      console.log('API çağırışı göndərilir...');
-      console.log('URL:', 'https://ekassa-api.e-portal.az/auth/Auth/Login');
-      console.log('Request body:', JSON.stringify({email, password}));
-
       const result: any = await axios.post(
         'https://ekassa-api.e-portal.az/auth/Auth/Login',
         {email, password},
       );
 
-      console.log('API cavabı alındı:', result.status);
-      console.log('Response data:', JSON.stringify(result.data, null, 2));
-
       if (rememberMe) {
-        console.log('Məlumatlar yadda saxlanılır...');
         await AsyncStorage.multiSet([
           ['rememberMe', 'true'],
           ['rememberedEmail', email],
           ['rememberedPassword', password],
         ]);
       } else {
-        console.log('Yadda saxlanmış məlumatlar silinir...');
         await AsyncStorage.multiRemove([
           'rememberMe',
           'rememberedEmail',
@@ -98,7 +83,6 @@ const LoginScreen: React.FC<
         ]);
       }
 
-      console.log('Token və user məlumatları saxlanılır...');
       await AsyncStorage.multiSet([
         ['userToken', result.data.accessToken],
         ['refreshToken', result.data.refreshToken],
@@ -108,17 +92,8 @@ const LoginScreen: React.FC<
       ]);
       await AsyncStorage.setItem('roleName', result.data.roleName);
 
-      console.log('Naviqasiya edilir...');
       navigation.replace(Routes.main as any, {screen: Routes.pinSetup} as any);
-      console.log('=== LOGIN UĞURLU ===');
     } catch (error: any) {
-      console.log('=== LOGIN XƏTASI ===');
-      console.log('Error full:', error);
-      console.log('Error response:', error?.response);
-      console.log('Error status:', error?.response?.status);
-      console.log('Error data:', error?.response?.data);
-      console.log('Error message:', error?.message);
-
       setModalTitle('Xəta');
       setModalDescription(
         error?.response?.status === 400
@@ -128,7 +103,6 @@ const LoginScreen: React.FC<
       setModalVisible(true);
     } finally {
       setLoading(false);
-      console.log('=== LOGIN PROSESI TAMAMLANDI ===');
     }
   };
 

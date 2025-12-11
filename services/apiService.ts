@@ -27,22 +27,21 @@ const refreshAccessToken = async (): Promise<string | null> => {
   try {
     const refreshToken = await AsyncStorage.getItem('refreshToken');
     if (!refreshToken) {
-      console.log('Refresh token yoxdur, logout edilir...');
       await logout();
       return null;
     }
-
-    console.log('Access token yenilənir...');
-    const response = await fetch(`${Config.API_URL}${API_ENDPOINTS.auth.refreshToken}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
+    const response = await fetch(
+      `${Config.API_URL}${API_ENDPOINTS.auth.refreshToken}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({token: refreshToken}),
       },
-      body: JSON.stringify({token: refreshToken}),
-    });
+    );
 
     if (!response.ok) {
-      console.log('Refresh token expired, logout edilir...');
       await logout();
       return null;
     }
@@ -59,7 +58,6 @@ const refreshAccessToken = async (): Promise<string | null> => {
         await AsyncStorage.setItem('refreshToken', data.refreshToken);
       }
 
-      console.log('Access token yeniləndi');
       return data.accessToken;
     }
 
@@ -74,7 +72,7 @@ const refreshAccessToken = async (): Promise<string | null> => {
 const logout = async () => {
   try {
     const refreshToken = await AsyncStorage.getItem('refreshToken');
-    
+
     if (refreshToken) {
       try {
         await fetch(`${Config.API_URL}${API_ENDPOINTS.auth.logout}`, {
@@ -108,16 +106,15 @@ const logout = async () => {
 
 const getToken = async (): Promise<string> => {
   let token = await AsyncStorage.getItem('userToken');
-  
+
   if (!token) {
     await logout();
     throw new Error('Token yoxdur');
   }
 
   const isExpired = await checkTokenExpiry();
-  
+
   if (isExpired) {
-    console.log('Access token expired, yenilənir...');
     const newToken = await refreshAccessToken();
     if (!newToken) {
       throw new Error('Token yenilənmədi');
@@ -154,9 +151,8 @@ const request = async (
 
   if (res.status === 401 && requiresAuth) {
     // Try to refresh token once more in case it expired between check and request
-    console.log('401 cavabı alındı, token yenilənir...');
     const newToken = await refreshAccessToken();
-    
+
     if (newToken) {
       // Retry the request with new token
       headers.Authorization = `Bearer ${newToken}`;
@@ -165,7 +161,7 @@ const request = async (
         headers,
         body: isMultipart ? body : body ? JSON.stringify(body) : undefined,
       });
-      
+
       if (res.status === 401) {
         await logout();
         throw new Error('Session expired');
@@ -193,40 +189,40 @@ export const validateTokenWithBackend = async (): Promise<boolean> => {
   try {
     const refreshToken = await AsyncStorage.getItem('refreshToken');
     const accessToken = await AsyncStorage.getItem('userToken');
-    
+
     if (!refreshToken || !accessToken) {
-      console.log('Token yoxdur, logout edilir...');
       await logout();
       return false;
     }
 
     const isExpired = await checkTokenExpiry();
-    
+
     // If token is expired, try to refresh it
     if (isExpired) {
       const newToken = await refreshAccessToken();
       return newToken !== null;
     }
-    
+
     // If token is not expired, validate refresh token by attempting to refresh
     // This will catch cases where refresh token was deleted from backend
-    console.log('Token expired deyil, refresh token backend ilə yoxlanılır...');
-    const response = await fetch(`${Config.API_URL}${API_ENDPOINTS.auth.refreshToken}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
+    const response = await fetch(
+      `${Config.API_URL}${API_ENDPOINTS.auth.refreshToken}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({token: refreshToken}),
       },
-      body: JSON.stringify({token: refreshToken}),
-    });
+    );
 
     if (!response.ok) {
-      console.log('Refresh token backend-də yoxdur, logout edilir...');
       await logout();
       return false;
     }
 
     const data = await response.json();
-    
+
     // Update tokens if new ones are provided
     if (data.accessToken) {
       await AsyncStorage.multiSet([

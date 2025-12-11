@@ -256,7 +256,6 @@ const NewReportScreen: React.FC<
       }
       if (response.errorCode) {
         Alert.alert('Xəta', response.errorMessage || 'Kamera açılmadı');
-        console.log('Camera error:', response.errorCode, response.errorMessage);
         return;
       }
       const uri = response.assets?.[0]?.uri;
@@ -289,11 +288,6 @@ const NewReportScreen: React.FC<
       }
       if (response.errorCode) {
         Alert.alert('Xəta', response.errorMessage || 'Şəkil seçilə bilmədi');
-        console.log(
-          'Gallery error:',
-          response.errorCode,
-          response.errorMessage,
-        );
         return;
       }
 
@@ -328,7 +322,6 @@ const NewReportScreen: React.FC<
       }
       if (response.errorCode) {
         Alert.alert('Xəta', response.errorMessage || 'Video seçilə bilmədi');
-        console.log('Video error:', response.errorCode, response.errorMessage);
         return;
       }
 
@@ -364,11 +357,6 @@ const NewReportScreen: React.FC<
       }
       if (response.errorCode) {
         Alert.alert('Xəta', response.errorMessage || 'Video çəkilə bilmədi');
-        console.log(
-          'Video record error:',
-          response.errorCode,
-          response.errorMessage,
-        );
         return;
       }
 

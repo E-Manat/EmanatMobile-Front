@@ -57,9 +57,6 @@ const TerminallarScreen: React.FC<
         const data = await apiService.get(
           API_ENDPOINTS.mobile.terminal.getCollectorAreaTerminals,
         );
-        console.log('====================================');
-        console.log('Fetched terminals data:', data);
-        console.log('====================================');
 
         setTerminals(data);
       } catch (error) {

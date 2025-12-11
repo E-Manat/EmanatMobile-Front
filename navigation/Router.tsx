@@ -22,7 +22,7 @@ const Router = () => {
     try {
       const token = await AsyncStorage.getItem('userToken');
       const refreshToken = await AsyncStorage.getItem('refreshToken');
-      
+
       if (!token || !refreshToken) {
         setIsAuthenticated(false);
         setLoading(false);
@@ -31,16 +31,14 @@ const Router = () => {
 
       // First check local expiry
       const isExpired = await checkTokenExpiry();
-      
+
       // If expired or close to expiry, validate with backend
       // This will catch cases where token was deleted from backend
       if (isExpired) {
-        console.log('Token expired locally, backend ilə yoxlanılır...');
         const isValid = await validateTokenWithBackend();
         setIsAuthenticated(isValid);
       } else {
         // Even if not expired, validate with backend to catch deleted tokens
-        console.log('Token backend ilə yoxlanılır...');
         const isValid = await validateTokenWithBackend();
         setIsAuthenticated(isValid);
       }
@@ -56,20 +54,22 @@ const Router = () => {
     checkAuth();
 
     // Listen for app state changes to validate token when app comes to foreground
-    const subscription = AppState.addEventListener('change', async nextAppState => {
-      if (nextAppState === 'active') {
-        const token = await AsyncStorage.getItem('userToken');
-        const refreshToken = await AsyncStorage.getItem('refreshToken');
-        
-        if (token && refreshToken) {
-          console.log('App foreground-a gəldi, token yoxlanılır...');
-          const isValid = await validateTokenWithBackend();
-          if (!isValid) {
-            setIsAuthenticated(false);
+    const subscription = AppState.addEventListener(
+      'change',
+      async nextAppState => {
+        if (nextAppState === 'active') {
+          const token = await AsyncStorage.getItem('userToken');
+          const refreshToken = await AsyncStorage.getItem('refreshToken');
+
+          if (token && refreshToken) {
+            const isValid = await validateTokenWithBackend();
+            if (!isValid) {
+              setIsAuthenticated(false);
+            }
           }
         }
-      }
-    });
+      },
+    );
 
     return () => {
       subscription.remove();
