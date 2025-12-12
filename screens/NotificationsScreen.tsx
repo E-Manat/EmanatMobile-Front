@@ -9,7 +9,7 @@ import {
   Image,
   ActivityIndicator,
 } from 'react-native';
-import {useFocusEffect, useNavigation} from '@react-navigation/native';
+import {useFocusEffect} from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Sound from 'react-native-sound';
 import Toast from 'react-native-toast-message';
@@ -559,9 +559,9 @@ const NotificationsScreen: React.FC<
         <Modal visible={true} transparent animationType="fade">
           <View style={styles.modalContainer}>
             <View style={styles.modalContent}>
-              <Image
-                source={require('../assets/img/emanat.png')}
+              <SvgImage
                 style={styles.image}
+                source={require('assets/icons/mpay.svg')}
               />
               <Text style={styles.modalTitle}>
                 {selectedNotification.title}
@@ -752,7 +752,7 @@ const styles = StyleSheet.create({
     width: 50,
     height: 57,
     objectFit: 'cover',
-    marginBottom: 5,
+    marginBottom: 20,
     alignSelf: 'center',
   },
   noResult: {

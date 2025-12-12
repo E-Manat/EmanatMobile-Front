@@ -28,10 +28,7 @@ const HomeHeader = () => {
   return (
     <View style={styles.container}>
       <View style={styles.searchContainer}>
-        <Image
-          source={require('../assets/img/emanatFull.png')}
-          style={styles.image}
-        />
+        <SvgImage source={require('assets/icons/mpay.svg')} />
       </View>
 
       <View style={styles.box}>

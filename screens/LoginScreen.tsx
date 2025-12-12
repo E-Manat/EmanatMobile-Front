@@ -106,6 +106,16 @@ const LoginScreen: React.FC<
     }
   };
 
+  const ONBOARDING_KEY = '@hasSeenOnboarding';
+
+  const clearOnboardingFlag = async () => {
+    await AsyncStorage.removeItem(ONBOARDING_KEY);
+  };
+
+  useEffect(() => {
+    clearOnboardingFlag();
+  }, []);
+
   return (
     <KeyboardAvoidingView
       style={styles.container}
@@ -115,9 +125,9 @@ const LoginScreen: React.FC<
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}>
-        <Image
-          source={require('../assets/img/logo.png')}
-          style={styles.profileImage}
+        <SvgImage
+          source={require('assets/icons/login-logo.svg')}
+          style={{marginBottom: 40}}
         />
         <Text style={styles.title}>Xoş gəlmisiniz!</Text>
         <Text style={styles.subtitle}>

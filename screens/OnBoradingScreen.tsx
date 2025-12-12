@@ -14,6 +14,7 @@ import CustomModal from '../components/Modal';
 import {AuthStackParamList} from 'types/types';
 import {Routes} from '@navigation/routes';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
+import {SvgImage} from '@components/SvgImage';
 
 const ONBOARDING_KEY = '@hasSeenOnboarding';
 
@@ -63,9 +64,9 @@ const OnBoardingScreen: React.FC<
     <>
       <View style={styles.container}>
         <View style={styles.splashContainer}>
-          <Image
-            source={require('../assets/img/splashImage.png')}
-            style={styles.emanatImage}
+          <SvgImage
+            source={require('assets/icons/splash.svg')}
+            style={styles.splashImage}
           />
           <Image
             source={require('../assets/img/inkassator.png')}
@@ -127,7 +128,7 @@ const styles = StyleSheet.create({
     height: 450,
     resizeMode: 'contain',
     alignSelf: 'center',
-    marginTop: 80,
+    marginTop: 50,
   },
   title: {
     color: '#FFFFFF',
