@@ -11,7 +11,9 @@ export const setNavigation = (nav: any) => {
 const checkTokenExpiry = async (): Promise<boolean> => {
   try {
     const expiresAt = await AsyncStorage.getItem('expiresAt');
-    if (!expiresAt) return true;
+    if (!expiresAt) {
+      return true;
+    }
 
     const now = new Date();
     const expiryDate = new Date(expiresAt);
@@ -26,6 +28,9 @@ const checkTokenExpiry = async (): Promise<boolean> => {
 const refreshAccessToken = async (): Promise<string | null> => {
   try {
     const refreshToken = await AsyncStorage.getItem('refreshToken');
+    console.log('================dads====================');
+    console.log(refreshToken);
+    console.log('====================================');
     if (!refreshToken) {
       await logout();
       return null;
@@ -106,6 +111,9 @@ const logout = async () => {
 
 const getToken = async (): Promise<string> => {
   let token = await AsyncStorage.getItem('userToken');
+  console.log('====================================');
+  console.log(token);
+  console.log('====================================');
 
   if (!token) {
     await logout();

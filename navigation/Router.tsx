@@ -23,6 +23,11 @@ const Router = () => {
       const token = await AsyncStorage.getItem('userToken');
       const refreshToken = await AsyncStorage.getItem('refreshToken');
 
+      console.log('==================token==================');
+      console.log(token);
+      console.log('===============refreshToken=====================');
+      console.log(refreshToken);
+
       if (!token || !refreshToken) {
         setIsAuthenticated(false);
         setLoading(false);

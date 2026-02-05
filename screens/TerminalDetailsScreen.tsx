@@ -28,6 +28,9 @@ const TerminalDetailsScreen: React.FC<
   const [taskInProgress, setTaskInProgress] = useState(false);
   const [customModalVisible, setCustomModalVisible] = useState(false);
   const [roleName, setRoleName] = useState<string | null>(null);
+  console.log('====================================');
+  console.log(taskData);
+  console.log('====================================');
 
   useEffect(() => {
     const loadRoleName = async () => {
@@ -37,6 +40,17 @@ const TerminalDetailsScreen: React.FC<
 
     loadRoleName();
   }, []);
+
+  console.log('====================================');
+  console.log(roleName);
+  console.log('====================================');
+
+  const handleContinueTask = () => {
+    navigation.navigate(Routes.taskProcess, {
+      taskData,
+      startTime: new Date().getTime(),
+    });
+  };
 
   const handleStartTask = async () => {
     if (taskInProgress) {
@@ -109,7 +123,9 @@ const TerminalDetailsScreen: React.FC<
           return 'Yoldadır';
         case 3:
           return 'İnkassasiya prosesi gedir';
-        case 4:
+        case 9:
+          return 'Uğursuz əməliyyat';
+        case 10:
           return 'Tapşırıq tamamlanıb';
         case 5:
           return 'Tapşırıq ləğv olunub';
@@ -126,6 +142,8 @@ const TerminalDetailsScreen: React.FC<
           return 'Texniki iş prosesi gedir';
         case 4:
           return 'Texniki iş prosesi tamamlandı';
+        case 9:
+          return 'Uğursuz əməliyyat';
         case 5:
           return 'Tapşırıq ləğv olunub';
         default:
@@ -160,11 +178,13 @@ const TerminalDetailsScreen: React.FC<
       case 0:
         return '#9E9E9E';
       case 4:
+      case 10:
         return '#38C172';
       case 1:
       case 2:
       case 3:
         return '#FFB600';
+      case 9:
       case 5:
         return '#F03E5C';
       default:
@@ -373,6 +393,12 @@ const TerminalDetailsScreen: React.FC<
             style={styles.startButton}
             onPress={() => setConfirmVisible(true)}>
             <Text style={styles.startButtonText}>Marşruta başla</Text>
+          </TouchableOpacity>
+        ) : taskData.status === 1 || taskData.status === 3 ? (
+          <TouchableOpacity
+            style={styles.startButton}
+            onPress={handleContinueTask}>
+            <Text style={styles.startButtonText}>Tapşırığa davam et</Text>
           </TouchableOpacity>
         ) : (
           <View

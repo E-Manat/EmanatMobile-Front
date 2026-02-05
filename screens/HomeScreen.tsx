@@ -1,7 +1,6 @@
 import React, {use, useEffect, useState} from 'react';
-import {ScrollView, View, StyleSheet} from 'react-native';
+import {View, StyleSheet} from 'react-native';
 import MenuCard from '../components/MenuCard';
-import Banner from '../components/Banner';
 import {globalStyles} from '../globalStyles';
 import HomeHeader from '../components/HomeHeader';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -12,23 +11,24 @@ import {useIsFocused} from '@react-navigation/native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {MainStackParamList} from 'types/types';
 import {Routes} from '@navigation/routes';
+import {apiService} from '../services/apiService';
+import {API_ENDPOINTS} from '../services/api_endpoint';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 const HomeScreen: React.FC<
   NativeStackScreenProps<MainStackParamList, Routes.home>
 > = () => {
-  useEffect(() => {
-    const logAllAsyncStorage = async () => {
-      try {
-        const keys = await AsyncStorage.getAllKeys();
-        const result = await AsyncStorage.multiGet(keys);
-      } catch (error) {
-        console.error('Error reading AsyncStorage:', error);
-      }
-    };
+  // useEffect(() => {
+  //   const clearAllAsyncStorage = async () => {
+  //     try {
+  //       await AsyncStorage.clear();
+  //     } catch (error) {
+  //       console.error('Error clearing AsyncStorage:', error);
+  //     }
+  //   };
 
-    logAllAsyncStorage();
-  }, []);
+  //   clearAllAsyncStorage();
+  // }, []);
 
   const isFocused = useIsFocused();
   const [taskData, setTaskData] = useState<any>(null);
@@ -36,9 +36,31 @@ const HomeScreen: React.FC<
   const fetchTaskData = async () => {
     try {
       const task = await AsyncStorage.getItem('currentTask');
-      setTaskData(task ? JSON.parse(task) : null);
+      if (task) {
+        setTaskData(JSON.parse(task));
+      }
+
+      const userRole = await AsyncStorage.getItem('roleName');
+      const endpointBase =
+        userRole === 'Collector'
+          ? API_ENDPOINTS.mobile.collector.getAll
+          : API_ENDPOINTS.mobile.technician.getAll;
+
+      const response: any = await apiService.get(endpointBase);
+      const inProgressCount = response?.inProgressTaskCount ?? 0;
+
+      if (inProgressCount > 0) {
+        const activeTask = response.tasks.find((t: any) => t.status === 1);
+        if (activeTask) {
+          setTaskData(activeTask);
+          await AsyncStorage.setItem('currentTask', JSON.stringify(activeTask));
+        }
+      } else {
+        setTaskData(null);
+        await AsyncStorage.removeItem('currentTask');
+      }
     } catch (error) {
-      console.error('Error reading task from AsyncStorage:', error);
+      console.error('Error reading task from AsyncStorage or API:', error);
     }
   };
 
@@ -48,6 +70,9 @@ const HomeScreen: React.FC<
     }
   }, [isFocused]);
   const {top} = useSafeAreaInsets();
+  console.log('==========================taskDatataskData==========');
+  console.log(taskData);
+  console.log('====================================');
 
   return (
     <View style={[globalStyles.container, {paddingTop: top}]}>

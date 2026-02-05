@@ -19,4 +19,5 @@ export enum Routes {
   taskProcess = 'TaskProcess',
   pinSetup = 'PinSetup',
   onboarding = 'OnBoarding',
+  currentTask = 'currentTask',
 }

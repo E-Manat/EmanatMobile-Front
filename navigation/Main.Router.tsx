@@ -31,6 +31,7 @@ import {defaultScreenOptions} from '@utils/navigationConfig';
 import {MainStackParamList} from 'types/types';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {isAndroid} from 'constants/common.consts';
+import CurrentTaskScreen from '@screens/CurrentTaskScreen';
 
 const MainStack = createNativeStackNavigator<MainStackParamList>();
 
@@ -194,10 +195,13 @@ export const MainRouter: React.FC = () => {
           component={TerminalDetailsScreen}
         />
         <MainStack.Screen name={Routes.pinSetup} component={PinSetupScreen} />
+        <MainStack.Screen
+          name={Routes.currentTask}
+          component={CurrentTaskScreen}
+        />
       </MainStack.Navigator>
-      {!['Splash', 'Login'].includes(currentRouteName) && hasCurrentTask && (
-        <DraggableTaskButton />
-      )}
+      {!['Splash', 'Login', 'PinSetup'].includes(currentRouteName) &&
+        hasCurrentTask && <DraggableTaskButton />}
     </SafeAreaView>
   );
 };

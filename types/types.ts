@@ -28,6 +28,7 @@ export type MainStackParamList = {
   [Routes.detailedReport]: {report: any};
   [Routes.taskProcess]: {taskData?: any; startTime?: any};
   [Routes.pinSetup]: undefined;
+  [Routes.currentTask]: undefined;
 };
 
 export type AppNavigation = NativeStackNavigationProp<

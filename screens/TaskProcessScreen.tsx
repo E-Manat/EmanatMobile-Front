@@ -31,6 +31,9 @@ const TaskProcessScreen: React.FC<
   NativeStackScreenProps<MainStackParamList, Routes.taskProcess>
 > = ({navigation, route}) => {
   const {taskData} = route?.params || {};
+  const terminal = taskData?.terminal || taskData;
+  const terminalPointId = terminal?.pointId;
+  const terminalAddress = terminal?.address;
 
   const [step, setStep] = useState(0);
   const [taskTimer, setTaskTimer] = useState(0);
@@ -168,7 +171,7 @@ const TaskProcessScreen: React.FC<
   };
 
   const openInWaze = async () => {
-    const address = taskData?.terminal?.address;
+    const address = terminalAddress;
     if (!address) {
       Alert.alert('Xəta', 'Ünvan tapılmadı.');
       return;
@@ -377,11 +380,9 @@ const TaskProcessScreen: React.FC<
             />
             <View style={styles.terminalInfo}>
               <Text style={styles.terminalTitle}>
-                Terminal ID: {taskData?.terminal?.pointId}
+                Terminal ID: {terminalPointId}
               </Text>
-              <Text style={styles.terminalSubtitle}>
-                {taskData?.terminal?.address}
-              </Text>
+              <Text style={styles.terminalSubtitle}>{terminalAddress}</Text>
             </View>
           </View>
 

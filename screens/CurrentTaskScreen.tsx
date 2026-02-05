@@ -53,11 +53,10 @@ interface TasksPayload {
   inProgressTaskCount: number;
   completedTaskCount: number;
 }
-const TasksScreen: React.FC<
-  NativeStackScreenProps<MainStackParamList, Routes.tasks>
+const CurrentTaskScreen: React.FC<
+  NativeStackScreenProps<MainStackParamList, Routes.currentTask>
 > = ({navigation, route}) => {
-  const [selectedFilter, setSelectedFilter] =
-    useState<string>('İcra olunmamış');
+  const [selectedFilter, setSelectedFilter] = useState<string>('İcra olunan');
 
   const getStatusColor = (status: number) => {
     switch (status) {
@@ -123,8 +122,8 @@ const TasksScreen: React.FC<
 
   useFocusEffect(
     useCallback(() => {
-      fetchTasks(0);
-      setSelectedFilter('İcra olunmamış');
+      fetchTasks(1);
+      setSelectedFilter('İcra olunan');
     }, []),
   );
 
@@ -475,7 +474,7 @@ const TasksScreen: React.FC<
   return (
     <View style={styles.container}>
       <TopHeader
-        title="Tapşırıqlar"
+        title="İcra olunan"
         variant="tapsiriq"
         onRightPress={() => fetchTasks(getStatusFromFilter(selectedFilter))}
         rightIconComponent={<RefreshIcon color="#fff" width={30} />}
@@ -484,7 +483,7 @@ const TasksScreen: React.FC<
         data={sortedTasks}
         keyExtractor={item => item.id}
         renderItem={renderTask}
-        ListHeaderComponent={ListHeaderComponent}
+        // ListHeaderComponent={ListHeaderComponent}
         ListEmptyComponent={ListEmptyComponent}
         ListFooterComponent={<View style={{height: 20}} />}
         refreshing={refreshing}
@@ -495,7 +494,7 @@ const TasksScreen: React.FC<
   );
 };
 
-export default TasksScreen;
+export default CurrentTaskScreen;
 
 const styles = StyleSheet.create({
   container: {
@@ -506,6 +505,7 @@ const styles = StyleSheet.create({
   flatListContent: {
     flexGrow: 1,
     paddingHorizontal: 15,
+    paddingTop: 50,
   },
   header: {
     backgroundColor: '#2D64AF',
