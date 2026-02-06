@@ -23,27 +23,18 @@ const Router = () => {
       const token = await AsyncStorage.getItem('userToken');
       const refreshToken = await AsyncStorage.getItem('refreshToken');
 
-      console.log('==================token==================');
-      console.log(token);
-      console.log('===============refreshToken=====================');
-      console.log(refreshToken);
-
       if (!token || !refreshToken) {
         setIsAuthenticated(false);
         setLoading(false);
         return;
       }
 
-      // First check local expiry
       const isExpired = await checkTokenExpiry();
 
-      // If expired or close to expiry, validate with backend
-      // This will catch cases where token was deleted from backend
       if (isExpired) {
         const isValid = await validateTokenWithBackend();
         setIsAuthenticated(isValid);
       } else {
-        // Even if not expired, validate with backend to catch deleted tokens
         const isValid = await validateTokenWithBackend();
         setIsAuthenticated(isValid);
       }
@@ -58,7 +49,6 @@ const Router = () => {
   useEffect(() => {
     checkAuth();
 
-    // Listen for app state changes to validate token when app comes to foreground
     const subscription = AppState.addEventListener(
       'change',
       async nextAppState => {

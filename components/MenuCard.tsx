@@ -58,9 +58,12 @@ const MenuCard: React.FC<Props> = ({
         } else if (inProgressCount === 1) {
           const activeTask = response?.tasks?.find((t: any) => t.status === 1);
           if (activeTask) {
-            navigation.navigate(Routes.taskProcess as never, {
-              taskData: activeTask,
-            } as never);
+            navigation.navigate(
+              Routes.taskProcess as never,
+              {
+                taskData: activeTask,
+              } as never,
+            );
             return;
           }
         }
@@ -76,9 +79,6 @@ const MenuCard: React.FC<Props> = ({
 
     navigation.navigate(screenName as never);
   };
-  console.log('===============screenName=====================');
-  console.log(screenName, taskData);
-  console.log('====================================');
 
   return (
     <TouchableOpacity style={styles.card} onPress={handlePress}>

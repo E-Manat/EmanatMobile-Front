@@ -70,9 +70,6 @@ const HomeScreen: React.FC<
     }
   }, [isFocused]);
   const {top} = useSafeAreaInsets();
-  console.log('==========================taskDatataskData==========');
-  console.log(taskData);
-  console.log('====================================');
 
   return (
     <View style={[globalStyles.container, {paddingTop: top}]}>

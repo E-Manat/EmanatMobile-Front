@@ -28,9 +28,6 @@ const checkTokenExpiry = async (): Promise<boolean> => {
 const refreshAccessToken = async (): Promise<string | null> => {
   try {
     const refreshToken = await AsyncStorage.getItem('refreshToken');
-    console.log('================dads====================');
-    console.log(refreshToken);
-    console.log('====================================');
     if (!refreshToken) {
       await logout();
       return null;
@@ -111,9 +108,6 @@ const logout = async () => {
 
 const getToken = async (): Promise<string> => {
   let token = await AsyncStorage.getItem('userToken');
-  console.log('====================================');
-  console.log(token);
-  console.log('====================================');
 
   if (!token) {
     await logout();
@@ -158,11 +152,9 @@ const request = async (
   });
 
   if (res.status === 401 && requiresAuth) {
-    // Try to refresh token once more in case it expired between check and request
     const newToken = await refreshAccessToken();
 
     if (newToken) {
-      // Retry the request with new token
       headers.Authorization = `Bearer ${newToken}`;
       res = await fetch(`${Config.API_URL}${endpoint}`, {
         method,
@@ -192,7 +184,6 @@ const request = async (
   return data;
 };
 
-// Export function to validate token with backend
 export const validateTokenWithBackend = async (): Promise<boolean> => {
   try {
     const refreshToken = await AsyncStorage.getItem('refreshToken');
@@ -205,14 +196,11 @@ export const validateTokenWithBackend = async (): Promise<boolean> => {
 
     const isExpired = await checkTokenExpiry();
 
-    // If token is expired, try to refresh it
     if (isExpired) {
       const newToken = await refreshAccessToken();
       return newToken !== null;
     }
 
-    // If token is not expired, validate refresh token by attempting to refresh
-    // This will catch cases where refresh token was deleted from backend
     const response = await fetch(
       `${Config.API_URL}${API_ENDPOINTS.auth.refreshToken}`,
       {
@@ -231,7 +219,6 @@ export const validateTokenWithBackend = async (): Promise<boolean> => {
 
     const data = await response.json();
 
-    // Update tokens if new ones are provided
     if (data.accessToken) {
       await AsyncStorage.multiSet([
         ['userToken', data.accessToken],

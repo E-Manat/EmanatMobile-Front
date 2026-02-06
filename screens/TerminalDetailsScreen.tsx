@@ -28,9 +28,6 @@ const TerminalDetailsScreen: React.FC<
   const [taskInProgress, setTaskInProgress] = useState(false);
   const [customModalVisible, setCustomModalVisible] = useState(false);
   const [roleName, setRoleName] = useState<string | null>(null);
-  console.log('====================================');
-  console.log(taskData);
-  console.log('====================================');
 
   useEffect(() => {
     const loadRoleName = async () => {
@@ -40,10 +37,6 @@ const TerminalDetailsScreen: React.FC<
 
     loadRoleName();
   }, []);
-
-  console.log('====================================');
-  console.log(roleName);
-  console.log('====================================');
 
   const handleContinueTask = () => {
     navigation.navigate(Routes.taskProcess, {
@@ -212,7 +205,6 @@ const TerminalDetailsScreen: React.FC<
     };
 
     fetchTask();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isFocused]);
 
   return (
@@ -311,9 +303,7 @@ const TerminalDetailsScreen: React.FC<
               </Text>
             </View>
           </View>
-
           <View style={styles.verticalLine} />
-
           <View style={styles.timelineItem}>
             <View style={styles.iconWrapper}>
               <SvgImage
@@ -325,13 +315,11 @@ const TerminalDetailsScreen: React.FC<
             </View>
             <View style={styles.textWrapper}>
               <Text style={styles.detailText}>
-                {taskData?.terminal?.responsiblePersonPhone || '012 404 48 88'}
+                {taskData?.terminal?.responsiblePersonPhone || 'Qeyd olunmayıb'}
               </Text>
             </View>
           </View>
-
           {/* {taskData.taskDuration && <View style={styles.verticalLine} />}
-
           {taskData.taskDuration && (
             <View style={styles.timelineItem}>
               <View style={styles.iconWrapper}>
@@ -347,9 +335,7 @@ const TerminalDetailsScreen: React.FC<
               </View>
             </View>
           )} */}
-
           {true && <View style={styles.verticalLine} />}
-
           {true && (
             <View style={styles.timelineItem}>
               <View style={styles.iconWrapper}>
@@ -369,7 +355,6 @@ const TerminalDetailsScreen: React.FC<
             </View>
           )}
         </View>
-
         <CustomModal
           visible={confirmVisible}
           title="Tapşırığa başlamaq istəyirsiniz?"
@@ -379,7 +364,6 @@ const TerminalDetailsScreen: React.FC<
           onConfirm={handleStartTask}
           onCancel={() => setConfirmVisible(false)}
         />
-
         <CustomModal
           visible={customModalVisible}
           title="Xəta!"
