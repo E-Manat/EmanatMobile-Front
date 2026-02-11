@@ -1,5 +1,4 @@
 import {
-  Image,
   StyleSheet,
   Text,
   TextInput,
@@ -7,64 +6,30 @@ import {
   View,
 } from 'react-native';
 import React, {useEffect, useState} from 'react';
+import FastImage from 'react-native-fast-image';
 import TopHeader from '../components/TopHeader';
-import {useNavigation} from '@react-navigation/native';
-import {apiService} from '../services/apiService';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import {StackNavigationProp} from '@react-navigation/stack';
-import {RootStackParamList} from '../App';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
+import {MainStackParamList} from 'types/types';
+import {Routes} from '@navigation/routes';
+import {useProfileStore} from 'stores/useProfileStore';
 
-type NavigationProp = StackNavigationProp<RootStackParamList, 'Profil'>;
-const ProfileDetailScreen = () => {
-  const [phone, setPhone] = useState('');
-  const [email, setEmail] = useState('');
-  const [address, setAddress] = useState('');
-  const [profileImage, setProfileImage] = useState(null);
+const ProfileDetailScreen: React.FC<
+  NativeStackScreenProps<MainStackParamList, Routes.profileDetail>
+> = ({navigation}) => {
+  const {profile, loading, loadProfile} = useProfileStore();
+
   const [modalVisible, setModalVisible] = useState(false);
-  const [loading, setLoading] = useState(true);
-
-  const navigation = useNavigation<NavigationProp>();
 
   useEffect(() => {
-    loadProfileData();
+    if (!profile) {
+      loadProfile();
+    }
   }, []);
 
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
+  if (loading || !profile) {
+    return <View style={styles.container} />;
+  }
 
-  const loadProfileData = async () => {
-    try {
-      setLoading(true);
-
-      const result: any = await apiService.get('/auth/User/GetProfile');
-      console.log('Profil məlumatları:', result);
-
-      if (result) {
-        setFirstName(result.firstName || 'Ad yoxdur');
-        setLastName(result.lastName || 'Soyad yoxdur');
-        setPhone(result.phone || 'N/A');
-        setEmail(result.email || 'example@example.com');
-        setAddress(result.address || 'Ünvan daxil edilməyib');
-        setProfileImage(result.profileImage || null);
-
-        const profileData = {
-          firstName: result.firstName || 'Ad yoxdur',
-          lastName: result.lastName || 'Soyad yoxdur',
-          phone: result.phone || 'N/A',
-          email: result.email || 'example@example.com',
-          address: result.address || 'Ünvan daxil edilməyib',
-          profileImage: result.profileImage || null,
-        };
-
-        await AsyncStorage.setItem('profileData', JSON.stringify(profileData));
-        setLoading(false);
-      } else {
-        console.log('API-dən uğursuz cavab:', result);
-      }
-    } catch (error) {
-      console.log('Məlumat yükləmə xətası:', error);
-    }
-  };
   return (
     <>
       <View style={styles.container}>
@@ -73,37 +38,43 @@ const ProfileDetailScreen = () => {
         <View style={styles.profileContainer}>
           <TouchableOpacity onPress={() => setModalVisible(true)}>
             <View style={styles.imageContainer}>
-              <Image
+              <FastImage
                 source={
-                  profileImage
-                    ? {uri: profileImage}
+                  profile.profileImage
+                    ? {uri: profile.profileImage, priority: FastImage.priority.normal}
                     : require('../assets/img/default.jpg')
                 }
                 style={styles.profileImage}
               />
             </View>
           </TouchableOpacity>
+
           <View>
             <Text style={styles.profileName}>
-              {firstName} {lastName}
+              {profile.firstName} {profile.lastName}
             </Text>
-            {/* <Text style={styles.profileRoleName}>Inkassator</Text> */}
           </View>
         </View>
 
         <View style={styles.inputContainer}>
           <Text style={styles.label}>Əlaqə nömrəsi</Text>
           <View style={styles.inputWrapper}>
-            <TextInput style={styles.input} placeholder="Nömrə" value={phone} />
-            {/* <Icon name="edit-2" size={20} color="gray" /> */}
+            <TextInput
+              style={styles.input}
+              value={profile.phone}
+              editable={false}
+            />
           </View>
         </View>
 
         <View style={styles.inputContainer}>
           <Text style={styles.label}>Email</Text>
           <View style={styles.inputWrapper}>
-            <TextInput style={styles.input} placeholder="Email" value={email} />
-            {/* <Icon name="edit-2" size={20} color="gray" /> */}
+            <TextInput
+              style={styles.input}
+              value={profile.email}
+              editable={false}
+            />
           </View>
         </View>
 
@@ -112,10 +83,9 @@ const ProfileDetailScreen = () => {
           <View style={styles.inputWrapper}>
             <TextInput
               style={styles.input}
-              placeholder="Ünvan"
-              value={address}
+              value={profile.address}
+              editable={false}
             />
-            {/* <Icon name="edit-2" size={20} color="gray" /> */}
           </View>
         </View>
       </View>

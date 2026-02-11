@@ -1,93 +1,80 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import {useNavigation, useRoute} from '@react-navigation/native';
-import axios from 'axios';
-import React, {useRef, useState} from 'react';
+import {CommonActions, useRoute} from '@react-navigation/native';
+import React, {useState} from 'react';
 import {
   View,
   Text,
-  TextInput,
   TouchableOpacity,
   StyleSheet,
-  KeyboardAvoidingView,
-  Platform,
+  ActivityIndicator,
 } from 'react-native';
-import {ActivityIndicator} from 'react-native';
-
-import Icon from 'react-native-vector-icons/Feather';
 import CustomModal from '../components/Modal';
-import {StackNavigationProp} from '@react-navigation/stack';
-import {RootStackParamList} from '../App';
+import {apiService} from '../services/apiService';
+import {API_ENDPOINTS} from '../services/api_endpoint';
+import {SvgImage} from '@components/SvgImage';
+import {AuthStackParamList} from 'types/types';
+import {Routes} from '@navigation/routes';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
+import {OtpInput} from '../components/OtpInput';
 
-import Config from 'react-native-config';
-type NavigationProp = StackNavigationProp<RootStackParamList, 'Login'>;
-const OtpSubmit = () => {
-  const navigation = useNavigation<NavigationProp>();
+interface ModalProps {
+  title: string;
+  description: string;
+  confirmText: string;
+  onConfirm: () => void;
+}
 
-  const inputRefs: any = useRef([]);
-  const [otp, setOtp] = useState(new Array(6).fill(''));
+const OtpSubmit: React.FC<
+  NativeStackScreenProps<AuthStackParamList, Routes.otpSubmit>
+> = ({navigation}) => {
+  const route = useRoute<any>();
+  const email = route.params?.email;
+
+  const [otp, setOtp] = useState<string[]>(new Array(6).fill(''));
   const [modalVisible, setModalVisible] = useState(false);
-  const [modalProps, setModalProps] = useState({});
-  const route: any = useRoute();
-  const email: any = route.params?.email;
+  const [modalProps, setModalProps] = useState<ModalProps>({
+    title: '',
+    description: '',
+    confirmText: '',
+    onConfirm: () => {},
+  });
   const [isLoading, setIsLoading] = useState(false);
-
-  const handleChange = (text: any, index: any) => {
-    if (/^[0-9]$/.test(text)) {
-      const newOtp: any = [...otp];
-      newOtp[index] = text;
-      setOtp(newOtp);
-      if (index < 5) {
-        inputRefs.current[index + 1]?.focus();
-      }
-    } else if (text === '') {
-      const newOtp = [...otp];
-      newOtp[index] = '';
-      setOtp(newOtp);
-    }
-  };
 
   const handleSubmit = async () => {
     const finalOtp = otp.join('');
+
+    if (finalOtp.length !== 6) {
+      return;
+    }
+
     setIsLoading(true);
     try {
-      const userToken = await AsyncStorage.getItem('userToken');
-      const response = await axios.post(
-        `${Config.API_URL}/auth/Auth/ConfirmOtp`,
-        {email, otp: finalOtp},
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${userToken}`,
-          },
-        },
-      );
-      console.log(response);
-
-      if (response?.status === 200) {
-        setModalProps({
-          visible: true,
-          title: 'Uğurlu',
-          description: 'OTP təsdiqləndi.',
-          confirmText: 'Bağla',
-          onConfirm: () => {
-            setModalVisible(false);
-            navigation.navigate('NewPassword', {email: email});
-          },
-        });
-      } else {
-        setModalProps({
-          visible: true,
-          title: 'Xəta',
-          description: 'OTP doğru deyil.',
-          confirmText: 'Bağla',
-          onConfirm: () => setModalVisible(false),
-        });
-      }
-    } catch (error) {
+      await apiService.postWithoutAuth(API_ENDPOINTS.auth.confirmOtp, {
+        email,
+        otp: finalOtp,
+      });
       setModalProps({
-        visible: true,
+        title: 'Uğurlu',
+        description: 'OTP təsdiqləndi.',
+        confirmText: 'Davam et',
+        onConfirm: () => {
+          setModalVisible(false);
+          navigation.dispatch(
+            CommonActions.reset({
+              index: 0,
+              routes: [
+                {
+                  name: Routes.newPassword,
+                  params: {email},
+                },
+              ],
+            }),
+          );
+        },
+      });
+    } catch {
+      setModalProps({
         title: 'Xəta',
-        description: 'Bir xəta baş verdi, zəhmət olmasa yenidən cəhd edin.',
+        description: 'OTP doğru deyil.',
         confirmText: 'Bağla',
         onConfirm: () => setModalVisible(false),
       });
@@ -100,86 +87,62 @@ const OtpSubmit = () => {
   const handleResendOtp = async () => {
     setIsLoading(true);
     try {
-      const userToken = await AsyncStorage.getItem('userToken');
-      const response = await axios.post(
-        `${Config.API_URL}/auth/Auth/SendEmail`,
-        {email},
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${userToken}`,
-          },
-        },
-      );
-
-      if (response) {
-        setModalProps({
-          visible: true,
-          title: 'OTP göndərildi',
-          description: `${email} ünvanına OTP göndərildi.`,
-          confirmText: 'Bağla',
-          onConfirm: () => setModalVisible(false),
-        });
-      }
-    } catch (error) {
+      await apiService.postWithoutAuth(API_ENDPOINTS.auth.sendEmail, {email});
       setModalProps({
-        visible: true,
+        title: 'Göndərildi',
+        description: `${email} ünvanına yeni OTP göndərildi.`,
+        confirmText: 'Bağla',
+        onConfirm: () => setModalVisible(false),
+      });
+    } catch {
+      setModalProps({
         title: 'Xəta',
         description: 'OTP göndərilə bilmədi.',
         confirmText: 'Bağla',
         onConfirm: () => setModalVisible(false),
       });
     } finally {
-      setIsLoading(false); // end loading
+      setIsLoading(false);
       setModalVisible(true);
     }
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      style={styles.container}>
+    <View style={styles.container}>
       <TouchableOpacity
         style={styles.backButton}
         onPress={() => navigation.goBack()}>
-        <Icon name="chevron-left" size={24} color="#2D64AF" />
+        <SvgImage
+          color="#28303F"
+          source={require('assets/icons/svg/go-back.svg')}
+        />
+        <Text style={styles.backText}>Geri</Text>
       </TouchableOpacity>
+
       <Text style={styles.title}>OTP təsdiqlə</Text>
       <Text style={styles.subtitle}>
         Zəhmət olmasa, email vasitəsilə ilə göndərilmiş 6 rəqəmli şifrəni daxil
         edin
       </Text>
-      <View style={styles.otpContainer}>
-        {otp.map((digit, index) => (
-          <TextInput
-            key={index}
-            ref={(ref): any => (inputRefs.current[index] = ref)}
-            style={styles.otpBox}
-            maxLength={1}
-            keyboardType="number-pad"
-            value={digit}
-            onChangeText={text => handleChange(text, index)}
-            autoFocus={index === 0}
-          />
-        ))}
-      </View>
+
+      <OtpInput length={6} value={otp} onChange={setOtp} />
+
       {isLoading ? (
-        <ActivityIndicator
-          size="small"
-          color="#1269B5"
-          style={{marginLeft: 6}}
-        />
+        <ActivityIndicator size="small" color="#1269B5" style={styles.loader} />
       ) : (
         <Text style={styles.resendLink} onPress={handleResendOtp}>
           Yenidən göndər
         </Text>
       )}
+
       <TouchableOpacity style={styles.verifyButton} onPress={handleSubmit}>
         <Text style={styles.verifyButtonText}>Təsdiqlə</Text>
       </TouchableOpacity>
-      <Text style={styles.resendText}>6-rəqəmli kod əldə etmisinizmi? </Text>{' '}
+
+      <Text style={styles.resendText}>6-rəqəmli kod əldə etmisinizmi?</Text>
+
       <CustomModal {...modalProps} visible={modalVisible} />
-    </KeyboardAvoidingView>
+    </View>
   );
 };
 
@@ -189,15 +152,17 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 24,
+    paddingTop: 20,
     backgroundColor: 'white',
-    position: 'relative',
-    width: '100%',
-    height: '100%',
   },
   backButton: {
     marginTop: 30,
     position: 'absolute',
     left: 15,
+    top: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    zIndex: 10,
   },
   backText: {
     fontSize: 16,
@@ -210,30 +175,14 @@ const styles = StyleSheet.create({
     fontSize: 36,
     fontWeight: '500',
     paddingTop: 100,
-    fontStyle: 'normal',
     lineHeight: 46.8,
   },
   subtitle: {
-    color: '#424242', // var(--Neutral-800)
+    color: '#424242',
     fontFamily: 'DMSans-Regular',
     fontSize: 14,
-    fontWeight: '400', // Regular
-    fontStyle: 'normal',
+    fontWeight: '400',
     lineHeight: 21,
-  },
-  otpContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginVertical: 30,
-  },
-  otpBox: {
-    width: 48,
-    height: 48,
-    borderRadius: 8,
-    backgroundColor: '#F7F7F7',
-    textAlign: 'center',
-    fontSize: 18,
-    fontWeight: 'bold',
   },
   verifyButton: {
     backgroundColor: '#1269B5',
@@ -257,6 +206,10 @@ const styles = StyleSheet.create({
     color: '#1269B5',
     fontWeight: '600',
     fontFamily: 'DMSans-SemiBold',
+    marginBottom: 15,
+    alignSelf: 'flex-end',
+  },
+  loader: {
     marginBottom: 15,
     alignSelf: 'flex-end',
   },

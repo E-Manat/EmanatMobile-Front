@@ -1,5 +1,6 @@
-import {useNavigation} from '@react-navigation/native';
-import React, {useEffect, useState} from 'react';
+/* eslint-disable react-hooks/exhaustive-deps */
+import {useFocusEffect, useNavigation} from '@react-navigation/native';
+import React, {useCallback, useState} from 'react';
 import {
   View,
   Text,
@@ -12,24 +13,26 @@ import {
   ActivityIndicator,
   Image,
 } from 'react-native';
-import Icon from 'react-native-vector-icons/Feather';
 import Modal from 'react-native-modal';
 
 import moment from 'moment';
 import {apiService} from '../services/apiService';
-import {RootStackParamList} from '../App';
-import {StackNavigationProp} from '@react-navigation/stack';
 import TopHeader from '../components/TopHeader';
 import {DownloadIcon} from '../assets/icons';
 import {API_ENDPOINTS} from '../services/api_endpoint';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
+import {MainStackParamList} from 'types/types';
+import {Routes} from '@navigation/routes';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import {SvgImage} from '@components/SvgImage';
 
-type NavigationProp = StackNavigationProp<RootStackParamList, 'YeniHesabat'>;
-
-const ReportsScreen = () => {
-  const navigation = useNavigation<NavigationProp>();
+const ReportsScreen: React.FC<
+  NativeStackScreenProps<MainStackParamList, Routes.reports>
+> = ({navigation}) => {
   const [searchText, setSearchText] = useState('');
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState('Cari ay');
+  const insets = useSafeAreaInsets();
 
   const highlightText = (
     text: string | number = '',
@@ -37,7 +40,9 @@ const ReportsScreen = () => {
   ) => {
     const textString = String(text);
     const searchTerm = highlight.replace(/\D/g, '');
-    if (!searchTerm) return textString;
+    if (!searchTerm) {
+      return textString;
+    }
 
     const parts = textString.split(new RegExp(`(${searchTerm})`, 'g'));
 
@@ -62,7 +67,9 @@ const ReportsScreen = () => {
 
     return (
       <TouchableOpacity
-        onPress={() => navigation.navigate('HesabatEtrafli', {report: item})}>
+        onPress={() =>
+          navigation.navigate(Routes.detailedReport, {report: item})
+        }>
         <View style={styles.card}>
           <DownloadIcon color="#1269B5" />
           <View style={styles.textContainer}>
@@ -130,9 +137,11 @@ const ReportsScreen = () => {
     }
   };
 
-  useEffect(() => {
-    fetchReports();
-  }, [selectedFilters]);
+  useFocusEffect(
+    useCallback(() => {
+      fetchReports();
+    }, [searchText, selectedFilters]),
+  );
 
   const renderFilterOption = (option: string) => (
     <TouchableOpacity
@@ -143,7 +152,10 @@ const ReportsScreen = () => {
       }}>
       <View style={styles.checkBox}>
         {selectedFilters.includes(option) && (
-          <Icon name="check" size={17} color="#2D64AF" />
+          <SvgImage
+            source={require('assets/icons/svg/thick.svg')}
+            style={styles.filterIcon}
+          />
         )}
       </View>
       <Text style={styles.filterOptionText}>{option}</Text>
@@ -155,16 +167,20 @@ const ReportsScreen = () => {
       <View style={styles.container}>
         <TopHeader
           title="Hesabatlar"
-          rightIconName="plus"
-          onRightPress={() => navigation.navigate('YeniHesabat')}
+          rightIconComponent={
+            <SvgImage
+              source={require('../assets/icons/svg/plus.svg')}
+              color="white"
+            />
+          }
+          onRightPress={() =>
+            navigation.navigate(Routes.newReport, {terminalId: null})
+          }
         />
-
         <View style={styles.searchContainer}>
-          <Icon
-            name="search"
-            size={18}
-            color="#2D64AF"
+          <SvgImage
             style={styles.searchIcon}
+            source={require('assets/icons/svg/search.svg')}
           />
           <TextInput
             placeholder="Axtar..."
@@ -173,22 +189,10 @@ const ReportsScreen = () => {
             value={searchText}
             onChangeText={setSearchText}
           />
-          {searchText ? (
-            <TouchableOpacity onPress={() => setSearchText('')}>
-              <Icon
-                name="x"
-                size={18}
-                color="#2D64AF"
-                style={styles.clearIcon}
-              />
-            </TouchableOpacity>
-          ) : null}
 
           <TouchableOpacity onPress={() => setModalVisible(!modalVisible)}>
-            <Icon
-              name="filter"
-              size={18}
-              color="#2D64AF"
+            <SvgImage
+              source={require('assets/icons/svg/filter.svg')}
               style={styles.filterIcon}
             />
           </TouchableOpacity>
@@ -203,7 +207,7 @@ const ReportsScreen = () => {
           backdropTransitionOutTiming={0}
           animationOutTiming={700}>
           <View style={styles.modalContent}>
-            <View style={styles.line}></View>
+            <View style={styles.line} />
             {FILTER_OPTIONS.map(option => renderFilterOption(option))}
             <View style={{alignItems: 'center', marginVertical: 20}}>
               <TouchableOpacity
@@ -229,6 +233,9 @@ const ReportsScreen = () => {
             renderItem={renderItem}
             keyExtractor={item => item.id.toString()}
             showsVerticalScrollIndicator={false}
+            initialNumToRender={12}
+            maxToRenderPerBatch={10}
+            windowSize={5}
           />
         ) : (
           <View style={styles.noResult}>
@@ -244,8 +251,10 @@ const ReportsScreen = () => {
             </Text>
             <TouchableOpacity
               style={styles.button}
-              onPress={() => navigation.navigate('YeniHesabat')}>
-              <Icon name="plus" size={24} color="#fff" />
+              onPress={() =>
+                navigation.navigate(Routes.newReport, {terminalId: undefined})
+              }>
+              <SvgImage source={require('assets/icons/svg/plus.svg')} />
               <Text style={styles.buttonText}>Yeni hesabat</Text>
             </TouchableOpacity>
           </View>
@@ -279,9 +288,7 @@ const styles = StyleSheet.create({
     marginVertical: 15,
     justifyContent: 'space-between',
   },
-  filterIcon: {
-    marginLeft: 10,
-  },
+  filterIcon: {},
 
   input: {
     fontSize: 14,

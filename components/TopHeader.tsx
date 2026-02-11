@@ -1,16 +1,11 @@
 import {StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import React from 'react';
-import Icon from 'react-native-vector-icons/Feather';
-import {RootStackParamList} from '../App';
-import {StackNavigationProp} from '@react-navigation/stack';
 import {useNavigation} from '@react-navigation/native';
-import LinearGradient from 'react-native-linear-gradient';
-
-type NavigationProp = StackNavigationProp<RootStackParamList, 'Profil'>;
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import {SvgImage} from './SvgImage';
 
 type TopHeaderProps = {
   title: string;
-  rightIconName?: string;
   onRightPress?: () => void;
   rightIconComponent?: React.ReactNode;
   variant?: 'default' | 'tapsiriq';
@@ -18,39 +13,40 @@ type TopHeaderProps = {
 
 const TopHeader = ({
   title,
-  rightIconName,
   onRightPress,
   rightIconComponent,
-  variant,
+  variant = 'default',
 }: TopHeaderProps) => {
-  const navigation = useNavigation<NavigationProp>();
-  const computedHeight = variant === 'tapsiriq' ? 140 : 90;
+  const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
+  const contentHeight = variant === 'tapsiriq' ? 70 : 70;
+
   return (
-    <LinearGradient
-      colors={['#3C85C4', '#1269B5']}
-      start={{x: 0, y: 0}}
-      end={{x: 1, y: 0}}
-      style={[styles.header, {height: computedHeight}]}>
+    <View
+      style={[
+        styles.header,
+        {
+          paddingTop: insets.top,
+          height: contentHeight + insets.top,
+        },
+      ]}>
       <TouchableOpacity
         onPress={() => navigation.goBack()}
         hitSlop={{top: 30, bottom: 30, left: 30, right: 30}}>
-        <Icon name="chevron-left" size={30} color="#fff" />
+        <SvgImage
+          source={require('assets/icons/svg/go-back.svg')}
+          color={'white'}
+        />
       </TouchableOpacity>
-
       <Text style={styles.headerText}>{title}</Text>
-
       {rightIconComponent ? (
         <TouchableOpacity onPress={onRightPress}>
           {rightIconComponent}
         </TouchableOpacity>
-      ) : rightIconName ? (
-        <TouchableOpacity onPress={onRightPress}>
-          <Icon name={rightIconName} size={30} color="#fff" />
-        </TouchableOpacity>
       ) : (
-        <View style={{width: 24}} />
+        <View style={{width: 28}} />
       )}
-    </LinearGradient>
+    </View>
   );
 };
 
@@ -60,8 +56,9 @@ const styles = StyleSheet.create({
   header: {
     backgroundColor: '#2D64AF',
     paddingHorizontal: 20,
+    paddingBottom: 20,
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-end',
     justifyContent: 'space-between',
     borderBottomLeftRadius: 16,
     borderBottomRightRadius: 16,
@@ -70,7 +67,6 @@ const styles = StyleSheet.create({
     color: '#FFF',
     fontFamily: 'DMSans-SemiBold',
     fontSize: 20,
-    fontStyle: 'normal',
     fontWeight: '600',
     lineHeight: 26,
   },

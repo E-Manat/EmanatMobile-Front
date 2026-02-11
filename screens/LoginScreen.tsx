@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import {
   View,
   Text,
@@ -6,41 +6,54 @@ import {
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  Image,
 } from 'react-native';
-import Icon from 'react-native-vector-icons/Feather';
-import {useNavigation} from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
-import {RootStackParamList} from '../App';
-import {StackNavigationProp} from '@react-navigation/stack';
 import CustomModal from '../components/Modal';
-import {Image} from 'react-native';
-import Config from 'react-native-config';
+import {AuthStackParamList} from '../types/types';
+import {Routes} from '@navigation/routes';
+import {SvgImage} from '@components/SvgImage';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 
-console.log(Config.API_URL, 'jdfnS');
-type NavigationProp = StackNavigationProp<RootStackParamList, 'Login'>;
-
-const LoginScreen = () => {
-  const navigation = useNavigation<NavigationProp>();
-
+const LoginScreen: React.FC<
+  NativeStackScreenProps<AuthStackParamList, Routes.login>
+> = ({navigation}) => {
   const [modalVisible, setModalVisible] = useState(false);
   const [modalTitle, setModalTitle] = useState('');
   const [modalDescription, setModalDescription] = useState('');
-
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState(__DEV__ ? '' : '');
+  const [password, setPassword] = useState(__DEV__ ? '' : '');
   const [showPassword, setShowPassword] = useState(false);
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [focusedInput, setFocusedInput] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
 
-  const API_URL = `http://192.168.10.104:5202/api/Auth/Login`;
+  useEffect(() => {
+    (async () => {
+      const remembered = await AsyncStorage.getItem('rememberMe');
+      if (remembered === 'true') {
+        const savedEmail = await AsyncStorage.getItem('rememberedEmail');
+        const savedPassword = await AsyncStorage.getItem('rememberedPassword');
+        if (savedEmail) {
+          setEmail(savedEmail);
+        }
+        if (savedPassword) {
+          setPassword(savedPassword);
+        }
+        setRememberMe(true);
+      }
+    })();
+  }, []);
 
   const handleLogin = async () => {
     setEmailError('');
     setPasswordError('');
-    console.log('step1');
 
     if (!email || !password) {
       setModalTitle('Xəta');
@@ -50,116 +63,158 @@ const LoginScreen = () => {
     }
 
     setLoading(true);
-
     try {
-      const response = await axios.post(
-        API_URL,
+      const result: any = await axios.post(
+        'https://ekassa-api.e-portal.az/auth/Auth/Login',
         {email, password},
-        {headers: {'Content-Type': 'application/json'}},
       );
-      console.log(response, API_URL);
-      console.log('step2');
-      if (response) {
-        console.log(response, 'response login');
+
+      if (rememberMe) {
         await AsyncStorage.multiSet([
-          ['userToken', response.data.accessToken],
-          ['userId', response.data.userId],
-          ['expiresAt', response.data.expires],
-          ['isLoggedIn', 'true'],
+          ['rememberMe', 'true'],
+          ['rememberedEmail', email],
+          ['rememberedPassword', password],
         ]);
-        await AsyncStorage.setItem('roleName', response.data.roleName);
-        navigation.navigate('PinSetup');
       } else {
-        console.log('Xəta', 'Gözlənilməz bir problem baş verdi!');
+        await AsyncStorage.multiRemove([
+          'rememberMe',
+          'rememberedEmail',
+          'rememberedPassword',
+        ]);
       }
+
+      await AsyncStorage.multiSet([
+        ['userToken', result.data.accessToken],
+        ['refreshToken', result.data.refreshToken],
+        ['userId', result.data.userId],
+        ['expiresAt', result.data.expires],
+        ['isLoggedIn', 'true'],
+      ]);
+      await AsyncStorage.setItem('roleName', result.data.roleName);
+
+      navigation.replace(Routes.main as any, {screen: Routes.pinSetup} as any);
     } catch (error: any) {
-      if (error.response || error.response.status === 401) {
-        console.log(error.response, 'error');
-        setModalTitle('Xəta');
-        setModalDescription('Daxil edilən məlumatlarda səhv var!');
-        setModalVisible(true);
-      } else {
-        console.log('sebeke xetasi');
-      }
+      setModalTitle('Xəta');
+      setModalDescription(
+        error?.response?.status === 400
+          ? 'Email və ya şifrə yanlışdır.'
+          : `Şəbəkə xətası: ${error?.message || 'Naməlum xəta'}`,
+      );
+      setModalVisible(true);
     } finally {
       setLoading(false);
     }
   };
 
+  const ONBOARDING_KEY = '@hasSeenOnboarding';
+
+  const clearOnboardingFlag = async () => {
+    await AsyncStorage.removeItem(ONBOARDING_KEY);
+  };
+
+  useEffect(() => {
+    clearOnboardingFlag();
+  }, []);
+
   return (
-    <View style={styles.container}>
-      <Image
-        source={require('../assets/img/logo.png')}
-        style={styles.profileImage}
-      />
-      <Text style={styles.title}>Xoş gəlmisiniz!</Text>
-      <Text style={styles.subtitle}>
-        Zəhmət olmasa, email və şifrənizi daxil edin
-      </Text>
-
-      <View
-        style={[
-          styles.inputContainer,
-          focusedInput === 'email' && {borderColor: '#1269B5'},
-          emailError && {borderColor: '#EF5350'},
-        ]}>
-        <TextInput
-          placeholder="namesurname@gmail.com"
-          style={styles.input}
-          keyboardType="email-address"
-          placeholderTextColor="#9E9E9E"
-          autoCapitalize="none"
-          value={email}
-          onChangeText={setEmail}
-          onFocus={() => setFocusedInput('email')}
-          onBlur={() => setFocusedInput(null)}
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}>
+        <SvgImage
+          source={require('assets/icons/login-logo.svg')}
+          style={{marginBottom: 40}}
         />
-        <Icon name="mail" size={20} color="#aaa" />
-      </View>
-      {emailError ? <Text style={styles.errorText}>{emailError}</Text> : null}
+        <Text style={styles.title}>Xoş gəlmisiniz!</Text>
+        <Text style={styles.subtitle}>
+          Zəhmət olmasa, email və şifrənizi daxil edin
+        </Text>
 
-      <View
-        style={[
-          styles.inputContainer,
-          focusedInput === 'password' && {borderColor: '#1269B5'},
-          passwordError && {borderColor: '#EF5350'},
-        ]}>
-        <TextInput
-          placeholder="********"
-          style={styles.input}
-          secureTextEntry={!showPassword}
-          placeholderTextColor="#9E9E9E"
-          value={password}
-          onChangeText={setPassword}
-          onFocus={() => setFocusedInput('password')}
-          onBlur={() => setFocusedInput(null)}
-        />
-        <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-          <Icon
-            name={showPassword ? 'eye' : 'eye-off'}
-            size={20}
-            color="#aaa"
+        <View
+          style={[
+            styles.inputContainer,
+            focusedInput === 'email' && {borderColor: '#1269B5'},
+            emailError && {borderColor: '#EF5350'},
+          ]}>
+          <TextInput
+            placeholder="namesurname@gmail.com"
+            style={styles.input}
+            keyboardType="email-address"
+            placeholderTextColor="#9E9E9E"
+            autoCapitalize="none"
+            value={email}
+            onChangeText={setEmail}
+            onFocus={() => setFocusedInput('email')}
+            onBlur={() => setFocusedInput(null)}
           />
+          <SvgImage source={require('assets/icons/svg/call.svg')} />
+        </View>
+        {emailError ? <Text style={styles.errorText}>{emailError}</Text> : null}
+
+        <View
+          style={[
+            styles.inputContainer,
+            focusedInput === 'password' && {borderColor: '#1269B5'},
+            passwordError && {borderColor: '#EF5350'},
+          ]}>
+          <TextInput
+            placeholder="********"
+            style={styles.input}
+            secureTextEntry={!showPassword}
+            placeholderTextColor="#9E9E9E"
+            value={password}
+            onChangeText={setPassword}
+            onFocus={() => setFocusedInput('password')}
+            onBlur={() => setFocusedInput(null)}
+          />
+          <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+            <SvgImage
+              source={
+                showPassword
+                  ? require('assets/icons/svg/open-eye.svg')
+                  : require('assets/icons/svg/closed-eye.svg')
+              }
+            />
+          </TouchableOpacity>
+        </View>
+        {passwordError ? (
+          <Text style={styles.errorText}>{passwordError}</Text>
+        ) : null}
+
+        <TouchableOpacity
+          style={styles.rememberRow}
+          onPress={() => setRememberMe(prev => !prev)}
+          activeOpacity={0.8}>
+          <SvgImage
+            source={
+              rememberMe
+                ? require('assets/icons/svg/checkbox-checked.svg')
+                : require('assets/icons/svg/checkbox-unchecked.svg')
+            }
+          />
+          <Text style={styles.rememberText}>Məni xatırla</Text>
         </TouchableOpacity>
-      </View>
-      {passwordError ? (
-        <Text style={styles.errorText}>{passwordError}</Text>
-      ) : null}
 
-      <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')}>
-        <Text style={styles.forgotPassword}>Şifrəni unutmusuz?</Text>
-      </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => navigation.navigate(Routes.forgotPassword)}>
+          <Text style={styles.forgotPassword}>Şifrəni unutmusuz?</Text>
+        </TouchableOpacity>
 
-      <TouchableOpacity
-        style={styles.button}
-        onPress={handleLogin}
-        disabled={loading}>
-        {loading ? (
-          <ActivityIndicator color="#fff" />
-        ) : (
-          <Text style={styles.buttonText}>Daxil ol</Text>
-        )}
-      </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.button}
+          onPress={handleLogin}
+          disabled={loading}>
+          {loading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.buttonText}>Daxil olun</Text>
+          )}
+        </TouchableOpacity>
+      </ScrollView>
 
       <CustomModal
         visible={modalVisible}
@@ -168,16 +223,19 @@ const LoginScreen = () => {
         confirmText="Bağla"
         onConfirm={() => setModalVisible(false)}
       />
-    </View>
+    </KeyboardAvoidingView>
   );
 };
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
+  },
+  scrollContent: {
+    flexGrow: 1,
     paddingHorizontal: 20,
     justifyContent: 'center',
+    paddingVertical: 40,
   },
   title: {
     color: '#063A66',
@@ -188,8 +246,8 @@ const styles = StyleSheet.create({
     lineHeight: 46.8,
   },
   subtitle: {
-    color: '#424242', // var(--Neutral-800)
-    fontFamily: 'DMSans-Regular', // Make sure it's loaded
+    color: '#424242',
+    fontFamily: 'DMSans-Regular',
     fontSize: 12,
     fontStyle: 'normal',
     fontWeight: '400',
@@ -216,6 +274,17 @@ const styles = StyleSheet.create({
     paddingRight: 12,
     alignItems: 'center',
     alignSelf: 'stretch',
+  },
+  rememberRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 16,
+    gap: 10,
+  },
+  rememberText: {
+    color: '#424242',
+    fontSize: 14,
+    fontFamily: 'DMSans-Regular',
   },
   forgotPassword: {
     alignSelf: 'flex-end',

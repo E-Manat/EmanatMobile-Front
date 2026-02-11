@@ -1,4 +1,3 @@
-import {StackNavigationProp} from '@react-navigation/stack';
 import React, {useState} from 'react';
 import {
   View,
@@ -7,13 +6,14 @@ import {
   TouchableOpacity,
   StyleSheet,
 } from 'react-native';
-import {RootStackParamList} from '../App';
-import {useNavigation} from '@react-navigation/native';
-import Icon from 'react-native-vector-icons/Feather';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
+import {AuthStackParamList} from 'types/types';
+import {Routes} from '@navigation/routes';
+import {SvgImage} from '@components/SvgImage';
 
-const OtpScreen = () => {
-  type NavigationProp = StackNavigationProp<RootStackParamList, 'Login'>;
-
+const OtpScreen: React.FC<
+  NativeStackScreenProps<AuthStackParamList, Routes.otp>
+> = ({navigation, route}) => {
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const handleChange = (text: any, index: any) => {
     const newOtp = [...otp];
@@ -21,14 +21,15 @@ const OtpScreen = () => {
     setOtp(newOtp);
   };
 
-  const navigation = useNavigation<NavigationProp>();
-
   return (
     <View style={styles.container}>
       <TouchableOpacity
         style={styles.backButton}
         onPress={() => navigation.goBack()}>
-        <Icon name="chevron-left" size={24} color="red" />
+        <SvgImage
+          source={require('assets/icons/svg/go-back.svg')}
+          color="red"
+        />
       </TouchableOpacity>
       <Text style={styles.title}>OTP təsdiqlə</Text>
       <Text style={styles.subtitle}>

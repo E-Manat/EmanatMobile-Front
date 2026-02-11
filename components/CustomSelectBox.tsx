@@ -1,6 +1,6 @@
 import React from 'react';
 import {TouchableOpacity, Text, View, StyleSheet} from 'react-native';
-import Icon from 'react-native-vector-icons/Feather';
+import {SvgImage} from './SvgImage';
 
 type Props = {
   label: string;
@@ -26,7 +26,10 @@ const CustomSelectBox = ({
         <Text style={[styles.value, !value && styles.placeholder]}>
           {value || placeholder}
         </Text>
-        <Icon name="chevron-down" size={20} color="#777" />
+        <SvgImage
+          style={{position: 'absolute', right: 10}}
+          source={require('assets/icons/svg/chevron-down.svg')}
+        />
       </TouchableOpacity>
     </View>
   );

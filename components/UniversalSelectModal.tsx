@@ -1,11 +1,18 @@
-import React from 'react';
+import React, {useState, useMemo} from 'react';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  FlatList,
+  TextInput,
+} from 'react-native';
 import Modal from 'react-native-modal';
-import {View, Text, TouchableOpacity, StyleSheet, FlatList} from 'react-native';
-import Icon from 'react-native-vector-icons/Feather';
+import {SvgImage} from './SvgImage';
 
 type Item = {
   id: number | string;
-  name: string;
+  name: number | string;
 };
 
 type Props = {
@@ -16,40 +23,92 @@ type Props = {
   onSelect: (item: Item) => void;
 };
 
-const UniversalSelectModal = ({
+const UniversalSelectModal: React.FC<Props> = ({
   visible,
   onClose,
   data,
   title,
   onSelect,
-}: Props) => {
+}) => {
+  const [searchText, setSearchText] = useState('');
+
+  const filteredData = useMemo(
+    () =>
+      data.filter(item =>
+        String(item.name)
+          .toLowerCase()
+          .includes(searchText.trim().toLowerCase()),
+      ),
+    [data, searchText],
+  );
+
+  const handleSelect = (item: Item) => {
+    onSelect(item);
+    setSearchText('');
+    onClose();
+  };
+
+  const handleClose = () => {
+    setSearchText('');
+    onClose();
+  };
+
   return (
     <Modal
       isVisible={visible}
-      onBackdropPress={onClose}
+      onBackdropPress={handleClose}
       backdropOpacity={0.4}
-      style={{justifyContent: 'center', margin: 0}}>
+      style={styles.modalWrapper}>
       <View style={styles.modalContainer}>
         <View style={styles.header}>
           <Text style={styles.title}>{title}</Text>
-          <TouchableOpacity onPress={onClose}>
-            <Icon name="x" size={20} color="#4B5D6A" />
+          <TouchableOpacity onPress={handleClose}>
+            <SvgImage source={require('assets/icons/svg/x-icon.svg')} />
           </TouchableOpacity>
+        </View>
+
+        <View style={styles.searchWrapper}>
+          <TextInput
+            placeholder="Axtar..."
+            value={searchText}
+            placeholderTextColor={'#4F4F4F'}
+            onChangeText={setSearchText}
+            style={styles.searchInput}
+            autoCorrect={false}
+            clearButtonMode="never"
+          />
+          {searchText.length > 0 && (
+            <TouchableOpacity
+              onPress={() => setSearchText('')}
+              style={styles.clearButton}>
+              <SvgImage
+                source={require('assets/icons/svg/x-icon.svg')}
+                width={16}
+                height={16}
+                color="#4B5D6A"
+              />
+            </TouchableOpacity>
+          )}
         </View>
 
         <View style={styles.listWrapper}>
           <FlatList
-            data={data}
+            data={filteredData}
             keyExtractor={item => item.id.toString()}
+            initialNumToRender={15}
+            maxToRenderPerBatch={10}
+            windowSize={5}
             renderItem={({item}) => (
               <TouchableOpacity
                 style={styles.option}
-                onPress={() => {
-                  onSelect(item);
-                  onClose();
-                }}>
-                <Text style={styles.optionText}>{item.name}</Text>
+                onPress={() => handleSelect(item)}>
+                <Text style={styles.optionText}>{String(item.name)}</Text>
               </TouchableOpacity>
+            )}
+            ListEmptyComponent={() => (
+              <View style={styles.emptyContainer}>
+                <Text style={styles.emptyText}>Nəticə yoxdur</Text>
+              </View>
             )}
           />
         </View>
@@ -61,6 +120,7 @@ const UniversalSelectModal = ({
 export default UniversalSelectModal;
 
 const styles = StyleSheet.create({
+  modalWrapper: {justifyContent: 'center', margin: 0},
   modalContainer: {
     backgroundColor: '#fff',
     padding: 20,
@@ -70,7 +130,7 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 16,
+    marginBottom: 8,
     borderBottomWidth: 1,
     borderBottomColor: '#E0E3E6',
     paddingBottom: 8,
@@ -82,6 +142,31 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     lineHeight: 24,
   },
+  searchWrapper: {
+    position: 'relative',
+    marginBottom: 12,
+    borderWidth: 1,
+    paddingHorizontal: 10,
+    borderRadius: 10,
+    borderColor: '#E0E3E6',
+  },
+  searchInput: {
+    height: 40,
+    borderColor: '#E0E3E6',
+    borderRadius: 8,
+    paddingRight: 36,
+    fontFamily: 'DMSans-Regular',
+    fontSize: 14,
+  },
+  clearButton: {
+    position: 'absolute',
+    right: 10,
+    top: '50%',
+    transform: [{translateY: -8}],
+  },
+  listWrapper: {
+    maxHeight: 400,
+  },
   option: {
     paddingVertical: 12,
   },
@@ -92,7 +177,13 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     lineHeight: 18,
   },
-  listWrapper: {
-    maxHeight: 400, // təxminən 6-7 seçimlik yer üçün ideal
+  emptyContainer: {
+    alignItems: 'center',
+    paddingVertical: 20,
+  },
+  emptyText: {
+    color: '#999',
+    fontFamily: 'DMSans-Regular',
+    fontSize: 14,
   },
 });

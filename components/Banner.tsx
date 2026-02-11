@@ -1,19 +1,8 @@
 import React, {useRef, useEffect} from 'react';
-import {
-  View,
-  Image,
-  Dimensions,
-  StyleSheet,
-  Animated,
-  TouchableOpacity,
-} from 'react-native';
+import {View, Image, Dimensions, StyleSheet, Animated} from 'react-native';
 import Swiper from 'react-native-swiper';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import {RootStackParamList} from '../App';
-import {StackNavigationProp} from '@react-navigation/stack';
 import {useNavigation} from '@react-navigation/native';
 
-type NavigationProp = StackNavigationProp<RootStackParamList, 'Ana səhifə'>;
 const {width} = Dimensions.get('window');
 
 const images = [
@@ -24,7 +13,7 @@ const images = [
 
 const ImageSlider = () => {
   const scaleAnim = useRef(new Animated.Value(1)).current;
-  const navigation = useNavigation<NavigationProp>();
+  const navigation = useNavigation<any>();
   useEffect(() => {
     Animated.loop(
       Animated.sequence([
@@ -40,7 +29,7 @@ const ImageSlider = () => {
         }),
       ]),
     ).start();
-  }, []);
+  }, [scaleAnim]);
 
   return (
     <Swiper autoplay height={250} showsPagination={false} autoplayTimeout={5}>

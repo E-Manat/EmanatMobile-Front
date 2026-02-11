@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
-import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {
   View,
   Text,
@@ -11,17 +11,19 @@ import {
   ActivityIndicator,
   Image,
 } from 'react-native';
-import Dot from 'react-native-vector-icons/Octicons';
 
-import {RootStackParamList} from '../App';
-import {StackNavigationProp} from '@react-navigation/stack';
 import {apiService} from '../services/apiService';
 import TopHeader from '../components/TopHeader';
 import Toast from 'react-native-toast-message';
 import * as signalR from '@microsoft/signalr';
 import {RefreshIcon} from '../assets/icons';
-type NavigationProp = StackNavigationProp<RootStackParamList, 'PinSetup'>;
+
 import {API_ENDPOINTS} from '../services/api_endpoint';
+import Config from 'react-native-config';
+import {SvgImage} from '@components/SvgImage';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
+import {MainStackParamList} from 'types/types';
+import {Routes} from '@navigation/routes';
 
 export enum TaskStatus {
   NotStarted = 'NotStarted',
@@ -51,24 +53,26 @@ interface TasksPayload {
   inProgressTaskCount: number;
   completedTaskCount: number;
 }
-const TasksScreen: React.FC = () => {
+const TasksScreen: React.FC<
+  NativeStackScreenProps<MainStackParamList, Routes.tasks>
+> = ({navigation, route}) => {
   const [selectedFilter, setSelectedFilter] =
     useState<string>('İcra olunmamış');
 
   const getStatusColor = (status: number) => {
     switch (status) {
-      case 5:
-        return '#EF4444'; // Canceled (Ləğv edilib)
+      case 0:
+        return '#9E9E9E';
       case 1:
       case 2:
       case 3:
-        return '#FFB600'; // In progress (İcra olunur)
-      case 4:
-        return '#29C0B9'; // Completed (Tamamlanıb)
-      case 0:
-        return '#9E9E9E'; // Not started (Başlanmayıb)
+        return '#eeee1eff';
+      case 5:
+        return '#EF4444';
       case 9:
         return '#090b3eff';
+      case 10:
+        return '#29C0B9';
       default:
         return '#9E9E9E';
     }
@@ -83,7 +87,6 @@ const TasksScreen: React.FC = () => {
     completedTaskCount: 0,
   });
 
-  const navigation = useNavigation<NavigationProp>();
   const [filteredTasks, setFilteredTasks] = useState<any>([]);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -134,20 +137,19 @@ const TasksScreen: React.FC = () => {
         break;
       case 'İcra olunan':
         fetchTasks(1);
-        fetchTasks(3);
-        break;
-      case 'Tamamlanıb':
-        fetchTasks(4); // Completed
         break;
       case 'Ləğv edilmiş':
-        fetchTasks(5); // Cancelled
+        fetchTasks(5);
         break;
       case 'Uğursuz əməliyyat':
-        fetchTasks(9); // failed
+        fetchTasks(9);
+        break;
+      case 'İnkassasiya edildi':
+        fetchTasks(10);
         break;
       case 'Hamısı':
       default:
-        fetchTasks(); // Statussuz bütün datalar
+        fetchTasks();
         break;
     }
   };
@@ -158,20 +160,17 @@ const TasksScreen: React.FC = () => {
         return 0;
       case 'İcra olunan':
         return 1;
-      case 'Tamamlanıb':
-        return 4;
       case 'Ləğv edilmiş':
         return 5;
       case 'Uğursuz əməliyyat':
         return 9;
+      case 'İnkassasiya edildi':
+        return 10;
       case 'Hamısı':
       default:
         return undefined;
     }
   };
-
-  // console.log(tasksData, 'tasksData');
-  // console.log(filteredTasks, 'filteredTasks');
 
   const renderTask = ({item}: any) => (
     <TouchableOpacity
@@ -181,15 +180,13 @@ const TasksScreen: React.FC = () => {
           const roleName = await AsyncStorage.getItem('roleName');
           const isCollector = roleName === 'Collector';
 
-          // /mobile
           const endpoint = isCollector
             ? API_ENDPOINTS.mobile.collector.getById(item.id)
             : API_ENDPOINTS.mobile.technician.getById(item.id);
 
           const taskDetails = await apiService.get(endpoint);
 
-          console.log(taskDetails, 'taskDetails');
-          navigation.navigate('TerminalEtrafli', {taskData: taskDetails});
+          navigation.navigate(Routes.terminalDetails, {taskData: taskDetails});
         } catch (err) {
           console.error('Detalları alarkən xəta:', err);
         } finally {
@@ -208,9 +205,8 @@ const TasksScreen: React.FC = () => {
           </Text>
         </View>
         <View>
-          <Dot
-            name="dot-fill"
-            size={16}
+          <SvgImage
+            source={require('assets/icons/svg/dot.svg')}
             color={getStatusColor(item.status)}
             style={{marginRight: 6}}
           />
@@ -224,17 +220,17 @@ const TasksScreen: React.FC = () => {
       try {
         const token = await AsyncStorage.getItem('userToken');
         const roleName = await AsyncStorage.getItem('roleName');
-        if (!token || connectionRef.current) return;
+        if (!token || connectionRef.current) {
+          return;
+        }
 
         const connection = new signalR.HubConnectionBuilder()
-          .withUrl(`http://192.168.10.104:5009/hubs/mobile`, {
+          .withUrl(`${Config.SIGNALR_URL}`, {
             accessTokenFactory: () => token,
           })
           .withAutomaticReconnect()
           .configureLogging(signalR.LogLevel.Information)
           .build();
-
-        console.log(connection, 'connection');
 
         const createdEvent =
           roleName === 'Collector' ? 'TaskCreated' : 'TechnicianTaskCreated';
@@ -242,7 +238,6 @@ const TasksScreen: React.FC = () => {
           roleName === 'Collector' ? 'TaskDeleted' : 'TechnicianTaskDeleted';
 
         connection.on('TaskCreated', (notification: any) => {
-          console.log(notification, 'TaskCreated');
           const {taskId, status, pointName, pointId, order} = notification;
 
           if (status === TaskStatus.Canceled) {
@@ -307,7 +302,7 @@ const TasksScreen: React.FC = () => {
 
           Toast.show({
             type: 'info',
-            text1: `Yeni bildiriş`,
+            text1: 'Yeni bildiriş',
             position: 'top',
             visibilityTime: 4000,
             autoHide: true,
@@ -335,14 +330,6 @@ const TasksScreen: React.FC = () => {
               case TaskStatus.NotStarted:
                 pendingTaskCount = Math.max(0, pendingTaskCount - 1);
                 break;
-              // case TaskStatus.InTransit:
-              // case TaskStatus.TechnicalWorkInProgress:
-              // case TaskStatus.CollectionInProgress:
-              //   inProgressTaskCount = Math.max(0, inProgressTaskCount - 1);
-              //   break;
-              // case TaskStatus.Completed:
-              //   completedTaskCount = Math.max(0, completedTaskCount - 1);
-              //   break;
             }
 
             return {
@@ -354,7 +341,6 @@ const TasksScreen: React.FC = () => {
             };
           });
 
-          // 4) Bildiriş göstər
           Toast.show({
             type: 'error',
             text1: 'Tapşırıq silindi',
@@ -391,14 +377,8 @@ const TasksScreen: React.FC = () => {
     setRefreshing(false);
   };
 
-  return (
-    <View style={styles.container}>
-      <TopHeader
-        title="Tapşırıqlar"
-        variant="tapsiriq"
-        onRightPress={() => fetchTasks(getStatusFromFilter(selectedFilter))}
-        rightIconComponent={<RefreshIcon color="#fff" width={30} />}
-      />
+  const ListHeaderComponent = () => (
+    <>
       <View style={styles.statusContainer}>
         <View style={styles.statusItem}>
           <Text style={styles.statusText}>
@@ -429,7 +409,7 @@ const TasksScreen: React.FC = () => {
             'Hamısı',
             'İcra olunmamış',
             'İcra olunan',
-            'Tamamlanıb',
+            'İnkassasiya edildi',
             'Uğursuz əməliyyat',
             'Ləğv edilmiş',
           ].map(filter => (
@@ -441,14 +421,13 @@ const TasksScreen: React.FC = () => {
               ]}
               onPress={() => filterTasks(filter)}>
               {filter !== 'Hamısı' && (
-                <Dot
-                  name="dot-fill"
-                  size={16}
+                <SvgImage
+                  source={require('assets/icons/svg/dot.svg')}
                   color={getStatusColor(
                     filter === 'İcra olunan'
                       ? 1
-                      : filter === 'Tamamlanıb'
-                      ? 4
+                      : filter === 'İnkassasiya edildi'
+                      ? 10
                       : filter === 'Ləğv edilmiş'
                       ? 5
                       : filter === 'Uğursuz əməliyyat'
@@ -465,37 +444,56 @@ const TasksScreen: React.FC = () => {
       </View>
 
       {sortedTasks?.length > 0 && <Text style={styles.currentDay}>Bu gün</Text>}
+    </>
+  );
 
-      <ScrollView contentContainerStyle={styles.mainContainer}>
-        {loading ? (
-          <View
-            style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-            <ActivityIndicator size="large" color="#2D64AF" />
-          </View>
-        ) : sortedTasks?.length > 0 ? (
-          <FlatList
-            data={[...filteredTasks].sort((a, b) => a.order - b.order)}
-            keyExtractor={item => item.id}
-            renderItem={renderTask}
-            ListFooterComponent={<View style={{height: 20}} />}
-            refreshing={refreshing}
-            onRefresh={handleRefresh}
-          />
-        ) : (
-          <View style={styles.noResult}>
-            <Image
-              source={require('../assets/img/tasks_empty.png')}
-              style={styles.noContentImage}
-            />
-            <Text style={styles.noContentLabel}>
-              Sizin heç bir tapşırığınız yoxdur
-            </Text>
-            <Text style={styles.noContentText}>
-              Yeni tapşırığlar burada görünəcək.
-            </Text>
-          </View>
-        )}
-      </ScrollView>
+  const ListEmptyComponent = () => {
+    if (loading) {
+      return (
+        <View style={styles.centerContainer}>
+          <ActivityIndicator size="large" color="#2D64AF" />
+        </View>
+      );
+    }
+
+    return (
+      <View style={styles.noResult}>
+        <Image
+          source={require('../assets/img/tasks_empty.png')}
+          style={styles.noContentImage}
+        />
+        <Text style={styles.noContentLabel}>
+          Sizin heç bir tapşırığınız yoxdur
+        </Text>
+        <Text style={styles.noContentText}>
+          Yeni tapşırığlar burada görünəcək.
+        </Text>
+      </View>
+    );
+  };
+
+  return (
+    <View style={styles.container}>
+      <TopHeader
+        title="Tapşırıqlar"
+        variant="tapsiriq"
+        onRightPress={() => fetchTasks(getStatusFromFilter(selectedFilter))}
+        rightIconComponent={<RefreshIcon color="#fff" width={30} />}
+      />
+      <FlatList
+        data={sortedTasks}
+        keyExtractor={item => item.id}
+        renderItem={renderTask}
+        ListHeaderComponent={ListHeaderComponent}
+        ListEmptyComponent={ListEmptyComponent}
+        ListFooterComponent={<View style={{height: 20}} />}
+        refreshing={refreshing}
+        onRefresh={handleRefresh}
+        contentContainerStyle={styles.flatListContent}
+        initialNumToRender={12}
+        maxToRenderPerBatch={10}
+        windowSize={5}
+      />
     </View>
   );
 };
@@ -506,6 +504,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F7F9FB',
+    paddingBottom: 80,
+  },
+  flatListContent: {
+    flexGrow: 1,
+    paddingHorizontal: 15,
   },
   header: {
     backgroundColor: '#2D64AF',
@@ -523,12 +526,11 @@ const styles = StyleSheet.create({
   statusContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 10,
-    paddingHorizontal: 15,
+    marginTop: 50,
     paddingVertical: 20,
-    margin: 'auto',
+    marginHorizontal: 'auto',
     transform: [{translateY: -46}],
-    width: '89%',
+    width: '100%',
     zIndex: 3,
     backgroundColor: '#fff',
     borderRadius: 10,
@@ -558,7 +560,6 @@ const styles = StyleSheet.create({
     marginTop: 5,
   },
   filterContainer: {
-    paddingHorizontal: 15,
     transform: [{translateY: -20}],
   },
   filterContentContainer: {
@@ -568,10 +569,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#2D64AF',
     borderStyle: 'solid',
-  },
-  mainContainer: {
-    marginTop: 15,
-    paddingHorizontal: 15,
   },
   filterButton: {
     flexDirection: 'row',
@@ -608,7 +605,7 @@ const styles = StyleSheet.create({
   },
   taskTitle: {
     color: '#1269B5',
-    fontFamily: 'DMSans-SemiBold', // və ya əlavə etdiyin font adı
+    fontFamily: 'DMSans-SemiBold',
     fontSize: 14,
     lineHeight: 21,
   },
@@ -618,11 +615,17 @@ const styles = StyleSheet.create({
   },
   taskDistance: {
     color: '#616161',
-    fontFamily: 'DMSans-Regular', // və ya əlavə etdiyin font adı
+    fontFamily: 'DMSans-Regular',
     fontSize: 12,
     fontStyle: 'normal',
     fontWeight: '400',
     lineHeight: 18,
+  },
+  centerContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingTop: 100,
   },
   noResult: {
     color: '#A8A8A8',
@@ -633,7 +636,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 5,
     width: '100%',
-    height: '100%',
     paddingTop: 60,
   },
   noContentImage: {
@@ -665,6 +667,6 @@ const styles = StyleSheet.create({
     fontStyle: 'normal',
     fontWeight: '600',
     lineHeight: 18,
-    paddingHorizontal: 20,
+    marginBottom: 10,
   },
 });

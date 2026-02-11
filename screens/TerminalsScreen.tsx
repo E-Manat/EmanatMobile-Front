@@ -4,28 +4,24 @@ import {
   Text,
   FlatList,
   StyleSheet,
-  SafeAreaView,
-  StatusBar,
   TouchableOpacity,
   Modal,
   Image,
   ScrollView,
 } from 'react-native';
 import TopHeader from '../components/TopHeader';
-import Icon from 'react-native-vector-icons/Ionicons';
-import {
-  AvatarIcon,
-  LocationIcon,
-  MapIcon,
-  RoadIcon,
-  TabletIcon,
-  UserIcon,
-} from '../assets/icons';
+import {LocationIcon, MapIcon, RoadIcon, TabletIcon} from '../assets/icons';
 import {apiService} from '../services/apiService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {API_ENDPOINTS} from '../services/api_endpoint';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
+import {MainStackParamList} from 'types/types';
+import {Routes} from '@navigation/routes';
+import {SvgImage} from '@components/SvgImage';
 
-const TerminallarScreen = () => {
+const TerminallarScreen: React.FC<
+  NativeStackScreenProps<MainStackParamList, Routes.terminals>
+> = ({navigation}) => {
   const [selectedTerminal, setSelectedTerminal] = useState<any>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [terminals, setTerminals] = useState<any[]>([]);
@@ -35,11 +31,10 @@ const TerminallarScreen = () => {
     setModalVisible(true);
 
     try {
-      const response = await apiService.get(
-        `/Terminal/GetById?id=${terminal.id}`,
+      const details: any = await apiService.get(
+        API_ENDPOINTS.mobile.terminal.getById(terminal.id),
       );
-      console.log(response, 'Terminal details');
-      setSelectedTerminal(response);
+      setSelectedTerminal(details);
     } catch (error) {
       console.error('Terminal details alınarkən xəta:', error);
     }
@@ -57,15 +52,13 @@ const TerminallarScreen = () => {
       setLoading(true);
       try {
         const roleName = await AsyncStorage.getItem('roleName');
+        const token = await AsyncStorage.getItem('userToken');
 
-        const url =
-          roleName === 'Collector'
-            ? API_ENDPOINTS.mobile.terminal.getCollectorAreaTerminals
-            : API_ENDPOINTS.mobile.terminal.getTechnicianAreaTerminals;
+        const data = await apiService.get(
+          API_ENDPOINTS.mobile.terminal.getCollectorAreaTerminals,
+        );
 
-        const response = await apiService.get(url);
-        console.log(response, 'response');
-        setTerminals(response);
+        setTerminals(data);
       } catch (error) {
         console.error('Terminals alınarkən xəta:', error);
       } finally {
@@ -88,23 +81,16 @@ const TerminallarScreen = () => {
             <Text style={styles.terminalId}>
               Terminal ID – {terminal.pointId}
             </Text>
-            <Text style={styles.infoText}>
-              {/* Əsginas sayı: {terminal.passengerCount} */}
-            </Text>
+            <Text style={styles.infoText} />
           </View>
         </View>
-        <View style={styles.right}>
-          {/* <View style={styles.fullnessBox}>
-            <Text style={styles.fullnessText}>{terminal.fullness}</Text>
-          </View> */}
-          {/* <Text style={styles.infoText}>Məbləğ: {terminal.amount}</Text> */}
-        </View>
+        <View style={styles.right} />
       </View>
     </TouchableOpacity>
   );
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <TopHeader title="Terminallar" />
 
       <FlatList
@@ -112,6 +98,9 @@ const TerminallarScreen = () => {
         keyExtractor={(_, index) => index.toString()}
         renderItem={({item}) => <TerminalCard terminal={item} />}
         contentContainerStyle={{paddingBottom: 20}}
+        initialNumToRender={12}
+        maxToRenderPerBatch={10}
+        windowSize={5}
         ListEmptyComponent={
           <View style={styles.noResult}>
             <Image
@@ -127,14 +116,13 @@ const TerminallarScreen = () => {
           </View>
         }
       />
-
       <Modal visible={modalVisible} transparent animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <Text style={styles.title}>Digər məlumatlar</Text>
               <TouchableOpacity onPress={closeModal}>
-                <Icon name="close" size={24} color="#555" />
+                <SvgImage source={require('assets/icons/svg/x-icon.svg')} />
               </TouchableOpacity>
             </View>
 
@@ -170,16 +158,11 @@ const TerminallarScreen = () => {
                 label="Ünvan"
                 value={selectedTerminal?.address}
               />
-              {/* <InfoItem
-                icon={<UserIcon color="#1269B5" />}
-                label="Məsul şəxs"
-                value={selectedTerminal?.responsiblePersonPhone}
-              /> */}
             </ScrollView>
           </View>
         </View>
       </Modal>
-    </SafeAreaView>
+    </View>
   );
 };
 

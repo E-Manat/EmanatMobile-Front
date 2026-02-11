@@ -2,7 +2,11 @@ import React from 'react';
 import {View, Text, StyleSheet, TouchableOpacity} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
-import Icon from 'react-native-vector-icons/AntDesign';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {SvgImage} from './SvgImage';
+import {Routes} from '@navigation/routes';
+import {apiService} from '../services/apiService';
+import {API_ENDPOINTS} from '../services/api_endpoint';
 
 export type RootStackParamList = {
   home: undefined;
@@ -14,6 +18,7 @@ export type RootStackParamList = {
   Tapşırıqlar: undefined;
   TaskProcess: {taskData: any};
   Terminallar: undefined;
+  currentTask: undefined;
 };
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -35,12 +40,60 @@ const MenuCard: React.FC<Props> = ({
 }) => {
   const navigation = useNavigation<NavigationProp>();
 
-  const handlePress = () => {
-    if (screenName === 'TaskProcess' && taskData) {
-      navigation.navigate(screenName, {taskData});
-    } else {
-      navigation.navigate(screenName);
+  const TASK_LIST_CACHE_TTL_MS = 30 * 1000;
+
+  const handlePress = async () => {
+    if (screenName === Routes.taskProcess) {
+      try {
+        const userRole = await AsyncStorage.getItem('roleName');
+        const endpointBase =
+          userRole === 'Collector'
+            ? API_ENDPOINTS.mobile.collector.getAll
+            : API_ENDPOINTS.mobile.technician.getAll;
+
+        const [cacheRaw, cacheAtRaw] = await Promise.all([
+          AsyncStorage.getItem('homeTaskListCache'),
+          AsyncStorage.getItem('homeTaskListCacheAt'),
+        ]);
+        let response: any = null;
+        if (cacheRaw && cacheAtRaw) {
+          const age = Date.now() - parseInt(cacheAtRaw, 10);
+          if (age < TASK_LIST_CACHE_TTL_MS) {
+            response = JSON.parse(cacheRaw);
+          }
+        }
+        if (!response) {
+          response = await apiService.get(endpointBase);
+          await AsyncStorage.setItem('homeTaskListCache', JSON.stringify(response));
+          await AsyncStorage.setItem('homeTaskListCacheAt', Date.now().toString());
+        }
+
+        const inProgressCount: number = response?.inProgressTaskCount ?? 0;
+        if (inProgressCount > 1) {
+          navigation.navigate(Routes.currentTask as never);
+          return;
+        }
+        if (inProgressCount === 1) {
+          const activeTask = response?.tasks?.find((t: any) => t.status === 1);
+          if (activeTask) {
+            navigation.navigate(
+              Routes.taskProcess as never,
+              {taskData: activeTask} as never,
+            );
+            return;
+          }
+        }
+      } catch (error) {
+        console.error('Cari tapşırıqlar alınarkən xəta:', error);
+      }
+
+      if (taskData) {
+        navigation.navigate(screenName as never, {taskData} as never);
+        return;
+      }
     }
+
+    navigation.navigate(screenName as never);
   };
 
   return (
@@ -53,7 +106,7 @@ const MenuCard: React.FC<Props> = ({
       </View>
 
       <View style={styles.fixedIcon}>
-        <Icon name="arrowright" size={24} color="#fff" />
+        <SvgImage source={require('assets/icons/svg/arrow-right.svg')} />
       </View>
     </TouchableOpacity>
   );

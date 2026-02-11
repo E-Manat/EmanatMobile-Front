@@ -1,53 +1,106 @@
 import React, {useEffect, useState} from 'react';
-import {ScrollView, View, StyleSheet} from 'react-native';
+import {View, StyleSheet} from 'react-native';
 import MenuCard from '../components/MenuCard';
-import Banner from '../components/Banner';
 import {globalStyles} from '../globalStyles';
 import HomeHeader from '../components/HomeHeader';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Image1 from '../assets/icons/img1.svg';
 import Image2 from '../assets/icons/img2.svg';
 import Image3 from '../assets/icons/img3.svg';
-const HomeScreen = () => {
-  useEffect(() => {
-    const logAllAsyncStorage = async () => {
-      try {
-        const keys = await AsyncStorage.getAllKeys();
-        const result = await AsyncStorage.multiGet(keys);
-        console.log('AsyncStorage content:');
-        result.forEach(([key, value]) => {
-          console.log(`${key}: ${value}`);
-        });
-      } catch (error) {
-        console.error('Error reading AsyncStorage:', error);
-      }
-    };
+import {useIsFocused} from '@react-navigation/native';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
+import {MainStackParamList} from 'types/types';
+import {Routes} from '@navigation/routes';
+import {apiService} from '../services/apiService';
+import {API_ENDPOINTS} from '../services/api_endpoint';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
-    logAllAsyncStorage();
-  }, []);
+const HomeScreen: React.FC<
+  NativeStackScreenProps<MainStackParamList, Routes.home>
+> = () => {
+  // useEffect(() => {
+  //   const clearAllAsyncStorage = async () => {
+  //     try {
+  //       await AsyncStorage.clear();
+  //     } catch (error) {
+  //       console.error('Error clearing AsyncStorage:', error);
+  //     }
+  //   };
+
+  //   clearAllAsyncStorage();
+  // }, []);
+
+  const TASK_LIST_CACHE_TTL_MS = 60 * 1000;
+  const isFocused = useIsFocused();
   const [taskData, setTaskData] = useState<any>(null);
 
-  useEffect(() => {
-    const fetchTaskData = async () => {
-      try {
-        const task = await AsyncStorage.getItem('currentTask');
-        if (task) {
-          setTaskData(JSON.parse(task));
-        }
-      } catch (error) {
-        console.error('Error reading task from AsyncStorage:', error);
+  const fetchTaskData = async () => {
+    try {
+      const task = await AsyncStorage.getItem('currentTask');
+      if (task) {
+        setTaskData(JSON.parse(task));
       }
-    };
 
-    fetchTaskData();
-  }, []);
+      const userRole = await AsyncStorage.getItem('roleName');
+      const endpointBase =
+        userRole === 'Collector'
+          ? API_ENDPOINTS.mobile.collector.getAll
+          : API_ENDPOINTS.mobile.technician.getAll;
+
+      const [cacheRaw, cacheAtRaw] = await Promise.all([
+        AsyncStorage.getItem('homeTaskListCache'),
+        AsyncStorage.getItem('homeTaskListCacheAt'),
+      ]);
+      if (cacheRaw && cacheAtRaw) {
+        const age = Date.now() - parseInt(cacheAtRaw, 10);
+        if (age < TASK_LIST_CACHE_TTL_MS) {
+          const response = JSON.parse(cacheRaw);
+          const inProgressCount = response?.inProgressTaskCount ?? 0;
+          if (inProgressCount > 0) {
+            const activeTask = response.tasks?.find((t: any) => t.status === 1);
+            if (activeTask) {
+              setTaskData(activeTask);
+              await AsyncStorage.setItem('currentTask', JSON.stringify(activeTask));
+            }
+          } else {
+            setTaskData(null);
+            await AsyncStorage.removeItem('currentTask');
+          }
+          return;
+        }
+      }
+
+      const response: any = await apiService.get(endpointBase);
+      await AsyncStorage.setItem('homeTaskListCache', JSON.stringify(response));
+      await AsyncStorage.setItem('homeTaskListCacheAt', Date.now().toString());
+
+      const inProgressCount = response?.inProgressTaskCount ?? 0;
+      if (inProgressCount > 0) {
+        const activeTask = response.tasks?.find((t: any) => t.status === 1);
+        if (activeTask) {
+          setTaskData(activeTask);
+          await AsyncStorage.setItem('currentTask', JSON.stringify(activeTask));
+        }
+      } else {
+        setTaskData(null);
+        await AsyncStorage.removeItem('currentTask');
+      }
+    } catch (error) {
+      console.error('Error reading task from AsyncStorage or API:', error);
+    }
+  };
+
+  useEffect(() => {
+    if (isFocused) {
+      fetchTaskData();
+    }
+  }, [isFocused]);
+  const {top} = useSafeAreaInsets();
 
   return (
-    <ScrollView
-      style={globalStyles.container}
-      contentContainerStyle={{paddingBottom: 40}}>
+    <View style={[globalStyles.container, {paddingTop: top}]}>
       <HomeHeader />
-      <Banner />
+      <View style={styles.spacer} />
       {taskData !== null && (
         <MenuCard
           title="Cari Tapşırıq"
@@ -76,9 +129,14 @@ const HomeScreen = () => {
         screenName="Hesabatlar"
         iconName={<Image3 />}
       />
-    </ScrollView>
+    </View>
   );
 };
 
-const styles = StyleSheet.create({});
+const styles = StyleSheet.create({
+  spacer: {
+    height: 30,
+  },
+});
+
 export default HomeScreen;

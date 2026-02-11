@@ -9,17 +9,24 @@ import {
   Image,
   ActivityIndicator,
 } from 'react-native';
-import Icon from 'react-native-vector-icons/Feather';
-import IconCheck from 'react-native-vector-icons/Ionicons';
-import {useFocusEffect, useNavigation} from '@react-navigation/native';
+import {useFocusEffect} from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Sound from 'react-native-sound';
 import Toast from 'react-native-toast-message';
 import * as signalR from '@microsoft/signalr';
 import {Swipeable} from 'react-native-gesture-handler';
 import Config from 'react-native-config';
-const NotificationsScreen = () => {
-  const navigation = useNavigation();
+import {apiService} from '../services/apiService';
+import {API_ENDPOINTS} from '../services/api_endpoint';
+import {SvgImage} from '@components/SvgImage';
+import {Routes} from '@navigation/routes';
+import {MainStackParamList} from 'types/types';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
+
+const NotificationsScreen: React.FC<
+  NativeStackScreenProps<MainStackParamList, Routes.notifications>
+> = ({navigation, route}) => {
   const [filter, setFilter] = useState('all');
   const [data, setData] = useState<any>([]);
   const [modalVisible, setModalVisible] = useState(false);
@@ -75,46 +82,19 @@ const NotificationsScreen = () => {
   const fetchNotifications = useCallback(async () => {
     setLoading(true);
     try {
-      const token = await AsyncStorage.getItem('userToken');
-      if (!token) {
-        console.warn('Token tapılmadı');
-        setLoading(false);
-        return;
-      }
-
-      const response = await fetch(
-        `${Config.API_URL}/notification/Notification/Get`,
-        {
-          method: 'GET',
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        },
-      );
-
-      if (response.ok) {
-        const text = await response.text();
-        if (text) {
-          const notifications = JSON.parse(text);
-          const formattedNotifications = notifications.map((item: any) => ({
-            id: item.id,
-            title: item.title,
-            text: item.message,
-            unread: !item.isRead,
-            time: formatTime(item.createdAt),
-            date: formatDate(item.createdAt),
-          }));
-          setData(formattedNotifications);
-        } else {
-          setData([]);
-        }
-      } else {
-        console.error('❌ API xətası:', response.status, response.statusText);
-        setData([]);
-      }
+      const raw: any[] = await apiService.get(API_ENDPOINTS.notification.get);
+      const formatted = raw?.map(item => ({
+        id: item.id,
+        title: item.title,
+        text: item.message,
+        unread: !item.isRead,
+        time: formatTime(item.createdAt),
+        date: formatDate(item.createdAt),
+      }));
+      setData(formatted);
     } catch (err) {
-      console.error('❌ Bildiriş GET xətası:', err);
+      console.error('GET notifications error:', err);
+      setData([]);
     } finally {
       setLoading(false);
     }
@@ -126,7 +106,6 @@ const NotificationsScreen = () => {
     }, [fetchNotifications]),
   );
 
-  console.log(AsyncStorage.getAllKeys);
   const connectionRef = useRef<signalR.HubConnection | null>(null);
 
   useEffect(() => {
@@ -139,17 +118,13 @@ const NotificationsScreen = () => {
         }
 
         if (connectionRef.current) {
-          console.log('⚠️ Mövcud bağlantı var, yenidən qurulmur');
           return;
         }
 
         const connection = new signalR.HubConnectionBuilder()
-          .withUrl(
-            'http://192.168.1.106:5009/hubs/mobile',
-            {
-              accessTokenFactory: () => token,
-            },
-          )
+          .withUrl(`${Config.SIGNALR_URL}`, {
+            accessTokenFactory: () => token,
+          })
           .withAutomaticReconnect()
           .configureLogging(signalR.LogLevel.Information)
           .build();
@@ -157,8 +132,6 @@ const NotificationsScreen = () => {
         connection.off('ReceiveNotification');
 
         connection.on('ReceiveNotification', (notification: any) => {
-          console.log('📩 Yeni real-time bildiriş:', notification);
-
           const newNotification = {
             id: notification.id,
             title: notification.title,
@@ -184,12 +157,10 @@ const NotificationsScreen = () => {
             Sound.MAIN_BUNDLE,
             error => {
               if (error) {
-                console.log('❌ Səs yükləmə xətası:', error);
                 return;
               }
               ding.play(success => {
                 if (!success) {
-                  console.log('🔇 Səs çalınmadı');
                 }
               });
             },
@@ -198,8 +169,6 @@ const NotificationsScreen = () => {
 
         await connection.start();
         connectionRef.current = connection;
-
-        console.log('✅ SignalR bağlantısı quruldu');
       } catch (err) {
         console.error('❌ SignalR bağlantı xətası:', err);
       }
@@ -210,7 +179,6 @@ const NotificationsScreen = () => {
     return () => {
       if (connectionRef.current) {
         connectionRef.current.stop();
-        console.log('🔌 SignalR bağlantısı dayandırıldı');
         connectionRef.current = null;
       }
     };
@@ -219,52 +187,32 @@ const NotificationsScreen = () => {
   const fetchUnreadNotifications = useCallback(async () => {
     setLoading(true);
     try {
-      const token = await AsyncStorage.getItem('userToken');
-      if (!token) {
-        console.warn('Token tapılmadı');
-        setLoading(false);
-        return;
-      }
-
-      const response = await fetch(
-        `${Config.API_URL}/notification/Notification/GetUnreads`,
-        {
-          method: 'GET',
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        },
+      const raw: any[] = await apiService.get(
+        API_ENDPOINTS.notification.getUnreads,
       );
-
-      if (response.ok) {
-        const text = await response.text();
-        if (text) {
-          const notifications = JSON.parse(text);
-          const formattedNotifications = notifications.map((item: any) => ({
-            id: item.id,
-            title: item.title,
-            text: item.message,
-            unread: !item.isRead,
-            time: formatTime(item.createdAt),
-            date: formatDate(item.createdAt),
-          }));
-          setData(formattedNotifications);
-        } else {
-          setData([]);
-        }
-      } else {
-        console.error('❌ API xətası:', response.status, response.statusText);
-        setData([]);
-      }
+      const formatted = raw?.map(item => ({
+        id: item.id,
+        title: item.title,
+        text: item.message,
+        unread: !item.isRead,
+        time: formatTime(item.createdAt),
+        date: formatDate(item.createdAt),
+      }));
+      setData(formatted);
     } catch (err) {
-      console.error('❌ Oxunmamış GET xətası:', err);
+      console.error('GET unreads error:', err);
+      setData([]);
     } finally {
       setLoading(false);
     }
   }, []);
 
+  const isFirstFilterRender = useRef(true);
   useEffect(() => {
+    if (isFirstFilterRender.current) {
+      isFirstFilterRender.current = false;
+      return;
+    }
     if (filter === 'unread') {
       fetchUnreadNotifications();
     } else {
@@ -272,72 +220,25 @@ const NotificationsScreen = () => {
     }
   }, [filter, fetchNotifications, fetchUnreadNotifications]);
 
-  const [successMessage, setSuccessMessage] = useState('');
-
-  console.log(data, 'data');
-
   const markAllAsRead = async () => {
     try {
-      const token = await AsyncStorage.getItem('userToken');
-      if (!token) {
-        console.warn('Token tapılmadı');
-        return;
-      }
-
-      const response = await fetch(
-        `${Config.API_URL}/notification/Notification/MarkAllAsRead`,
-        {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        },
-      );
-      console.log(response, 'response');
-      if (response) {
-        setData((prevData: any) =>
-          prevData.map((item: any) => ({...item, unread: false})),
-        );
-        setSuccessMessage('Bütün bildirişlər uğurla işarələndi!');
-        setModalVisible(false);
-      } else {
-        Toast.show({
-          type: 'error',
-          text1: 'Xəta baş verdi',
-          text2: 'Bildirişlər işarələnə bilmədi',
-        });
-      }
+      await apiService.post(API_ENDPOINTS.notification.markAllAsRead, {});
+      setData((d: any) => d.map((x: any) => ({...x, unread: false})));
+      setModalVisible(false);
+      Toast.show({type: 'success', text1: 'Bütün bildirişlər oxundu.'});
     } catch (err) {
-      console.error('❌ markAllAsRead API xətası:', err);
+      Toast.show({type: 'error', text1: 'Xəta', text2: 'İşarələnmədi.'});
+      console.error(err);
     }
   };
 
   const markAsRead = async (notificationId: string) => {
     try {
-      const token = await AsyncStorage.getItem('userToken');
-      if (!token) {
-        console.warn('Token tapılmadı');
-        return;
-      }
-
-      const response = await fetch(
-        `${Config.API_URL}/notification/Notification/MarkAsRead`,
-        {
-          method: 'PATCH',
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({notificationId: notificationId}),
-        },
-      );
-
-      if (!response.ok) {
-        console.error('❌ markAsRead API xətası:', response.status);
-      }
+      await apiService.patch(API_ENDPOINTS.notification.markAsRead, {
+        notificationId,
+      });
     } catch (err) {
-      console.error('❌ markAsRead istisna xətası:', err);
+      console.error('❌ markAsRead error:', err);
     }
   };
 
@@ -348,8 +249,6 @@ const NotificationsScreen = () => {
         console.warn('Token tapılmadı');
         return;
       }
-
-      console.log(id);
 
       const response: any = await fetch(
         `${Config.API_URL}/notification/Notification/Delete`,
@@ -362,8 +261,6 @@ const NotificationsScreen = () => {
           body: JSON.stringify({notificationId: id}),
         },
       );
-
-      console.log(response, 'response');
 
       if (response) {
         setData((prev: any) => prev.filter((item: any) => item.id !== id));
@@ -421,12 +318,13 @@ const NotificationsScreen = () => {
       </Swipeable>
     );
   };
-  console.log(selectedIds, 'selectedIds');
 
   const handleBulkDelete = async () => {
     try {
       const token = await AsyncStorage.getItem('userToken');
-      if (!token) return console.warn('Token tapılmadı');
+      if (!token) {
+        return console.warn('Token tapılmadı');
+      }
 
       const response = await fetch(
         `${Config.API_URL}/notification/Notification/DeleteSelectedIds`,
@@ -466,7 +364,9 @@ const NotificationsScreen = () => {
   const handleDeleteAll = async () => {
     try {
       const token = await AsyncStorage.getItem('userToken');
-      if (!token) return console.warn('Token tapılmadı');
+      if (!token) {
+        return console.warn('Token tapılmadı');
+      }
 
       const response = await fetch(
         `${Config.API_URL}/notification/Notification/DeleteAll`,
@@ -479,7 +379,6 @@ const NotificationsScreen = () => {
           body: JSON.stringify({}),
         },
       );
-      console.log(response, 'response');
       if (response) {
         setData([]);
         setSelectedIds([]);
@@ -499,38 +398,43 @@ const NotificationsScreen = () => {
       console.error('❌ handleDeleteAll istisna:', err);
     }
   };
+  const {top} = useSafeAreaInsets();
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, {paddingTop: top}]}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Icon name="chevron-left" size={24} color="#2D64AF" />
+        <TouchableOpacity
+          style={{marginLeft: 20}}
+          onPress={() => navigation.goBack()}>
+          <SvgImage
+            color="#2D64AF"
+            source={require('assets/icons/svg/go-back.svg')}
+          />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Bildirişlər</Text>
 
-        {filter === 'unread' && filteredData?.length > 0 ? (
-          <TouchableOpacity onPress={() => setModalVisible(true)}>
-            <IconCheck name="checkmark-done-sharp" size={20} color="#2D64AF" />
-          </TouchableOpacity>
-        ) : (
-          <View style={{width: 20}} />
-        )}
+        <View style={{flexDirection: 'row', alignItems: 'center'}}>
+          {filter === 'unread' && filteredData.length > 0 ? (
+            <TouchableOpacity
+              onPress={() => setModalVisible(true)}
+              style={{marginRight: 12}}>
+              <SvgImage source={require('assets/icons/svg/seen.svg')} />
+            </TouchableOpacity>
+          ) : (
+            <View style={{width: 20, marginRight: 12}} />
+          )}
 
-        {selectionMode && selectedIds.length > 0 && (
-          <TouchableOpacity
-            onPress={handleBulkDelete}
-            style={{
-              backgroundColor: 'red',
-              padding: 10,
-              alignItems: 'center',
-              margin: 10,
-              borderRadius: 10,
-            }}>
-            <Text style={{color: 'white', fontFamily: 'DMSans-Regular'}}>
-              Seçilmişləri Sil ({selectedIds.length})
-            </Text>
-          </TouchableOpacity>
-        )}
+          {selectionMode && selectedIds.length > 0 && (
+            <TouchableOpacity
+              onPress={handleBulkDelete}
+              style={styles.bulkDeleteButton}>
+              <SvgImage
+                source={require('assets/icons/svg/trash.svg')}
+                color="#FF3B30"
+              />
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
 
       <View style={styles.filterContainer}>
@@ -574,6 +478,10 @@ const NotificationsScreen = () => {
             data={filteredData}
             keyExtractor={(item: any) => String(item.id)}
             renderItem={renderItem}
+            contentContainerStyle={{paddingHorizontal: 20}}
+            initialNumToRender={12}
+            maxToRenderPerBatch={10}
+            windowSize={5}
             ListHeaderComponent={() =>
               filteredData.length ? (
                 <>
@@ -659,9 +567,9 @@ const NotificationsScreen = () => {
         <Modal visible={true} transparent animationType="fade">
           <View style={styles.modalContainer}>
             <View style={styles.modalContent}>
-              <Image
-                source={require('../assets/img/emanat.png')}
+              <SvgImage
                 style={styles.image}
+                source={require('assets/icons/mpay.svg')}
               />
               <Text style={styles.modalTitle}>
                 {selectedNotification.title}
@@ -684,7 +592,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F7F9FB',
-    paddingHorizontal: 16,
   },
   header: {
     flexDirection: 'row',
@@ -697,6 +604,10 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontFamily: 'DMSans-SemiBold',
     color: '#2D64AF',
+  },
+  bulkDeleteButton: {
+    padding: 8,
+    borderRadius: 8,
   },
   filterContainer: {
     flexDirection: 'row',
@@ -849,7 +760,7 @@ const styles = StyleSheet.create({
     width: 50,
     height: 57,
     objectFit: 'cover',
-    marginBottom: 5,
+    marginBottom: 20,
     alignSelf: 'center',
   },
   noResult: {

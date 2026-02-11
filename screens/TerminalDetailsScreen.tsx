@@ -5,32 +5,30 @@ import {
   Image,
   TouchableOpacity,
   StyleSheet,
-  Modal,
-  Alert,
+  DeviceEventEmitter,
 } from 'react-native';
-import Icon from 'react-native-vector-icons/FontAwesome6';
-import Icon1 from 'react-native-vector-icons/MaterialIcons';
-import Icon2 from 'react-native-vector-icons/Octicons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {StackNavigationProp} from '@react-navigation/stack';
-import {RootStackParamList} from '../App';
-import {useNavigation} from '@react-navigation/native';
+import {useIsFocused} from '@react-navigation/native';
 import TopHeader from '../components/TopHeader';
 import CustomModal from '../components/Modal';
 import Config from 'react-native-config';
-import {ScrollView} from 'react-native-gesture-handler';
 import {HomeIcon} from '../assets/icons';
-type NavigationProp = StackNavigationProp<RootStackParamList, 'Hesabatlar'>;
+import {MainStackParamList} from 'types/types';
+import {Routes} from '@navigation/routes';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
+import {SvgImage} from '@components/SvgImage';
 
-const TerminalDetailsScreen = ({route}: any) => {
-  const {taskData} = route.params;
+const TerminalDetailsScreen: React.FC<
+  NativeStackScreenProps<MainStackParamList, Routes.terminalDetails>
+> = ({navigation, route}) => {
+  const isFocused = useIsFocused();
+  const [taskData, setTaskDetails] = useState(route?.params?.taskData);
   const [confirmVisible, setConfirmVisible] = useState(false);
   const [loading, setLoading] = useState(false);
   const [taskInProgress, setTaskInProgress] = useState(false);
   const [customModalVisible, setCustomModalVisible] = useState(false);
   const [roleName, setRoleName] = useState<string | null>(null);
 
-  console.log(taskData, 'dd');
   useEffect(() => {
     const loadRoleName = async () => {
       const storedRoleName = await AsyncStorage.getItem('roleName');
@@ -39,6 +37,13 @@ const TerminalDetailsScreen = ({route}: any) => {
 
     loadRoleName();
   }, []);
+
+  const handleContinueTask = () => {
+    navigation.navigate(Routes.taskProcess, {
+      taskData,
+      startTime: new Date().getTime(),
+    });
+  };
 
   const handleStartTask = async () => {
     if (taskInProgress) {
@@ -55,8 +60,8 @@ const TerminalDetailsScreen = ({route}: any) => {
       // mobile
       const url =
         roleName === 'Collector'
-          ? `${Config.API_URL}/CollectorTask/StartTask?taskId=${taskData.id}`
-          : `${Config.API_URL}/TechnicianTask/StartRoute?taskId=${taskData.id}`;
+          ? `${Config.API_URL}/mobile/CollectorTask/StartTask?taskId=${taskData.id}`
+          : `${Config.API_URL}/mobile/TechnicianTask/StartRoute?taskId=${taskData.id}`;
 
       const response = await fetch(url, {
         method: 'POST',
@@ -84,12 +89,13 @@ const TerminalDetailsScreen = ({route}: any) => {
 
       setConfirmVisible(false);
       await AsyncStorage.setItem('currentTask', JSON.stringify(taskData));
+      DeviceEventEmitter.emit('taskStarted');
       await AsyncStorage.setItem(
         'routeStartTime',
         new Date().getTime().toString(),
       );
 
-      navigation.navigate('TaskProcess', {
+      navigation.navigate(Routes.taskProcess, {
         taskData,
         startTime: new Date().getTime(),
       });
@@ -102,7 +108,6 @@ const TerminalDetailsScreen = ({route}: any) => {
   };
 
   const getStatusText = (status: number) => {
-    console.log(roleName, 'r');
     if (roleName === 'Collector') {
       switch (status) {
         case 0:
@@ -111,7 +116,9 @@ const TerminalDetailsScreen = ({route}: any) => {
           return 'Yoldadır';
         case 3:
           return 'İnkassasiya prosesi gedir';
-        case 4:
+        case 9:
+          return 'Uğursuz əməliyyat';
+        case 10:
           return 'Tapşırıq tamamlanıb';
         case 5:
           return 'Tapşırıq ləğv olunub';
@@ -128,6 +135,8 @@ const TerminalDetailsScreen = ({route}: any) => {
           return 'Texniki iş prosesi gedir';
         case 4:
           return 'Texniki iş prosesi tamamlandı';
+        case 9:
+          return 'Uğursuz əməliyyat';
         case 5:
           return 'Tapşırıq ləğv olunub';
         default:
@@ -136,17 +145,23 @@ const TerminalDetailsScreen = ({route}: any) => {
     }
   };
 
-  console.log(getStatusText(taskData.status));
-  const navigation = useNavigation<NavigationProp>();
   const formatDuration = (durationStr: string) => {
-    if (!durationStr) return 'Qeyd olunmayıb';
+    if (!durationStr) {
+      return 'Qeyd olunmayıb';
+    }
 
     const [hours, minutes, seconds] = durationStr.split(':').map(Number);
 
     const parts = [];
-    if (hours > 0) parts.push(`${hours} saat`);
-    if (minutes > 0) parts.push(`${minutes} dəqiqə`);
-    if (seconds > 0) parts.push(`${seconds} saniyə`);
+    if (hours > 0) {
+      parts.push(`${hours} saat`);
+    }
+    if (minutes > 0) {
+      parts.push(`${minutes} dəqiqə`);
+    }
+    if (seconds > 0) {
+      parts.push(`${seconds} saniyə`);
+    }
 
     return parts.length > 0 ? parts.join(' ') : '0 saniyə';
   };
@@ -156,11 +171,13 @@ const TerminalDetailsScreen = ({route}: any) => {
       case 0:
         return '#9E9E9E';
       case 4:
+      case 10:
         return '#38C172';
       case 1:
       case 2:
       case 3:
         return '#FFB600';
+      case 9:
       case 5:
         return '#F03E5C';
       default:
@@ -168,12 +185,34 @@ const TerminalDetailsScreen = ({route}: any) => {
     }
   };
 
+  useEffect(() => {
+    if (!isFocused) {
+      return;
+    }
+
+    const fetchTask = async () => {
+      try {
+        const token = await AsyncStorage.getItem('userToken');
+        const res = await fetch(
+          `${Config.API_URL}/mobile/CollectorTask/GetById?id=${taskData.id}`,
+          {headers: {Authorization: `Bearer ${token}`}},
+        );
+        const updated = await res.json();
+        setTaskDetails(updated);
+      } catch (e) {
+        console.error('Task fetch error:', e);
+      }
+    };
+
+    fetchTask();
+  }, [isFocused]);
+
   return (
-    <ScrollView contentContainerStyle={{flexGrow: 1}}>
+    <View style={{flexGrow: 1}}>
       <View style={styles.container}>
         <TopHeader
           title="Tapşırıq detalları"
-          onRightPress={() => navigation.navigate('Ana səhifə')}
+          onRightPress={() => navigation.navigate(Routes.home)}
           rightIconComponent={<HomeIcon color="#fff" />}
         />
 
@@ -186,7 +225,10 @@ const TerminalDetailsScreen = ({route}: any) => {
                 flexDirection: 'row',
                 alignItems: 'center',
               }}>
-              <Icon name="location-dot" size={20} color="#1976D2" />{' '}
+              <SvgImage
+                source={require('assets/icons/svg/location.svg')}
+                color="#1976D2"
+              />{' '}
               <Text style={styles.terminalCode}>
                 {' '}
                 Terminal ID: {taskData?.terminal?.pointId}
@@ -225,7 +267,10 @@ const TerminalDetailsScreen = ({route}: any) => {
 
           <View style={styles.timelineItem}>
             <View style={styles.iconWrapper}>
-              <Icon name="location-dot" size={15} color="white" />
+              <SvgImage
+                source={require('assets/icons/svg/location.svg')}
+                color="white"
+              />
             </View>
             <View style={styles.textWrapper}>
               <Text style={styles.detailText}>
@@ -241,7 +286,12 @@ const TerminalDetailsScreen = ({route}: any) => {
 
           <View style={styles.timelineItem}>
             <View style={styles.iconWrapper}>
-              <Icon1 name="watch-later" size={15} color="white" />
+              <SvgImage
+                source={require('assets/icons/svg/clock.svg')}
+                color="white"
+                width={15}
+                height={15}
+              />
             </View>
             <View style={styles.textWrapper}>
               <Text style={styles.detailText}>
@@ -253,22 +303,23 @@ const TerminalDetailsScreen = ({route}: any) => {
               </Text>
             </View>
           </View>
-
           <View style={styles.verticalLine} />
-
           <View style={styles.timelineItem}>
             <View style={styles.iconWrapper}>
-              <Icon name="phone" size={15} color="white" />
+              <SvgImage
+                source={require('assets/icons/svg/called.svg')}
+                color="white"
+                width={15}
+                height={15}
+              />
             </View>
             <View style={styles.textWrapper}>
               <Text style={styles.detailText}>
-                {taskData?.terminal?.responsiblePersonPhone || '012 404 48 88'}
+                {taskData?.terminal?.responsiblePersonPhone || 'Qeyd olunmayıb'}
               </Text>
             </View>
           </View>
-
           {/* {taskData.taskDuration && <View style={styles.verticalLine} />}
-
           {taskData.taskDuration && (
             <View style={styles.timelineItem}>
               <View style={styles.iconWrapper}>
@@ -284,15 +335,14 @@ const TerminalDetailsScreen = ({route}: any) => {
               </View>
             </View>
           )} */}
-
-          {taskData.totalProcessDuration && (
-            <View style={styles.verticalLine} />
-          )}
-
-          {taskData.totalProcessDuration && (
+          {true && <View style={styles.verticalLine} />}
+          {true && (
             <View style={styles.timelineItem}>
               <View style={styles.iconWrapper}>
-                <Icon2 name="check-circle-fill" size={15} color="white" />
+                <SvgImage
+                  source={require('assets/icons/svg/check-fill.svg')}
+                  color="white"
+                />
               </View>
               <View style={styles.textWrapper}>
                 <Text style={styles.detailText}>
@@ -305,7 +355,6 @@ const TerminalDetailsScreen = ({route}: any) => {
             </View>
           )}
         </View>
-
         <CustomModal
           visible={confirmVisible}
           title="Tapşırığa başlamaq istəyirsiniz?"
@@ -315,7 +364,6 @@ const TerminalDetailsScreen = ({route}: any) => {
           onConfirm={handleStartTask}
           onCancel={() => setConfirmVisible(false)}
         />
-
         <CustomModal
           visible={customModalVisible}
           title="Xəta!"
@@ -330,6 +378,12 @@ const TerminalDetailsScreen = ({route}: any) => {
             onPress={() => setConfirmVisible(true)}>
             <Text style={styles.startButtonText}>Marşruta başla</Text>
           </TouchableOpacity>
+        ) : taskData.status === 1 || taskData.status === 3 ? (
+          <TouchableOpacity
+            style={styles.startButton}
+            onPress={handleContinueTask}>
+            <Text style={styles.startButtonText}>Tapşırığa davam et</Text>
+          </TouchableOpacity>
         ) : (
           <View
             style={[
@@ -342,7 +396,7 @@ const TerminalDetailsScreen = ({route}: any) => {
           </View>
         )}
       </View>
-    </ScrollView>
+    </View>
   );
 };
 

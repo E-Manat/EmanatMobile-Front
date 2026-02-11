@@ -1,7 +1,26 @@
 import React from 'react';
-import {Modal, StyleSheet, Text, View, TouchableOpacity} from 'react-native';
+import {
+  Modal,
+  StyleSheet,
+  Text,
+  View,
+  TouchableOpacity,
+  ActivityIndicator,
+} from 'react-native';
 
-const CustomModal = ({
+interface CustomModalProps {
+  visible: boolean;
+  description: string;
+  title: string;
+  confirmText?: string;
+  cancelText?: string;
+  onConfirm?: () => void;
+  onCancel?: () => void;
+  closeable?: boolean;
+  loading?: boolean;
+}
+
+const CustomModal: React.FC<CustomModalProps> = ({
   visible,
   description,
   title,
@@ -9,29 +28,54 @@ const CustomModal = ({
   cancelText,
   onConfirm,
   onCancel,
-}: any) => {
+  closeable = false,
+  loading = false,
+}) => {
+  const handleOverlayPress = () => {
+    if (closeable && onCancel && !loading) {
+      onCancel();
+    }
+  };
+
   return (
     <Modal transparent visible={visible} animationType="fade">
-      <View style={styles.overlay}>
-        <View style={styles.modalContainer}>
-          <Text style={styles.title}>{title}</Text>
-          <Text style={styles.description}>{description}</Text>
-          <View style={styles.buttonContainer}>
-            {cancelText && (
-              <TouchableOpacity style={styles.cancelButton} onPress={onCancel}>
-                <Text style={styles.cancelText}>{cancelText}</Text>
-              </TouchableOpacity>
-            )}
-            {confirmText && (
-              <TouchableOpacity
-                style={styles.confirmButton}
-                onPress={onConfirm}>
-                <Text style={styles.confirmText}>{confirmText}</Text>
-              </TouchableOpacity>
-            )}
+      <TouchableOpacity
+        style={styles.overlay}
+        activeOpacity={1}
+        onPress={handleOverlayPress}
+        disabled={loading}>
+        <TouchableOpacity activeOpacity={1} onPress={e => e.stopPropagation()}>
+          <View style={styles.modalContainer}>
+            <Text style={styles.title}>{title}</Text>
+            <Text style={styles.description}>{description}</Text>
+            <View style={styles.buttonContainer}>
+              {cancelText && (
+                <TouchableOpacity
+                  style={styles.cancelButton}
+                  onPress={onCancel}
+                  disabled={loading}>
+                  <Text style={styles.cancelText}>{cancelText}</Text>
+                </TouchableOpacity>
+              )}
+              {confirmText && (
+                <TouchableOpacity
+                  style={[
+                    styles.confirmButton,
+                    loading && styles.confirmButtonDisabled,
+                  ]}
+                  onPress={onConfirm}
+                  disabled={loading}>
+                  {loading ? (
+                    <ActivityIndicator color="#fff" size="small" />
+                  ) : (
+                    <Text style={styles.confirmText}>{confirmText}</Text>
+                  )}
+                </TouchableOpacity>
+              )}
+            </View>
           </View>
-        </View>
-      </View>
+        </TouchableOpacity>
+      </TouchableOpacity>
     </Modal>
   );
 };
@@ -46,7 +90,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   modalContainer: {
-    width: '85%',
+    width: 320,
     backgroundColor: 'white',
     paddingVertical: 20,
     paddingHorizontal: 15,
@@ -105,6 +149,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     backgroundColor: '#1269B5',
     width: '48%',
+  },
+  confirmButtonDisabled: {
+    opacity: 0.7,
   },
   confirmText: {
     color: '#fff',
