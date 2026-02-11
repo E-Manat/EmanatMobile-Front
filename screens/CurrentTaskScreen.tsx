@@ -483,12 +483,14 @@ const CurrentTaskScreen: React.FC<
         data={sortedTasks}
         keyExtractor={item => item.id}
         renderItem={renderTask}
-        // ListHeaderComponent={ListHeaderComponent}
         ListEmptyComponent={ListEmptyComponent}
         ListFooterComponent={<View style={{height: 20}} />}
         refreshing={refreshing}
         onRefresh={handleRefresh}
         contentContainerStyle={styles.flatListContent}
+        initialNumToRender={12}
+        maxToRenderPerBatch={10}
+        windowSize={5}
       />
     </View>
   );

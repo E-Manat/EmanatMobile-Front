@@ -95,6 +95,9 @@ const UniversalSelectModal: React.FC<Props> = ({
           <FlatList
             data={filteredData}
             keyExtractor={item => item.id.toString()}
+            initialNumToRender={15}
+            maxToRenderPerBatch={10}
+            windowSize={5}
             renderItem={({item}) => (
               <TouchableOpacity
                 style={styles.option}

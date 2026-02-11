@@ -1,5 +1,4 @@
 import {
-  Image,
   StyleSheet,
   Text,
   TextInput,
@@ -7,6 +6,7 @@ import {
   View,
 } from 'react-native';
 import React, {useEffect, useState} from 'react';
+import FastImage from 'react-native-fast-image';
 import TopHeader from '../components/TopHeader';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {MainStackParamList} from 'types/types';
@@ -38,10 +38,10 @@ const ProfileDetailScreen: React.FC<
         <View style={styles.profileContainer}>
           <TouchableOpacity onPress={() => setModalVisible(true)}>
             <View style={styles.imageContainer}>
-              <Image
+              <FastImage
                 source={
                   profile.profileImage
-                    ? {uri: profile.profileImage}
+                    ? {uri: profile.profileImage, priority: FastImage.priority.normal}
                     : require('../assets/img/default.jpg')
                 }
                 style={styles.profileImage}

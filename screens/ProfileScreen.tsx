@@ -5,12 +5,12 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  Image,
   Modal,
   KeyboardAvoidingView,
   TouchableWithoutFeedback,
   Keyboard,
 } from 'react-native';
+import FastImage from 'react-native-fast-image';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Toast from 'react-native-toast-message';
 import TopHeader from '../components/TopHeader';
@@ -61,8 +61,8 @@ const ProfileScreen: React.FC<
               <TouchableOpacity onPress={() => setModalVisible(true)}>
                 <View style={styles.imageContainer}>
                   {profile?.profileImage ? (
-                    <Image
-                      source={{uri: profile.profileImage}}
+                    <FastImage
+                      source={{uri: profile.profileImage, priority: FastImage.priority.normal}}
                       style={styles.profileImage}
                     />
                   ) : (
@@ -134,10 +134,10 @@ const ProfileScreen: React.FC<
               <TouchableOpacity
                 style={styles.modalContainer}
                 onPress={() => setModalVisible(false)}>
-                <Image
+                <FastImage
                   source={
                     profile?.profileImage
-                      ? {uri: profile.profileImage}
+                      ? {uri: profile.profileImage, priority: FastImage.priority.normal}
                       : require('../assets/img/default.jpg')
                   }
                   style={styles.modalImage}

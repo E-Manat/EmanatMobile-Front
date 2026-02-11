@@ -207,7 +207,12 @@ const NotificationsScreen: React.FC<
     }
   }, []);
 
+  const isFirstFilterRender = useRef(true);
   useEffect(() => {
+    if (isFirstFilterRender.current) {
+      isFirstFilterRender.current = false;
+      return;
+    }
     if (filter === 'unread') {
       fetchUnreadNotifications();
     } else {
@@ -474,6 +479,9 @@ const NotificationsScreen: React.FC<
             keyExtractor={(item: any) => String(item.id)}
             renderItem={renderItem}
             contentContainerStyle={{paddingHorizontal: 20}}
+            initialNumToRender={12}
+            maxToRenderPerBatch={10}
+            windowSize={5}
             ListHeaderComponent={() =>
               filteredData.length ? (
                 <>

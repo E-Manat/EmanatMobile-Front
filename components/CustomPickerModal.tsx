@@ -22,6 +22,9 @@ const CustomPickerModal = ({visible, onClose, options, onSelect}: any) => {
           <FlatList
             data={options}
             keyExtractor={item => item.id.toString()}
+            initialNumToRender={15}
+            maxToRenderPerBatch={10}
+            windowSize={5}
             renderItem={({item}) => (
               <TouchableOpacity onPress={() => onSelect(item)}>
                 <Text style={{padding: 10}}>{item.name}</Text>

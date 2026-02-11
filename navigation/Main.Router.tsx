@@ -133,8 +133,8 @@ export const MainRouter: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    const interval = setInterval(checkCurrentTask, 200);
     checkCurrentTask();
+    const interval = setInterval(checkCurrentTask, 2500);
     return () => clearInterval(interval);
   }, []);
 

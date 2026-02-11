@@ -40,6 +40,8 @@ const MenuCard: React.FC<Props> = ({
 }) => {
   const navigation = useNavigation<NavigationProp>();
 
+  const TASK_LIST_CACHE_TTL_MS = 30 * 1000;
+
   const handlePress = async () => {
     if (screenName === Routes.taskProcess) {
       try {
@@ -49,20 +51,34 @@ const MenuCard: React.FC<Props> = ({
             ? API_ENDPOINTS.mobile.collector.getAll
             : API_ENDPOINTS.mobile.technician.getAll;
 
-        const response: any = await apiService.get(endpointBase);
-        const inProgressCount: number = response?.inProgressTaskCount ?? 0;
+        const [cacheRaw, cacheAtRaw] = await Promise.all([
+          AsyncStorage.getItem('homeTaskListCache'),
+          AsyncStorage.getItem('homeTaskListCacheAt'),
+        ]);
+        let response: any = null;
+        if (cacheRaw && cacheAtRaw) {
+          const age = Date.now() - parseInt(cacheAtRaw, 10);
+          if (age < TASK_LIST_CACHE_TTL_MS) {
+            response = JSON.parse(cacheRaw);
+          }
+        }
+        if (!response) {
+          response = await apiService.get(endpointBase);
+          await AsyncStorage.setItem('homeTaskListCache', JSON.stringify(response));
+          await AsyncStorage.setItem('homeTaskListCacheAt', Date.now().toString());
+        }
 
+        const inProgressCount: number = response?.inProgressTaskCount ?? 0;
         if (inProgressCount > 1) {
           navigation.navigate(Routes.currentTask as never);
           return;
-        } else if (inProgressCount === 1) {
+        }
+        if (inProgressCount === 1) {
           const activeTask = response?.tasks?.find((t: any) => t.status === 1);
           if (activeTask) {
             navigation.navigate(
               Routes.taskProcess as never,
-              {
-                taskData: activeTask,
-              } as never,
+              {taskData: activeTask} as never,
             );
             return;
           }

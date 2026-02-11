@@ -4,12 +4,13 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  Image,
   FlatList,
   Modal,
   TouchableWithoutFeedback,
   TextStyle,
+  ScrollView,
 } from 'react-native';
+import FastImage from 'react-native-fast-image';
 import {useRoute} from '@react-navigation/native';
 import {apiService} from '../services/apiService';
 import {
@@ -25,6 +26,7 @@ import {MainStackParamList} from 'types/types';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {SvgImage} from '@components/SvgImage';
+import Video from 'react-native-video';
 
 const DetailedReportScreen: React.FC<
   NativeStackScreenProps<MainStackParamList, Routes.detailedReport>
@@ -36,6 +38,11 @@ const DetailedReportScreen: React.FC<
   const [loading, setLoading] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [videoModalVisible, setVideoModalVisible] = useState(false);
+  const [paused, setPaused] = useState(true);
+  console.log('====================================');
+  console.log('report id:', detailedReport);
+  console.log('====================================');
 
   useEffect(() => {
     const fetchReportById = async () => {
@@ -62,7 +69,7 @@ const DetailedReportScreen: React.FC<
   ) => (
     <View style={styles.detailRow}>
       {icon}
-      <View>
+      <View style={{flex: 1}}>
         <Text style={styles.label}>{label}</Text>
         <Text style={[styles.value, valueStyle]}>{value}</Text>
       </View>
@@ -77,6 +84,16 @@ const DetailedReportScreen: React.FC<
   const closeModal = () => {
     setModalVisible(false);
     setSelectedImage(null);
+  };
+
+  const openVideoModal = () => {
+    setVideoModalVisible(true);
+    setPaused(false);
+  };
+
+  const closeVideoModal = () => {
+    setVideoModalVisible(false);
+    setPaused(true);
   };
 
   const getStatusText = (status: number) => {
@@ -103,6 +120,18 @@ const DetailedReportScreen: React.FC<
 
   const {top} = useSafeAreaInsets();
 
+  if (loading) {
+    return (
+      <View
+        style={[
+          styles.container,
+          {justifyContent: 'center', alignItems: 'center'},
+        ]}>
+        <Text>Yüklənir...</Text>
+      </View>
+    );
+  }
+
   return (
     <View style={[styles.container, {paddingTop: top}]}>
       <View style={styles.header}>
@@ -116,54 +145,81 @@ const DetailedReportScreen: React.FC<
         <View style={{width: 24}} />
       </View>
 
-      <View style={styles.card}>
-        {renderDetail(
-          <TabletIcon color="#1269B5" />,
-          'Terminal ID',
-          detailedReport?.terminal?.pointId,
-        )}
-        {renderDetail(
-          <BriefCaseIcon color="#1269B5" />,
-          'Problemin növü',
-          detailedReport?.problem?.description,
-        )}
-        {renderDetail(
-          <CalendarIcon color="#1269B5" />,
-          'Tarix',
-          formatDate(report.createdDate),
-        )}
-        {renderDetail(
-          <InfoIcon color="#1269B5" />,
-          'Status',
-          getStatusText(detailedReport?.reportStatus),
-          {
-            color: detailedReport?.reportStatus === 0 ? 'red' : '#29C0B9',
-            fontWeight: 'bold',
-            fontFamily: 'DMSans-Regular',
-          },
-        )}
-        {renderDetail(
-          <NoteIcon color="#1269B5" />,
-          'Qeyd',
-          detailedReport?.description,
-        )}
-
-        <Text style={styles.label}>Terminal</Text>
-
-        <FlatList
-          data={detailedReport?.images}
-          keyExtractor={(item, index) => index.toString()}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{gap: 10, marginTop: 10}}
-          renderItem={({item}) => (
-            <TouchableOpacity onPress={() => openModal(item.imageUrl)}>
-              <Image source={{uri: item.imageUrl}} style={styles.image} />
-            </TouchableOpacity>
+      <ScrollView showsVerticalScrollIndicator={false}>
+        <View style={styles.card}>
+          {renderDetail(
+            <TabletIcon color="#1269B5" />,
+            'Terminal ID',
+            detailedReport?.terminal?.pointId?.toString() || 'N/A',
           )}
-        />
-      </View>
+          {renderDetail(
+            <BriefCaseIcon color="#1269B5" />,
+            'Problemin növü',
+            detailedReport?.problem?.description || 'N/A',
+          )}
+          {renderDetail(
+            <CalendarIcon color="#1269B5" />,
+            'Tarix',
+            formatDate(detailedReport?.createdDate || report.createdDate),
+          )}
+          {renderDetail(
+            <InfoIcon color="#1269B5" />,
+            'Status',
+            getStatusText(detailedReport?.reportStatus),
+            {
+              color: detailedReport?.reportStatus === 0 ? 'red' : '#29C0B9',
+              fontWeight: 'bold',
+              fontFamily: 'DMSans-Regular',
+            },
+          )}
+          {renderDetail(
+            <NoteIcon color="#1269B5" />,
+            'Qeyd',
+            detailedReport?.description || 'Qeyd yoxdur',
+          )}
 
+          {/* Şəkillər */}
+          {detailedReport?.images && detailedReport.images.length > 0 && (
+            <>
+              <Text style={[styles.label, {marginTop: 20}]}>Şəkillər</Text>
+              <FlatList
+                data={detailedReport.images}
+                keyExtractor={(item, index) => index.toString()}
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{gap: 10, marginTop: 10}}
+                initialNumToRender={5}
+                maxToRenderPerBatch={5}
+                windowSize={3}
+                renderItem={({item}) => (
+                  <TouchableOpacity onPress={() => openModal(item.imageUrl)}>
+                    <FastImage
+                      source={{uri: item.imageUrl, priority: FastImage.priority.normal}}
+                      style={styles.image}
+                    />
+                  </TouchableOpacity>
+                )}
+              />
+            </>
+          )}
+
+          {detailedReport?.videoUrl && (
+            <>
+              <Text style={[styles.label, {marginTop: 20}]}>Video</Text>
+              <TouchableOpacity
+                style={styles.videoThumbnail}
+                onPress={openVideoModal}>
+                <View style={styles.playIconContainer}>
+                  <Text style={styles.playIcon}>▶</Text>
+                </View>
+                <Text style={styles.videoText}>Videonu göstər</Text>
+              </TouchableOpacity>
+            </>
+          )}
+        </View>
+      </ScrollView>
+
+      {/* Şəkil Modal */}
       <Modal
         visible={modalVisible}
         transparent={true}
@@ -171,17 +227,52 @@ const DetailedReportScreen: React.FC<
         onRequestClose={closeModal}>
         <TouchableWithoutFeedback onPress={closeModal}>
           <View style={styles.modalBackground}>
-            <View style={styles.modalContent}>
-              {selectedImage && (
-                <Image
-                  source={{uri: selectedImage}}
-                  style={styles.modalImage}
-                />
-              )}
-              <TouchableOpacity style={styles.closeButton} onPress={closeModal}>
-                <Text style={styles.closeButtonText}>Bağla</Text>
-              </TouchableOpacity>
-            </View>
+            <TouchableWithoutFeedback>
+              <View style={styles.modalContent}>
+                {selectedImage && (
+                  <FastImage
+                    source={{uri: selectedImage, priority: FastImage.priority.high}}
+                    style={styles.modalImage}
+                    resizeMode={FastImage.resizeMode.contain}
+                  />
+                )}
+                <TouchableOpacity
+                  style={styles.closeButton}
+                  onPress={closeModal}>
+                  <Text style={styles.closeButtonText}>Bağla</Text>
+                </TouchableOpacity>
+              </View>
+            </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
+
+      <Modal
+        visible={videoModalVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={closeVideoModal}>
+        <TouchableWithoutFeedback onPress={closeVideoModal}>
+          <View style={styles.modalBackground}>
+            <TouchableWithoutFeedback>
+              <View style={styles.videoModalContent}>
+                {detailedReport?.videoUrl && (
+                  <Video
+                    source={{uri: detailedReport.videoUrl}}
+                    style={styles.videoPlayer}
+                    controls={true}
+                    paused={paused}
+                    resizeMode="contain"
+                    onError={error => console.log('Video xətası:', error)}
+                  />
+                )}
+                <TouchableOpacity
+                  style={styles.closeButton}
+                  onPress={closeVideoModal}>
+                  <Text style={styles.closeButtonText}>Bağla</Text>
+                </TouchableOpacity>
+              </View>
+            </TouchableWithoutFeedback>
           </View>
         </TouchableWithoutFeedback>
       </Modal>
@@ -215,6 +306,7 @@ const styles = StyleSheet.create({
     shadowColor: '#d7dee6',
     shadowRadius: 9,
     elevation: 8,
+    marginBottom: 20,
   },
   label: {
     fontSize: 14,
@@ -231,18 +323,46 @@ const styles = StyleSheet.create({
     fontFamily: 'DMSans-Regular',
   },
   image: {width: 100, height: 100, borderRadius: 5},
-  detailRow: {flexDirection: 'row', alignItems: 'center', marginTop: 10},
-  icon: {marginRight: 8},
-  staticImagesContainer: {
-    width: '100%',
-    display: 'flex',
+  detailRow: {
     flexDirection: 'row',
-    gap: 10,
+    alignItems: 'center',
     marginTop: 10,
+    gap: 8,
+  },
+  icon: {marginRight: 8},
+  videoThumbnail: {
+    width: '100%',
+    height: 120,
+    backgroundColor: '#f0f0f0',
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 10,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+  },
+  playIconContainer: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: '#1269B5',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  playIcon: {
+    color: '#fff',
+    fontSize: 20,
+    marginLeft: 3,
+  },
+  videoText: {
+    color: '#1269B5',
+    fontSize: 14,
+    fontFamily: 'DMSans-SemiBold',
   },
   modalBackground: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -254,6 +374,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 10,
     height: 48,
+    justifyContent: 'center',
   },
   closeButtonText: {
     color: '#fff',
@@ -264,14 +385,26 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderRadius: 10,
     padding: 20,
-    width: '80%',
-    height: '60%',
+    width: '90%',
+    maxHeight: '80%',
   },
   modalImage: {
     width: '100%',
-    height: 300,
+    height: 400,
     borderRadius: 10,
     marginBottom: 10,
-    resizeMode: 'cover',
+  },
+  videoModalContent: {
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    padding: 20,
+    width: '90%',
+    maxHeight: '80%',
+  },
+  videoPlayer: {
+    width: '100%',
+    height: 300,
+    borderRadius: 10,
+    backgroundColor: '#000',
   },
 });

@@ -1,7 +1,8 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import React, {useCallback, useEffect} from 'react';
-import {View, Image, StyleSheet, TouchableOpacity, Text} from 'react-native';
-import {useFocusEffect, useNavigation} from '@react-navigation/native';
+import React, {useEffect} from 'react';
+import {View, StyleSheet, TouchableOpacity, Text} from 'react-native';
+import FastImage from 'react-native-fast-image';
+import {useNavigation} from '@react-navigation/native';
 import {SvgImage} from './SvgImage';
 import {useProfileStore} from 'stores/useProfileStore';
 
@@ -12,12 +13,6 @@ const HomeHeader = () => {
   useEffect(() => {
     loadProfile();
   }, []);
-
-  useFocusEffect(
-    useCallback(() => {
-      loadProfile();
-    }, []),
-  );
 
   const getInitials = (firstName: string, lastName: string) => {
     const first = firstName?.trim()?.[0]?.toUpperCase() || 'S';
@@ -42,7 +37,10 @@ const HomeHeader = () => {
       <View style={styles.box}>
         <TouchableOpacity onPress={() => navigation.navigate('Profil')}>
           {profile?.profileImage ? (
-            <Image source={{uri: profile.profileImage}} style={styles.avatar} />
+            <FastImage
+              source={{uri: profile.profileImage, priority: FastImage.priority.normal}}
+              style={styles.avatar}
+            />
           ) : (
             <View style={styles.initialsPlaceholder}>
               <Text style={styles.initialsText}>

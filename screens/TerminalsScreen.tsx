@@ -98,6 +98,9 @@ const TerminallarScreen: React.FC<
         keyExtractor={(_, index) => index.toString()}
         renderItem={({item}) => <TerminalCard terminal={item} />}
         contentContainerStyle={{paddingBottom: 20}}
+        initialNumToRender={12}
+        maxToRenderPerBatch={10}
+        windowSize={5}
         ListEmptyComponent={
           <View style={styles.noResult}>
             <Image

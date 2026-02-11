@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
-import React, {useCallback, useEffect, useState} from 'react';
+import React, {useCallback, useState} from 'react';
 import {
   View,
   Text,
@@ -137,10 +137,6 @@ const ReportsScreen: React.FC<
     }
   };
 
-  useEffect(() => {
-    fetchReports();
-  }, [selectedFilters]);
-
   useFocusEffect(
     useCallback(() => {
       fetchReports();
@@ -237,6 +233,9 @@ const ReportsScreen: React.FC<
             renderItem={renderItem}
             keyExtractor={item => item.id.toString()}
             showsVerticalScrollIndicator={false}
+            initialNumToRender={12}
+            maxToRenderPerBatch={10}
+            windowSize={5}
           />
         ) : (
           <View style={styles.noResult}>

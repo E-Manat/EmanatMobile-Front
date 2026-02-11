@@ -26,19 +26,26 @@ export const useProfileStore = create<ProfileStore>(set => ({
   loading: false,
 
   loadProfile: async () => {
+    const PROFILE_CACHE_TTL_MS = 5 * 60 * 1000;
     try {
-      set({loading: true});
-      const token = await AsyncStorage.getItem('userToken');
-      if (!token) {
-        return;
+      const [cached, fetchedAt] = await Promise.all([
+        AsyncStorage.getItem('profileData'),
+        AsyncStorage.getItem('profileDataFetchedAt'),
+      ]);
+      if (cached && fetchedAt) {
+        const age = Date.now() - parseInt(fetchedAt, 10);
+        if (age < PROFILE_CACHE_TTL_MS) {
+          set({profile: JSON.parse(cached)});
+          return;
+        }
       }
-
+      const token = await AsyncStorage.getItem('userToken');
+      if (!token) return;
+      set({loading: true});
       const result: any = await apiService.get(API_ENDPOINTS.auth.getProfile);
-
       if (result) {
         const savedRole = await AsyncStorage.getItem('roleName');
         const roleName = savedRole === 'Technician' ? 'Texnik' : 'Inkassator';
-
         const profileData: ProfileData = {
           id: result.id,
           firstName: result.firstName || 'Ad yoxdur',
@@ -49,9 +56,9 @@ export const useProfileStore = create<ProfileStore>(set => ({
           profileImage: result.profileImage || null,
           roleName,
         };
-
         set({profile: profileData});
         await AsyncStorage.setItem('profileData', JSON.stringify(profileData));
+        await AsyncStorage.setItem('profileDataFetchedAt', Date.now().toString());
       }
     } catch (error) {
       console.error('Profile load error:', error);
@@ -62,6 +69,6 @@ export const useProfileStore = create<ProfileStore>(set => ({
 
   clearProfile: async () => {
     set({profile: null});
-    await AsyncStorage.removeItem('profileData');
+    await AsyncStorage.multiRemove(['profileData', 'profileDataFetchedAt']);
   },
 }));

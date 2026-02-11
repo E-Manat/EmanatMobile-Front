@@ -490,6 +490,9 @@ const TasksScreen: React.FC<
         refreshing={refreshing}
         onRefresh={handleRefresh}
         contentContainerStyle={styles.flatListContent}
+        initialNumToRender={12}
+        maxToRenderPerBatch={10}
+        windowSize={5}
       />
     </View>
   );

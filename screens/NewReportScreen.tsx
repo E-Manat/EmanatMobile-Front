@@ -551,7 +551,7 @@ const NewReportScreen: React.FC<
               <VideoIcon />
               <View>
                 <Text style={styles.videoContentText}>Video əlavə et</Text>
-                <Text style={styles.videoContentTextSize}>Max 10 MB</Text>
+                <Text style={styles.videoContentTextSize}>Max 30 MB</Text>
               </View>
             </TouchableOpacity>
 

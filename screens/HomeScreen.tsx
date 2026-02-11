@@ -1,4 +1,4 @@
-import React, {use, useEffect, useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {View, StyleSheet} from 'react-native';
 import MenuCard from '../components/MenuCard';
 import {globalStyles} from '../globalStyles';
@@ -30,6 +30,7 @@ const HomeScreen: React.FC<
   //   clearAllAsyncStorage();
   // }, []);
 
+  const TASK_LIST_CACHE_TTL_MS = 60 * 1000;
   const isFocused = useIsFocused();
   const [taskData, setTaskData] = useState<any>(null);
 
@@ -46,11 +47,36 @@ const HomeScreen: React.FC<
           ? API_ENDPOINTS.mobile.collector.getAll
           : API_ENDPOINTS.mobile.technician.getAll;
 
-      const response: any = await apiService.get(endpointBase);
-      const inProgressCount = response?.inProgressTaskCount ?? 0;
+      const [cacheRaw, cacheAtRaw] = await Promise.all([
+        AsyncStorage.getItem('homeTaskListCache'),
+        AsyncStorage.getItem('homeTaskListCacheAt'),
+      ]);
+      if (cacheRaw && cacheAtRaw) {
+        const age = Date.now() - parseInt(cacheAtRaw, 10);
+        if (age < TASK_LIST_CACHE_TTL_MS) {
+          const response = JSON.parse(cacheRaw);
+          const inProgressCount = response?.inProgressTaskCount ?? 0;
+          if (inProgressCount > 0) {
+            const activeTask = response.tasks?.find((t: any) => t.status === 1);
+            if (activeTask) {
+              setTaskData(activeTask);
+              await AsyncStorage.setItem('currentTask', JSON.stringify(activeTask));
+            }
+          } else {
+            setTaskData(null);
+            await AsyncStorage.removeItem('currentTask');
+          }
+          return;
+        }
+      }
 
+      const response: any = await apiService.get(endpointBase);
+      await AsyncStorage.setItem('homeTaskListCache', JSON.stringify(response));
+      await AsyncStorage.setItem('homeTaskListCacheAt', Date.now().toString());
+
+      const inProgressCount = response?.inProgressTaskCount ?? 0;
       if (inProgressCount > 0) {
-        const activeTask = response.tasks.find((t: any) => t.status === 1);
+        const activeTask = response.tasks?.find((t: any) => t.status === 1);
         if (activeTask) {
           setTaskData(activeTask);
           await AsyncStorage.setItem('currentTask', JSON.stringify(activeTask));
