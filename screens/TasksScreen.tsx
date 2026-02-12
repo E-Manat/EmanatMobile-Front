@@ -53,11 +53,14 @@ interface TasksPayload {
   inProgressTaskCount: number;
   completedTaskCount: number;
 }
+
+let persistedTaskFilter = 'İcra olunmamış';
+
 const TasksScreen: React.FC<
   NativeStackScreenProps<MainStackParamList, Routes.tasks>
 > = ({navigation, route}) => {
   const [selectedFilter, setSelectedFilter] =
-    useState<string>('İcra olunmamış');
+    useState<string>(persistedTaskFilter);
 
   const getStatusColor = (status: number) => {
     switch (status) {
@@ -123,12 +126,12 @@ const TasksScreen: React.FC<
 
   useFocusEffect(
     useCallback(() => {
-      fetchTasks(0);
-      setSelectedFilter('İcra olunmamış');
+      fetchTasks(getStatusFromFilter(persistedTaskFilter));
     }, []),
   );
 
   const filterTasks = (filter: string) => {
+    persistedTaskFilter = filter;
     setSelectedFilter(filter);
 
     switch (filter) {

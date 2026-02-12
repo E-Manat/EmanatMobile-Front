@@ -243,7 +243,7 @@ export const apiService = {
   post: (endpoint: string, body: any) => request(endpoint, 'POST', body),
   put: (endpoint: string, body: any) => request(endpoint, 'PUT', body),
   patch: (endpoint: string, body: any) => request(endpoint, 'PATCH', body),
-  delete: (endpoint: string) => request(endpoint, 'DELETE'),
+  delete: (endpoint: string, body?: any) => request(endpoint, 'DELETE', body),
   postMultipart: (endpoint: string, formData: FormData) =>
     request(endpoint, 'POST', formData, true),
   postWithoutAuth: (endpoint: string, body: any) =>

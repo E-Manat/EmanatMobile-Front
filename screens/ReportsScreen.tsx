@@ -12,9 +12,9 @@ import {
   Keyboard,
   ActivityIndicator,
   Image,
+  RefreshControl,
 } from 'react-native';
 import Modal from 'react-native-modal';
-
 import moment from 'moment';
 import {apiService} from '../services/apiService';
 import TopHeader from '../components/TopHeader';
@@ -118,10 +118,27 @@ const ReportsScreen: React.FC<
   const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
 
   const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   const fetchReports = async () => {
     try {
       setLoading(true);
+      const selectedFilter = selectedFilters[0] || 'Hamısı';
+      const dateFilterParam = getDateFilterParam(selectedFilter);
+      const data = await apiService.get(
+        API_ENDPOINTS.mobile.report.getAll(searchText, dateFilterParam),
+      );
+      setReports(data);
+    } catch (error) {
+      console.error('Reportlar alınarkən xəta:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
       const selectedFilter = selectedFilters[0] || 'Hamısı';
       const dateFilterParam = getDateFilterParam(selectedFilter);
 
@@ -133,9 +150,9 @@ const ReportsScreen: React.FC<
     } catch (error) {
       console.error('Reportlar alınarkən xəta:', error);
     } finally {
-      setLoading(false);
+      setRefreshing(false);
     }
-  };
+  }, [searchText, selectedFilters]);
 
   useFocusEffect(
     useCallback(() => {
@@ -222,43 +239,59 @@ const ReportsScreen: React.FC<
           </View>
         </Modal>
 
-        {loading ? (
-          <View
-            style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-            <ActivityIndicator size="large" color="#2D64AF" />
-          </View>
-        ) : reports.length > 0 ? (
-          <FlatList
-            data={reports}
-            renderItem={renderItem}
-            keyExtractor={item => item.id.toString()}
-            showsVerticalScrollIndicator={false}
-            initialNumToRender={12}
-            maxToRenderPerBatch={10}
-            windowSize={5}
-          />
-        ) : (
-          <View style={styles.noResult}>
-            <Image
-              source={require('../assets/img/report_empty.png')}
-              style={styles.noContentImage}
+        <FlatList
+          data={reports}
+          renderItem={renderItem}
+          keyExtractor={item => item.id.toString()}
+          showsVerticalScrollIndicator={false}
+          initialNumToRender={12}
+          maxToRenderPerBatch={10}
+          windowSize={5}
+          ListEmptyComponent={
+            loading ? (
+              <View
+                style={{
+                  flex: 1,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  paddingTop: 80,
+                }}>
+                <ActivityIndicator size="large" color="#2D64AF" />
+              </View>
+            ) : (
+              <View style={styles.noResult}>
+                <Image
+                  source={require('../assets/img/report_empty.png')}
+                  style={styles.noContentImage}
+                />
+                <Text style={styles.noContentLabel}>
+                  Sizin heç bir hesabatınız yoxdur
+                </Text>
+                <Text style={styles.noContentText}>
+                  Yeni hesabat yaratmaq üçün aşağıdakı düyməyə klikləyin.
+                </Text>
+                <TouchableOpacity
+                  style={styles.button}
+                  onPress={() =>
+                    navigation.navigate(Routes.newReport, {
+                      terminalId: undefined,
+                    })
+                  }>
+                  <SvgImage source={require('assets/icons/svg/plus.svg')} />
+                  <Text style={styles.buttonText}>Yeni hesabat</Text>
+                </TouchableOpacity>
+              </View>
+            )
+          }
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              colors={['#2D64AF']}
+              tintColor="#2D64AF"
             />
-            <Text style={styles.noContentLabel}>
-              Sizin heç bir hesabatınız yoxdur
-            </Text>
-            <Text style={styles.noContentText}>
-              Yeni hesabat yaratmaq üçün aşağıdakı düyməyə klikləyin.
-            </Text>
-            <TouchableOpacity
-              style={styles.button}
-              onPress={() =>
-                navigation.navigate(Routes.newReport, {terminalId: undefined})
-              }>
-              <SvgImage source={require('assets/icons/svg/plus.svg')} />
-              <Text style={styles.buttonText}>Yeni hesabat</Text>
-            </TouchableOpacity>
-          </View>
-        )}
+          }
+        />
       </View>
     </TouchableWithoutFeedback>
   );

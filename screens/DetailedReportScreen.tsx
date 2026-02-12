@@ -40,9 +40,6 @@ const DetailedReportScreen: React.FC<
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [videoModalVisible, setVideoModalVisible] = useState(false);
   const [paused, setPaused] = useState(true);
-  console.log('====================================');
-  console.log('report id:', detailedReport);
-  console.log('====================================');
 
   useEffect(() => {
     const fetchReportById = async () => {
@@ -194,7 +191,10 @@ const DetailedReportScreen: React.FC<
                 renderItem={({item}) => (
                   <TouchableOpacity onPress={() => openModal(item.imageUrl)}>
                     <FastImage
-                      source={{uri: item.imageUrl, priority: FastImage.priority.normal}}
+                      source={{
+                        uri: item.imageUrl,
+                        priority: FastImage.priority.normal,
+                      }}
                       style={styles.image}
                     />
                   </TouchableOpacity>
@@ -231,7 +231,10 @@ const DetailedReportScreen: React.FC<
               <View style={styles.modalContent}>
                 {selectedImage && (
                   <FastImage
-                    source={{uri: selectedImage, priority: FastImage.priority.high}}
+                    source={{
+                      uri: selectedImage,
+                      priority: FastImage.priority.high,
+                    }}
                     style={styles.modalImage}
                     resizeMode={FastImage.resizeMode.contain}
                   />
