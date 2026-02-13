@@ -331,8 +331,8 @@ const TerminalDetailsScreen: React.FC<
               </View>
             </View>
           )} */}
-          {true && <View style={styles.verticalLine} />}
-          {true && (
+          {false && <View style={styles.verticalLine} />}
+          {false && (
             <View style={styles.timelineItem}>
               <View style={styles.iconWrapper}>
                 <SvgImage
