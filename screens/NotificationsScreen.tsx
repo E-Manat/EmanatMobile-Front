@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
+import React, {useCallback, useMemo, useState} from 'react';
 import {
   View,
   Text,
@@ -9,402 +9,168 @@ import {
   Image,
   ActivityIndicator,
 } from 'react-native';
-import {useFocusEffect} from '@react-navigation/native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import Sound from 'react-native-sound';
-import Toast from 'react-native-toast-message';
-import * as signalR from '@microsoft/signalr';
-import {Swipeable} from 'react-native-gesture-handler';
-import Config from 'react-native-config';
-import {apiService} from '../services/apiService';
-import {API_ENDPOINTS} from '../services/api_endpoint';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {SvgImage} from '@components/SvgImage';
 import {Routes} from '@navigation/routes';
 import {MainStackParamList} from 'types/types';
-import {NativeStackScreenProps} from '@react-navigation/native-stack';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import {NotificationItem} from '@components/NotificationItem';
+import {useNotifications} from '../hooks/useNotifications';
+import {useSignalRNotifications} from '../hooks/useSignalRNotifications';
+import {useNotificationSelection} from '../hooks/useNotificationSelection';
+import type {Notification} from '../types/notification';
 
 const NotificationsScreen: React.FC<
   NativeStackScreenProps<MainStackParamList, Routes.notifications>
-> = ({navigation, route}) => {
-  const [filter, setFilter] = useState('all');
-  const [data, setData] = useState<any>([]);
+> = ({navigation}) => {
+  const {top} = useSafeAreaInsets();
+  const [filter, setFilter] = useState<'all' | 'unread'>('all');
   const [modalVisible, setModalVisible] = useState(false);
-  const [selectedNotification, setSelectedNotification] = useState<any>(null);
-  const [loading, setLoading] = useState<boolean>(false);
+  const [selectedNotification, setSelectedNotification] =
+    useState<Notification | null>(null);
 
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [selectionMode, setSelectionMode] = useState(false);
+  const {
+    data,
+    filteredData,
+    loading,
+    refreshing,
+    refresh,
+    addNotification,
+    markAsRead,
+    updateLocalAsRead,
+    markAllAsRead,
+    deleteNotification,
+    deleteSelected,
+    deleteAll,
+  } = useNotifications(filter);
 
-  const handleLongPress = (id: string) => {
-    setSelectionMode(true);
-    if (!selectedIds.includes(id)) {
-      setSelectedIds(prev => [...prev, id]);
-    }
-  };
+  const {
+    selectedIds,
+    selectionMode,
+    handleLongPress,
+    handleSelect,
+    clearSelection,
+  } = useNotificationSelection();
 
-  const handleSelect = (id: string) => {
-    setSelectedIds(prev =>
-      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id],
-    );
-  };
+  useSignalRNotifications(addNotification);
 
-  const filteredData = useMemo(() => {
-    return (
-      filter === 'all' ? data : data?.filter((item: any) => item.unread)
-    ).sort((a: any, b: any) => b.unread - a.unread);
-  }, [filter, data]);
-
-  const handleNotificationPress = (notification: any) => {
-    setData((prevData: any) =>
-      prevData.map((item: any) =>
-        item.id === notification.id ? {...item, unread: false} : item,
-      ),
-    );
-    setSelectedNotification(notification);
-    markAsRead(notification.id);
-  };
-
-  const closeModal = () => {
-    setSelectedNotification(null);
-  };
-
-  const formatTime = (datetime: string) => {
-    const date = new Date(datetime);
-    return `${date.getHours()}:${String(date.getMinutes()).padStart(2, '0')}`;
-  };
-
-  const formatDate = (datetime: string) => {
-    const date = new Date(datetime);
-    return date.toLocaleDateString('az-AZ');
-  };
-
-  const fetchNotifications = useCallback(async () => {
-    setLoading(true);
-    try {
-      const raw: any[] = await apiService.get(API_ENDPOINTS.notification.get);
-      const formatted = raw?.map(item => ({
-        id: item.id,
-        title: item.title,
-        text: item.message,
-        unread: !item.isRead,
-        time: formatTime(item.createdAt),
-        date: formatDate(item.createdAt),
-      }));
-      setData(formatted);
-    } catch (err) {
-      console.error('GET notifications error:', err);
-      setData([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useFocusEffect(
-    useCallback(() => {
-      fetchNotifications();
-    }, [fetchNotifications]),
+  const handleNotificationPress = useCallback(
+    (notification: Notification) => {
+      updateLocalAsRead(notification.id);
+      setSelectedNotification(notification);
+      markAsRead(notification.id);
+    },
+    [updateLocalAsRead, markAsRead],
   );
 
-  const connectionRef = useRef<signalR.HubConnection | null>(null);
+  const handleBulkDelete = useCallback(async () => {
+    await deleteSelected(selectedIds);
+    clearSelection();
+  }, [deleteSelected, selectedIds, clearSelection]);
 
-  useEffect(() => {
-    const connectSignalR = async () => {
-      try {
-        const token = await AsyncStorage.getItem('userToken');
-        if (!token) {
-          console.warn('Token tapılmadı');
-          return;
-        }
+  const handleDeleteAll = useCallback(async () => {
+    await deleteAll();
+    clearSelection();
+  }, [deleteAll, clearSelection]);
 
-        if (connectionRef.current) {
-          return;
-        }
+  const handleMarkAllAsRead = useCallback(async () => {
+    await markAllAsRead();
+    setModalVisible(false);
+  }, [markAllAsRead]);
 
-        const connection = new signalR.HubConnectionBuilder()
-          .withUrl(`${Config.SIGNALR_URL}`, {
-            accessTokenFactory: () => token,
-          })
-          .withAutomaticReconnect()
-          .configureLogging(signalR.LogLevel.Information)
-          .build();
+  const closeDetailModal = useCallback(() => {
+    setSelectedNotification(null);
+  }, []);
 
-        connection.off('ReceiveNotification');
+  const renderItem = useCallback(
+    ({item}: {item: Notification}) => (
+      <NotificationItem
+        item={item}
+        isSelected={selectedIds.includes(item.id)}
+        selectionMode={selectionMode}
+        onPress={handleNotificationPress}
+        onLongPress={handleLongPress}
+        onSelect={handleSelect}
+        onDelete={deleteNotification}
+      />
+    ),
+    [
+      selectedIds,
+      selectionMode,
+      handleNotificationPress,
+      handleLongPress,
+      handleSelect,
+      deleteNotification,
+    ],
+  );
 
-        connection.on('ReceiveNotification', (notification: any) => {
-          const newNotification = {
-            id: notification.id,
-            title: notification.title,
-            text: notification.message,
-            unread: !notification.isRead,
-            time: formatTime(notification.createdAt),
-            date: formatDate(notification.createdAt),
-          };
+  const keyExtractor = useCallback((item: Notification) => String(item.id), []);
 
-          setData((prev: any) => [newNotification, ...prev]);
+  const ListHeaderComponent = useMemo(
+    () =>
+      () =>
+        loading || !filteredData.length ? null : (
+          <View style={styles.listHeader}>
+            <Text style={styles.sectionTitle}>{filteredData[0].date}</Text>
+            <TouchableOpacity
+              onPress={handleDeleteAll}
+              style={styles.deleteAllButton}>
+              <Text style={styles.deleteAllText}>Hamısını Sil</Text>
+            </TouchableOpacity>
+          </View>
+        ),
+    [loading, filteredData, handleDeleteAll],
+  );
 
-          Toast.show({
-            type: 'success',
-            text1: notification.title,
-            text2: notification.message,
-            position: 'top',
-            visibilityTime: 4000,
-            autoHide: true,
-          });
-
-          const ding = new Sound(
-            'notification.mp3',
-            Sound.MAIN_BUNDLE,
-            error => {
-              if (error) {
-                return;
-              }
-              ding.play(success => {
-                if (!success) {
-                }
-              });
-            },
-          );
-        });
-
-        await connection.start();
-        connectionRef.current = connection;
-      } catch (err) {
-        console.error('❌ SignalR bağlantı xətası:', err);
-      }
-    };
-
-    connectSignalR();
-
+  const ListEmptyComponent = useMemo(() => {
     return () => {
-      if (connectionRef.current) {
-        connectionRef.current.stop();
-        connectionRef.current = null;
+      if (loading) {
+        return (
+          <ActivityIndicator
+            size="large"
+            color="#1269B5"
+            style={styles.loader}
+          />
+        );
       }
-    };
-  }, []);
-
-  const fetchUnreadNotifications = useCallback(async () => {
-    setLoading(true);
-    try {
-      const raw: any[] = await apiService.get(
-        API_ENDPOINTS.notification.getUnreads,
-      );
-      const formatted = raw?.map(item => ({
-        id: item.id,
-        title: item.title,
-        text: item.message,
-        unread: !item.isRead,
-        time: formatTime(item.createdAt),
-        date: formatDate(item.createdAt),
-      }));
-      setData(formatted);
-    } catch (err) {
-      console.error('GET unreads error:', err);
-      setData([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  const isFirstFilterRender = useRef(true);
-  useEffect(() => {
-    if (isFirstFilterRender.current) {
-      isFirstFilterRender.current = false;
-      return;
-    }
-    if (filter === 'unread') {
-      fetchUnreadNotifications();
-    } else {
-      fetchNotifications();
-    }
-  }, [filter, fetchNotifications, fetchUnreadNotifications]);
-
-  const markAllAsRead = async () => {
-    try {
-      await apiService.post(API_ENDPOINTS.notification.markAllAsRead, {});
-      setData((d: any) => d.map((x: any) => ({...x, unread: false})));
-      setModalVisible(false);
-      Toast.show({type: 'success', text1: 'Bütün bildirişlər oxundu.'});
-    } catch (err) {
-      Toast.show({type: 'error', text1: 'Xəta', text2: 'İşarələnmədi.'});
-      console.error(err);
-    }
-  };
-
-  const markAsRead = async (notificationId: string) => {
-    try {
-      await apiService.patch(API_ENDPOINTS.notification.markAsRead, {
-        notificationId,
-      });
-    } catch (err) {
-      console.error('❌ markAsRead error:', err);
-    }
-  };
-
-  const handleSwipeDelete = async (id: string) => {
-    try {
-      const token = await AsyncStorage.getItem('userToken');
-      if (!token) {
-        console.warn('Token tapılmadı');
-        return;
-      }
-
-      const response: any = await fetch(
-        `${Config.API_URL}/notification/Notification/Delete`,
-        {
-          method: 'DELETE',
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({notificationId: id}),
-        },
-      );
-
-      if (response) {
-        setData((prev: any) => prev.filter((item: any) => item.id !== id));
-        Toast.show({
-          type: 'success',
-          text1: 'Bildiriş silindi',
-        });
-      } else {
-        console.error('❌ Bildiriş silinmədi:', response.status);
-      }
-    } catch (err) {
-      console.error('❌ handleSwipeDelete istisna:', err);
-    }
-  };
-
-  const renderItem = ({item}: any) => {
-    const isSelected = selectedIds.includes(item.id);
-
-    return (
-      <Swipeable
-        renderRightActions={() => (
-          <TouchableOpacity
-            onPress={() => handleSwipeDelete(item.id)}
-            style={{
-              backgroundColor: '#FF3B30',
-              justifyContent: 'center',
-              alignItems: 'center',
-              width: 80,
-            }}>
-            <Text style={{color: 'white', fontWeight: 'bold'}}>Sil</Text>
-          </TouchableOpacity>
-        )}>
-        <TouchableOpacity
-          onPress={() =>
-            selectionMode
-              ? handleSelect(item.id)
-              : handleNotificationPress(item)
-          }
-          onLongPress={() => handleLongPress(item.id)}
-          style={[
-            styles.notificationCard,
-            isSelected && {backgroundColor: '#e6f0ff'},
-          ]}>
-          {item.unread && <View style={styles.unreadDot} />}
-          <View style={styles.notificationContent}>
-            <View style={styles.notificationHeader}>
-              <Text style={styles.notificationTitle}>{item.title}</Text>
-              <Text style={styles.notificationTime}>{item.time}</Text>
-            </View>
-            <Text style={styles.notificationText}>
-              {item.text.slice(0, 100)}..
+      if (data.length === 0) {
+        return (
+          <View style={styles.noResult}>
+            <Image
+              source={require('../assets/img/notification_empty.png')}
+              style={styles.noContentImage}
+            />
+            <Text style={styles.noContentLabel}>
+              Hazırda heç bir bildirişiniz yoxdur.
+            </Text>
+            <Text style={styles.noContentText}>
+              Yeni bildirişlər burada görünəcək.
             </Text>
           </View>
-        </TouchableOpacity>
-      </Swipeable>
-    );
-  };
-
-  const handleBulkDelete = async () => {
-    try {
-      const token = await AsyncStorage.getItem('userToken');
-      if (!token) {
-        return console.warn('Token tapılmadı');
-      }
-
-      const response = await fetch(
-        `${Config.API_URL}/notification/Notification/DeleteSelectedIds`,
-        {
-          method: 'DELETE',
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({notificationIds: selectedIds}),
-        },
-      );
-
-      if (response.ok) {
-        setData((prev: any) =>
-          prev.filter((item: any) => !selectedIds.includes(item.id)),
         );
-        setSelectedIds([]);
-        setSelectionMode(false);
-
-        Toast.show({
-          type: 'success',
-          text1: 'Seçilmiş bildirişlər silindi',
-        });
-      } else {
-        Toast.show({
-          type: 'error',
-          text1: 'Xəta baş verdi',
-          text2: 'Bildirişlər silinmədi',
-        });
       }
-    } catch (err) {
-      console.error('❌ handleBulkDelete istisna:', err);
-    }
-  };
-
-  const handleDeleteAll = async () => {
-    try {
-      const token = await AsyncStorage.getItem('userToken');
-      if (!token) {
-        return console.warn('Token tapılmadı');
+      if (filter === 'unread') {
+        return (
+          <View style={styles.noResult}>
+            <Image
+              source={require('../assets/img/notification_empty.png')}
+              style={styles.noContentImage}
+            />
+            <Text style={styles.noContentLabel}>
+              Oxunmamış bildiriş yoxdur.
+            </Text>
+          </View>
+        );
       }
-
-      const response = await fetch(
-        `${Config.API_URL}/notification/Notification/DeleteAll`,
-        {
-          method: 'DELETE',
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({}),
-        },
-      );
-      if (response) {
-        setData([]);
-        setSelectedIds([]);
-        setSelectionMode(false);
-        Toast.show({
-          type: 'success',
-          text1: 'Bütün bildirişlər silindi',
-        });
-      } else {
-        Toast.show({
-          type: 'error',
-          text1: 'Xəta baş verdi',
-          text2: 'Bildirişlər silinmədi',
-        });
-      }
-    } catch (err) {
-      console.error('❌ handleDeleteAll istisna:', err);
-    }
-  };
-  const {top} = useSafeAreaInsets();
+      return null;
+    };
+  }, [loading, data.length, filter]);
 
   return (
     <View style={[styles.container, {paddingTop: top}]}>
       <View style={styles.header}>
         <TouchableOpacity
-          style={{marginLeft: 20}}
+          style={styles.backButton}
           onPress={() => navigation.goBack()}>
           <SvgImage
             color="#2D64AF"
@@ -413,15 +179,15 @@ const NotificationsScreen: React.FC<
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Bildirişlər</Text>
 
-        <View style={{flexDirection: 'row', alignItems: 'center'}}>
+        <View style={styles.headerActions}>
           {filter === 'unread' && filteredData.length > 0 ? (
             <TouchableOpacity
               onPress={() => setModalVisible(true)}
-              style={{marginRight: 12}}>
+              style={styles.headerAction}>
               <SvgImage source={require('assets/icons/svg/seen.svg')} />
             </TouchableOpacity>
           ) : (
-            <View style={{width: 20, marginRight: 12}} />
+            <View style={styles.headerActionPlaceholder} />
           )}
 
           {selectionMode && selectedIds.length > 0 && (
@@ -465,80 +231,19 @@ const NotificationsScreen: React.FC<
         </TouchableOpacity>
       </View>
 
-      {loading ? (
-        <ActivityIndicator
-          size="large"
-          color="#1269B5"
-          style={{marginTop: 60}}
-        />
-      ) : (
-        <View>
-          {' '}
-          <FlatList
-            data={filteredData}
-            keyExtractor={(item: any) => String(item.id)}
-            renderItem={renderItem}
-            contentContainerStyle={{paddingHorizontal: 20}}
-            initialNumToRender={12}
-            maxToRenderPerBatch={10}
-            windowSize={5}
-            ListHeaderComponent={() =>
-              filteredData.length ? (
-                <>
-                  <View
-                    style={{
-                      display: 'flex',
-                      flexDirection: 'row',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                    }}>
-                    <Text style={styles.sectionTitle}>
-                      {filteredData[0].date}
-                    </Text>
-                    <TouchableOpacity
-                      onPress={handleDeleteAll}
-                      style={{
-                        padding: 10,
-                        borderRadius: 8,
-                        marginBottom: 10,
-                      }}>
-                      <Text style={styles.deleteAllText}>Hamısını Sil</Text>
-                    </TouchableOpacity>
-                  </View>
-                </>
-              ) : null
-            }
-            ListEmptyComponent={() =>
-              data.length === 0 ? (
-                <View style={styles.noResult}>
-                  <Image
-                    source={require('../assets/img/notification_empty.png')}
-                    style={styles.noContentImage}
-                  />
-                  <Text style={styles.noContentLabel}>
-                    Hazırda heç bir bildirişiniz yoxdur.
-                  </Text>
-                  <Text style={styles.noContentText}>
-                    Yeni bildirişlər burada görünəcək.
-                  </Text>
-                </View>
-              ) : (
-                filter === 'unread' && (
-                  <View style={styles.noResult}>
-                    <Image
-                      source={require('../assets/img/notification_empty.png')}
-                      style={styles.noContentImage}
-                    />
-                    <Text style={styles.noContentLabel}>
-                      Oxunmamış bildiriş yoxdur.
-                    </Text>
-                  </View>
-                )
-              )
-            }
-          />
-        </View>
-      )}
+      <FlatList
+        data={filteredData}
+        keyExtractor={keyExtractor}
+        renderItem={renderItem}
+        contentContainerStyle={styles.listContent}
+        initialNumToRender={12}
+        maxToRenderPerBatch={10}
+        windowSize={5}
+        refreshing={refreshing}
+        onRefresh={refresh}
+        ListHeaderComponent={ListHeaderComponent}
+        ListEmptyComponent={ListEmptyComponent}
+      />
 
       <Modal visible={modalVisible} transparent animationType="fade">
         <View style={styles.modalContainer}>
@@ -555,7 +260,7 @@ const NotificationsScreen: React.FC<
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.confirmButton}
-                onPress={markAllAsRead}>
+                onPress={handleMarkAllAsRead}>
                 <Text style={styles.confirmText}>Bəli, istəyirəm</Text>
               </TouchableOpacity>
             </View>
@@ -564,18 +269,20 @@ const NotificationsScreen: React.FC<
       </Modal>
 
       {selectedNotification && (
-        <Modal visible={true} transparent animationType="fade">
+        <Modal visible transparent animationType="fade">
           <View style={styles.modalContainer}>
             <View style={styles.modalContent}>
               <SvgImage
-                style={styles.image}
+                style={styles.modalImage}
                 source={require('assets/icons/mpay.svg')}
               />
               <Text style={styles.modalTitle}>
                 {selectedNotification.title}
               </Text>
               <Text style={styles.modalText}>{selectedNotification.text}</Text>
-              <TouchableOpacity style={styles.closeButton} onPress={closeModal}>
+              <TouchableOpacity
+                style={styles.closeButton}
+                onPress={closeDetailModal}>
                 <Text style={styles.closeButtonText}>Bağla</Text>
               </TouchableOpacity>
             </View>
@@ -600,10 +307,24 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
     height: 80,
   },
+  backButton: {
+    marginLeft: 20,
+  },
   headerTitle: {
     fontSize: 18,
     fontFamily: 'DMSans-SemiBold',
     color: '#2D64AF',
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  headerAction: {
+    marginRight: 12,
+  },
+  headerActionPlaceholder: {
+    width: 24,
+    marginRight: 12,
   },
   bulkDeleteButton: {
     padding: 8,
@@ -637,6 +358,16 @@ const styles = StyleSheet.create({
     color: '#FFF',
     fontFamily: 'DMSans-SemiBold',
   },
+  listContent: {
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+  },
+  listHeader: {
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
   sectionTitle: {
     fontSize: 14,
     fontWeight: 'bold',
@@ -644,51 +375,13 @@ const styles = StyleSheet.create({
     marginTop: 10,
     marginBottom: 5,
   },
-  notificationCard: {
-    flexDirection: 'column',
-    gap: 3,
-    backgroundColor: '#FFF',
-    borderRadius: 10,
-    padding: 15,
+  deleteAllButton: {
+    padding: 10,
+    borderRadius: 8,
     marginBottom: 10,
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowOffset: {width: 0, height: 2},
-    shadowRadius: 5,
-    display: 'flex',
   },
-  unreadDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#007AFF',
-    marginRight: 10,
-    marginTop: 8,
-  },
-  notificationContent: {
-    flex: 1,
-  },
-  notificationHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  notificationTitle: {
-    fontSize: 16,
-    fontFamily: 'DMSans-SemiBold',
-    color: '#1269B5',
-    flex: 1,
-  },
-  notificationTime: {
-    fontSize: 12,
-    color: '#A8A8A8',
-    fontFamily: 'DMSans-Regular',
-  },
-  notificationText: {
-    fontSize: 14,
-    color: '#A8A8A8',
-    marginTop: 5,
-    fontFamily: 'DMSans-Regular',
+  loader: {
+    marginTop: 60,
   },
   modalContainer: {
     flex: 1,
@@ -716,6 +409,13 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     fontFamily: 'DMSans-Regular',
   },
+  modalImage: {
+    width: 50,
+    height: 57,
+    objectFit: 'cover',
+    marginBottom: 20,
+    alignSelf: 'center',
+  },
   modalActions: {
     flexDirection: 'row',
     width: '100%',
@@ -730,7 +430,11 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     marginRight: 5,
   },
-  cancelText: {color: '#1269B5', fontSize: 14, fontFamily: 'DMSans-SemiBold'},
+  cancelText: {
+    color: '#1269B5',
+    fontSize: 14,
+    fontFamily: 'DMSans-SemiBold',
+  },
   confirmButton: {
     flex: 1,
     paddingVertical: 10,
@@ -738,7 +442,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#1269B5',
     borderRadius: 5,
   },
-  confirmText: {color: '#FFF', fontSize: 14, fontFamily: 'DMSans-SemiBold'},
+  confirmText: {
+    color: '#FFF',
+    fontSize: 14,
+    fontFamily: 'DMSans-SemiBold',
+  },
   closeButton: {
     paddingVertical: 15,
     paddingHorizontal: 20,
@@ -755,13 +463,6 @@ const styles = StyleSheet.create({
     color: '#1269B5',
     fontSize: 14,
     fontFamily: 'DMSans-SemiBold',
-  },
-  image: {
-    width: 50,
-    height: 57,
-    objectFit: 'cover',
-    marginBottom: 20,
-    alignSelf: 'center',
   },
   noResult: {
     color: '#A8A8A8',

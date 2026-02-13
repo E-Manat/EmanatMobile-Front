@@ -17,6 +17,7 @@ import {MainStackParamList} from 'types/types';
 import {Routes} from '@navigation/routes';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {SvgImage} from '@components/SvgImage';
+import {setTaskStartTime} from '../utils/taskStorage';
 
 const TerminalDetailsScreen: React.FC<
   NativeStackScreenProps<MainStackParamList, Routes.terminalDetails>
@@ -39,10 +40,7 @@ const TerminalDetailsScreen: React.FC<
   }, []);
 
   const handleContinueTask = () => {
-    navigation.navigate(Routes.taskProcess, {
-      taskData,
-      startTime: new Date().getTime(),
-    });
+    navigation.navigate(Routes.taskProcess, {taskData});
   };
 
   const handleStartTask = async () => {
@@ -90,14 +88,12 @@ const TerminalDetailsScreen: React.FC<
       setConfirmVisible(false);
       await AsyncStorage.setItem('currentTask', JSON.stringify(taskData));
       DeviceEventEmitter.emit('taskStarted');
-      await AsyncStorage.setItem(
-        'routeStartTime',
-        new Date().getTime().toString(),
-      );
+      const startTime = new Date().getTime();
+      await setTaskStartTime(taskData.id, startTime);
 
       navigation.navigate(Routes.taskProcess, {
         taskData,
-        startTime: new Date().getTime(),
+        startTime,
       });
     } catch (error) {
       console.error('Task start error:', error);

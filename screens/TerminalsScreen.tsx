@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,7 @@ import {
   Modal,
   Image,
   ScrollView,
+  RefreshControl,
 } from 'react-native';
 import TopHeader from '../components/TopHeader';
 import {LocationIcon, MapIcon, RoadIcon, TabletIcon} from '../assets/icons';
@@ -25,6 +26,8 @@ const TerminallarScreen: React.FC<
   const [selectedTerminal, setSelectedTerminal] = useState<any>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [terminals, setTerminals] = useState<any[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   const openModal = async (terminal: any) => {
     setSelectedTerminal(terminal);
@@ -45,29 +48,33 @@ const TerminallarScreen: React.FC<
     setSelectedTerminal(null);
   };
 
-  const [loading, setLoading] = useState<boolean>(false);
+  const fetchTerminals = useCallback(async () => {
+    setLoading(true);
+    try {
+      const roleName = await AsyncStorage.getItem('roleName');
+      const token = await AsyncStorage.getItem('userToken');
+
+      const data = await apiService.get(
+        API_ENDPOINTS.mobile.terminal.getCollectorAreaTerminals,
+      );
+
+      setTerminals(data);
+    } catch (error) {
+      console.error('Terminals alınarkən xəta:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    const fetchTerminals = async () => {
-      setLoading(true);
-      try {
-        const roleName = await AsyncStorage.getItem('roleName');
-        const token = await AsyncStorage.getItem('userToken');
-
-        const data = await apiService.get(
-          API_ENDPOINTS.mobile.terminal.getCollectorAreaTerminals,
-        );
-
-        setTerminals(data);
-      } catch (error) {
-        console.error('Terminals alınarkən xəta:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchTerminals();
-  }, []);
+  }, [fetchTerminals]);
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await fetchTerminals();
+    setRefreshing(false);
+  };
 
   const TerminalCard = ({terminal}: any) => (
     <TouchableOpacity onPress={() => openModal(terminal)}>
@@ -98,6 +105,8 @@ const TerminallarScreen: React.FC<
         keyExtractor={(_, index) => index.toString()}
         renderItem={({item}) => <TerminalCard terminal={item} />}
         contentContainerStyle={{paddingBottom: 20}}
+        refreshing={refreshing}
+        onRefresh={handleRefresh}
         initialNumToRender={12}
         maxToRenderPerBatch={10}
         windowSize={5}

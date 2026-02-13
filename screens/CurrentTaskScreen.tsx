@@ -7,7 +7,6 @@ import {
   FlatList,
   TouchableOpacity,
   StyleSheet,
-  ScrollView,
   ActivityIndicator,
   Image,
 } from 'react-native';
@@ -55,7 +54,7 @@ interface TasksPayload {
 }
 const CurrentTaskScreen: React.FC<
   NativeStackScreenProps<MainStackParamList, Routes.currentTask>
-> = ({navigation, route}) => {
+> = ({navigation}) => {
   const [selectedFilter, setSelectedFilter] = useState<string>('İcra olunan');
 
   const getStatusColor = (status: number) => {
@@ -78,7 +77,6 @@ const CurrentTaskScreen: React.FC<
   };
 
   const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
   const [tasksData, setTasksData] = useState<TasksPayload>({
     tasks: [],
     pendingTaskCount: 0,
@@ -126,32 +124,6 @@ const CurrentTaskScreen: React.FC<
       setSelectedFilter('İcra olunan');
     }, []),
   );
-
-  const filterTasks = (filter: string) => {
-    setSelectedFilter(filter);
-
-    switch (filter) {
-      case 'İcra olunmamış':
-        fetchTasks(0);
-        break;
-      case 'İcra olunan':
-        fetchTasks(1);
-        break;
-      case 'Ləğv edilmiş':
-        fetchTasks(5);
-        break;
-      case 'Uğursuz əməliyyat':
-        fetchTasks(9);
-        break;
-      case 'İnkassasiya edildi':
-        fetchTasks(10);
-        break;
-      case 'Hamısı':
-      default:
-        fetchTasks();
-        break;
-    }
-  };
 
   const getStatusFromFilter = (filter: string): number | undefined => {
     switch (filter) {
@@ -231,12 +203,9 @@ const CurrentTaskScreen: React.FC<
           .configureLogging(signalR.LogLevel.Information)
           .build();
 
-        const createdEvent =
-          roleName === 'Collector' ? 'TaskCreated' : 'TechnicianTaskCreated';
-        const deletedEvent =
-          roleName === 'Collector' ? 'TaskDeleted' : 'TechnicianTaskDeleted';
-
-        connection.on('TaskCreated', (notification: any) => {
+        connection.on(
+          roleName === 'Collector' ? 'TaskCreated' : 'TechnicianTaskCreated',
+          (notification: any) => {
           const {taskId, status, pointName, pointId, order} = notification;
 
           if (status === TaskStatus.Canceled) {
@@ -274,11 +243,30 @@ const CurrentTaskScreen: React.FC<
             return;
           }
 
-          if (
-            status === TaskStatus.InTransit ||
-            status === TaskStatus.TechnicalWorkInProgress ||
-            status === TaskStatus.CollectionInProgress
-          ) {
+          const inProgressStatuses = [
+            TaskStatus.InTransit,
+            TaskStatus.TechnicalWorkInProgress,
+            TaskStatus.CollectionInProgress,
+          ];
+          const isInProgress = inProgressStatuses.includes(status);
+
+          if (isInProgress) {
+            const existing = tasksRef.current.find((t: any) => t.id === taskId);
+            if (existing) {
+              tasksRef.current = tasksRef.current.map((t: any) =>
+                t.id === taskId ? {...t, status} : t,
+              );
+            } else {
+              tasksRef.current = [
+                ...tasksRef.current.filter((t: any) => t.id !== taskId),
+                {id: taskId, status, address: pointName, pointId, order},
+              ].sort((a: any, b: any) => a.order - b.order);
+            }
+            setFilteredTasks([...tasksRef.current]);
+            setTasksData(prev => ({
+              ...prev,
+              tasks: tasksRef.current,
+            }));
             return;
           }
 
@@ -308,7 +296,9 @@ const CurrentTaskScreen: React.FC<
           });
         });
 
-        connection.on('TaskDeleted', (notification: any) => {
+        connection.on(
+          roleName === 'Collector' ? 'TaskDeleted' : 'TechnicianTaskDeleted',
+          (notification: any) => {
           const {taskId, pointId} = notification;
 
           const removed = tasksRef.current.find((t: any) => t.id === taskId);
@@ -376,75 +366,10 @@ const CurrentTaskScreen: React.FC<
     setRefreshing(false);
   };
 
-  const ListHeaderComponent = () => (
-    <>
-      <View style={styles.statusContainer}>
-        <View style={styles.statusItem}>
-          <Text style={styles.statusText}>
-            {tasksData?.pendingTaskCount || 0}
-          </Text>
-          <Text style={styles.statusLabel}>Gözləyən</Text>
-        </View>
-        <View style={styles.statusItem}>
-          <Text style={styles.statusText}>
-            {tasksData?.inProgressTaskCount || 0}
-          </Text>
-          <Text style={styles.statusLabel}>İcra olunan</Text>
-        </View>
-        <View style={styles.statusItem}>
-          <Text style={styles.statusText}>
-            {tasksData?.completedTaskCount || 0}
-          </Text>
-          <Text style={styles.statusLabel}>Tamamlanmış</Text>
-        </View>
-      </View>
-
-      <View style={styles.filterContainer}>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.filterContentContainer}>
-          {[
-            'Hamısı',
-            'İcra olunmamış',
-            'İcra olunan',
-            'İnkassasiya edildi',
-            'Uğursuz əməliyyat',
-            'Ləğv edilmiş',
-          ].map(filter => (
-            <TouchableOpacity
-              key={filter}
-              style={[
-                styles.filterButton,
-                selectedFilter === filter && styles.activeFilter,
-              ]}
-              onPress={() => filterTasks(filter)}>
-              {filter !== 'Hamısı' && (
-                <SvgImage
-                  source={require('assets/icons/svg/dot.svg')}
-                  color={getStatusColor(
-                    filter === 'İcra olunan'
-                      ? 1
-                      : filter === 'İnkassasiya edildi'
-                      ? 10
-                      : filter === 'Ləğv edilmiş'
-                      ? 5
-                      : filter === 'Uğursuz əməliyyat'
-                      ? 9
-                      : 0,
-                  )}
-                  style={{marginRight: 6}}
-                />
-              )}
-              <Text style={styles.filterText}>{filter}</Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-      </View>
-
-      {sortedTasks?.length > 0 && <Text style={styles.currentDay}>Bu gün</Text>}
-    </>
-  );
+  const ListHeaderComponent = () =>
+    sortedTasks?.length > 0 ? (
+      <Text style={styles.currentDay}>Bu gün</Text>
+    ) : null;
 
   const ListEmptyComponent = () => {
     if (loading) {
@@ -479,10 +404,13 @@ const CurrentTaskScreen: React.FC<
         onRightPress={() => fetchTasks(getStatusFromFilter(selectedFilter))}
         rightIconComponent={<RefreshIcon color="#fff" width={30} />}
       />
+
       <FlatList
+        style={styles.flatList}
         data={sortedTasks}
         keyExtractor={item => item.id}
         renderItem={renderTask}
+        ListHeaderComponent={ListHeaderComponent}
         ListEmptyComponent={ListEmptyComponent}
         ListFooterComponent={<View style={{height: 20}} />}
         refreshing={refreshing}
@@ -504,95 +432,19 @@ const styles = StyleSheet.create({
     backgroundColor: '#F7F9FB',
     paddingBottom: 80,
   },
+  flatList: {
+    flex: 1,
+    paddingTop: 20,
+  },
   flatListContent: {
     flexGrow: 1,
     paddingHorizontal: 15,
-    paddingTop: 50,
-  },
-  header: {
-    backgroundColor: '#2D64AF',
-    height: 80,
-    paddingHorizontal: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  headerText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#fff',
-  },
-  statusContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 50,
-    paddingVertical: 20,
-    marginHorizontal: 'auto',
-    transform: [{translateY: -46}],
-    width: '100%',
-    zIndex: 3,
-    backgroundColor: '#fff',
-    borderRadius: 10,
-  },
-  statusItem: {
-    alignItems: 'center',
-    width: '31%',
-    justifyContent: 'space-between',
-  },
-  statusText: {
-    color: '#095291',
-    textAlign: 'center',
-    fontFamily: 'DMSans-Medium',
-    fontSize: 20,
-    fontStyle: 'normal',
-    fontWeight: '600',
-    lineHeight: 26,
-  },
-  statusLabel: {
-    color: '#616161',
-    textAlign: 'center',
-    fontFamily: 'DMSans-Medium',
-    fontSize: 12,
-    fontStyle: 'normal',
-    fontWeight: '500',
-    lineHeight: 18,
-    marginTop: 5,
-  },
-  filterContainer: {
-    transform: [{translateY: -20}],
-  },
-  filterContentContainer: {
-    flexDirection: 'row',
-  },
-  activeFilter: {
-    borderWidth: 1,
-    borderColor: '#2D64AF',
-    borderStyle: 'solid',
-  },
-  filterButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 6,
-    paddingHorizontal: 14,
-    marginRight: 5,
-    borderRadius: 5,
-    backgroundColor: '#fff',
-  },
-  filterText: {
-    color: '#063A66',
-    textAlign: 'center',
-    fontFamily: 'DMSans-Regular',
-    fontSize: 12,
-    fontStyle: 'normal',
-    fontWeight: '500',
-    lineHeight: 18,
   },
   taskCard: {
     backgroundColor: '#fff',
     borderRadius: 6,
     padding: 16,
     marginBottom: 10,
-    display: 'flex',
     flexDirection: 'row',
     alignItems: 'flex-start',
   },
@@ -607,10 +459,6 @@ const styles = StyleSheet.create({
     fontFamily: 'DMSans-SemiBold',
     fontSize: 14,
     lineHeight: 21,
-  },
-  taskText: {
-    fontSize: 12,
-    color: '#A8A8A8',
   },
   taskDistance: {
     color: '#616161',
@@ -627,9 +475,6 @@ const styles = StyleSheet.create({
     paddingTop: 100,
   },
   noResult: {
-    color: '#A8A8A8',
-    fontSize: 16,
-    display: 'flex',
     flexDirection: 'column',
     justifyContent: 'center',
     alignItems: 'center',

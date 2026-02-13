@@ -53,11 +53,14 @@ interface TasksPayload {
   inProgressTaskCount: number;
   completedTaskCount: number;
 }
+
+let persistedTaskFilter = 'İcra olunmamış';
+
 const TasksScreen: React.FC<
   NativeStackScreenProps<MainStackParamList, Routes.tasks>
 > = ({navigation, route}) => {
   const [selectedFilter, setSelectedFilter] =
-    useState<string>('İcra olunmamış');
+    useState<string>(persistedTaskFilter);
 
   const getStatusColor = (status: number) => {
     switch (status) {
@@ -92,7 +95,6 @@ const TasksScreen: React.FC<
 
   const tasksRef = useRef<any>([]);
   const connectionRef = useRef<signalR.HubConnection | null>(null);
-
   useEffect(() => {
     tasksRef.current = filteredTasks;
   }, [filteredTasks]);
@@ -123,12 +125,12 @@ const TasksScreen: React.FC<
 
   useFocusEffect(
     useCallback(() => {
-      fetchTasks(0);
-      setSelectedFilter('İcra olunmamış');
+      fetchTasks(getStatusFromFilter(persistedTaskFilter));
     }, []),
   );
 
   const filterTasks = (filter: string) => {
+    persistedTaskFilter = filter;
     setSelectedFilter(filter);
 
     switch (filter) {
@@ -275,11 +277,30 @@ const TasksScreen: React.FC<
             return;
           }
 
-          if (
-            status === TaskStatus.InTransit ||
-            status === TaskStatus.TechnicalWorkInProgress ||
-            status === TaskStatus.CollectionInProgress
-          ) {
+          const inProgressStatuses = [
+            TaskStatus.InTransit,
+            TaskStatus.TechnicalWorkInProgress,
+            TaskStatus.CollectionInProgress,
+          ];
+          const isInProgress = inProgressStatuses.includes(status);
+
+          if (isInProgress) {
+            const existing = tasksRef.current.find((t: any) => t.id === taskId);
+            if (existing) {
+              tasksRef.current = tasksRef.current.map((t: any) =>
+                t.id === taskId ? {...t, status} : t,
+              );
+            } else {
+              tasksRef.current = [
+                ...tasksRef.current.filter((t: any) => t.id !== taskId),
+                {id: taskId, status, address: pointName, pointId, order},
+              ].sort((a: any, b: any) => a.order - b.order);
+            }
+            setFilteredTasks([...tasksRef.current]);
+            setTasksData(prev => ({
+              ...prev,
+              tasks: tasksRef.current,
+            }));
             return;
           }
 
@@ -377,8 +398,45 @@ const TasksScreen: React.FC<
     setRefreshing(false);
   };
 
-  const ListHeaderComponent = () => (
-    <>
+  const ListHeaderComponent = () =>
+    sortedTasks?.length > 0 ? (
+      <Text style={styles.currentDay}>Bu gün</Text>
+    ) : null;
+
+  const ListEmptyComponent = () => {
+    if (loading) {
+      return (
+        <View style={styles.centerContainer}>
+          <ActivityIndicator size="large" color="#2D64AF" />
+        </View>
+      );
+    }
+
+    return (
+      <View style={styles.noResult}>
+        <Image
+          source={require('../assets/img/tasks_empty.png')}
+          style={styles.noContentImage}
+        />
+        <Text style={styles.noContentLabel}>
+          Sizin heç bir tapşırığınız yoxdur
+        </Text>
+        <Text style={styles.noContentText}>
+          Yeni tapşırığlar burada görünəcək.
+        </Text>
+      </View>
+    );
+  };
+
+  return (
+    <View style={styles.container}>
+      <TopHeader
+        title="Tapşırıqlar"
+        variant="tapsiriq"
+        onRightPress={() => fetchTasks(getStatusFromFilter(selectedFilter))}
+        rightIconComponent={<RefreshIcon color="#fff" width={30} />}
+      />
+      <View style={styles.headerWrapper}>
       <View style={styles.statusContainer}>
         <View style={styles.statusItem}>
           <Text style={styles.statusText}>
@@ -399,7 +457,6 @@ const TasksScreen: React.FC<
           <Text style={styles.statusLabel}>Tamamlanmış</Text>
         </View>
       </View>
-
       <View style={styles.filterContainer}>
         <ScrollView
           horizontal
@@ -442,45 +499,9 @@ const TasksScreen: React.FC<
           ))}
         </ScrollView>
       </View>
-
-      {sortedTasks?.length > 0 && <Text style={styles.currentDay}>Bu gün</Text>}
-    </>
-  );
-
-  const ListEmptyComponent = () => {
-    if (loading) {
-      return (
-        <View style={styles.centerContainer}>
-          <ActivityIndicator size="large" color="#2D64AF" />
-        </View>
-      );
-    }
-
-    return (
-      <View style={styles.noResult}>
-        <Image
-          source={require('../assets/img/tasks_empty.png')}
-          style={styles.noContentImage}
-        />
-        <Text style={styles.noContentLabel}>
-          Sizin heç bir tapşırığınız yoxdur
-        </Text>
-        <Text style={styles.noContentText}>
-          Yeni tapşırığlar burada görünəcək.
-        </Text>
       </View>
-    );
-  };
-
-  return (
-    <View style={styles.container}>
-      <TopHeader
-        title="Tapşırıqlar"
-        variant="tapsiriq"
-        onRightPress={() => fetchTasks(getStatusFromFilter(selectedFilter))}
-        rightIconComponent={<RefreshIcon color="#fff" width={30} />}
-      />
       <FlatList
+        style={styles.flatList}
         data={sortedTasks}
         keyExtractor={item => item.id}
         renderItem={renderTask}
@@ -506,8 +527,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#F7F9FB',
     paddingBottom: 80,
   },
+  flatList: {
+    flex: 1,
+  },
   flatListContent: {
     flexGrow: 1,
+    paddingHorizontal: 15,
+  },
+  headerWrapper: {
     paddingHorizontal: 15,
   },
   header: {
