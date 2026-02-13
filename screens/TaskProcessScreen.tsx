@@ -22,6 +22,11 @@ import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {MainStackParamList} from 'types/types';
 import {Routes} from '@navigation/routes';
 import {SvgImage} from '@components/SvgImage';
+import {
+  getTaskStartTime,
+  setTaskStartTime,
+  removeTaskStartTime,
+} from '../utils/taskStorage';
 
 const {width: SCREEN_WIDTH, height: SCREEN_HEIGHT} = Dimensions.get('window');
 const HORIZONTAL_PADDING = SCREEN_WIDTH * 0.05;
@@ -53,35 +58,44 @@ const TaskProcessScreen: React.FC<
 
   useEffect(() => {
     const restore = async () => {
-      const routeStart = await AsyncStorage.getItem('routeStartTime');
       const storedRoleName = await AsyncStorage.getItem('roleName');
       setRoleName(storedRoleName);
 
-      if (routeStart) {
+      let startTs: number | null = null;
+      if (taskData?.id) {
+        startTs = await getTaskStartTime(taskData.id);
+      }
+      if (startTs == null) {
+        const legacy = await AsyncStorage.getItem('routeStartTime');
+        startTs = legacy ? parseInt(legacy, 10) : null;
+      }
+
+      if (startTs) {
         setStep(0);
         setTimerActive(true);
-        const diff = Math.floor((Date.now() - parseInt(routeStart, 10)) / 1000);
+        const diff = Math.floor((Date.now() - startTs) / 1000);
         setTaskTimer(diff);
       }
     };
     restore();
-  }, []);
+  }, [taskData?.id]);
 
   useEffect(() => {
     let routeInterval: any;
 
     const loadRouteStartTime = async () => {
-      if (step === 0 && timerActive) {
-        const storedTime = await AsyncStorage.getItem('routeStartTime');
-        const start = storedTime ? parseInt(storedTime, 10) : Date.now();
-
-        if (!storedTime) {
-          await AsyncStorage.setItem('routeStartTime', start.toString());
+      if (step === 0 && timerActive && taskData?.id) {
+        let start: number | null = await getTaskStartTime(taskData.id);
+        if (start == null) {
+          const legacy = await AsyncStorage.getItem('routeStartTime');
+          start = legacy ? parseInt(legacy, 10) : Date.now();
+          await setTaskStartTime(taskData.id, start);
         }
 
+        const startTs = start;
         routeInterval = setInterval(() => {
           const now = Date.now();
-          setTaskTimer(Math.floor((now - start) / 1000));
+          setTaskTimer(Math.floor((now - startTs) / 1000));
         }, 1000);
       }
     };
@@ -93,14 +107,22 @@ const TaskProcessScreen: React.FC<
         clearInterval(routeInterval);
       }
     };
-  }, [step, timerActive]);
+  }, [step, timerActive, taskData?.id]);
 
   const startRoute = async () => {
     try {
       setLoading(true);
-      const existing = await AsyncStorage.getItem('routeStartTime');
-      if (!existing) {
-        await AsyncStorage.setItem('routeStartTime', Date.now().toString());
+      const now = Date.now();
+      if (taskData?.id) {
+        const existing = await getTaskStartTime(taskData.id);
+        if (!existing) {
+          await setTaskStartTime(taskData.id, now);
+        }
+      } else {
+        const existing = await AsyncStorage.getItem('routeStartTime');
+        if (!existing) {
+          await AsyncStorage.setItem('routeStartTime', now.toString());
+        }
       }
       setTimerActive(true);
       setStep(0);
@@ -143,7 +165,12 @@ const TaskProcessScreen: React.FC<
       setStep(1);
       setTimerActive(false);
 
-      await AsyncStorage.multiRemove(['currentTask', 'routeStartTime']);
+      await removeTaskStartTime(taskData.id);
+      const stored = await AsyncStorage.getItem('currentTask');
+      const parsed = stored ? JSON.parse(stored) : null;
+      if (parsed?.id === taskData.id) {
+        await AsyncStorage.removeItem('currentTask');
+      }
 
       setSuccessModalVisible(true);
     } catch (error: any) {
@@ -291,7 +318,12 @@ const TaskProcessScreen: React.FC<
         headers: {Authorization: `Bearer ${token}`},
       });
 
-      await AsyncStorage.multiRemove(['currentTask', 'routeStartTime']);
+      await removeTaskStartTime(taskData.id);
+      const stored = await AsyncStorage.getItem('currentTask');
+      const parsed = stored ? JSON.parse(stored) : null;
+      if (parsed?.id === taskData.id) {
+        await AsyncStorage.removeItem('currentTask');
+      }
       navigation.navigate(Routes.newReport, {
         terminalId: taskData?.terminal?.id,
       });
