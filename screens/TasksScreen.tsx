@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
-import React, {useCallback, useEffect, useRef, useState} from 'react';
+import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {
   View,
   Text,
@@ -10,6 +10,7 @@ import {
   ScrollView,
   ActivityIndicator,
   Image,
+  TextInput,
 } from 'react-native';
 
 import {apiService} from '../services/apiService';
@@ -92,6 +93,7 @@ const TasksScreen: React.FC<
 
   const [filteredTasks, setFilteredTasks] = useState<any>([]);
   const [refreshing, setRefreshing] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
 
   const tasksRef = useRef<any>([]);
   const connectionRef = useRef<signalR.HubConnection | null>(null);
@@ -388,9 +390,18 @@ const TasksScreen: React.FC<
     };
   }, []);
 
-  const sortedTasks = [...(filteredTasks ?? [])].sort(
-    (a, b) => a.order - b.order,
-  );
+  const sortedTasks = useMemo(() => {
+    let tasks = filteredTasks ?? [];
+    if (searchTerm.trim()) {
+      const term = searchTerm.trim().toLowerCase();
+      tasks = tasks.filter((t: any) =>
+        String(t?.pointId ?? t?.terminal?.pointId ?? '')
+          .toLowerCase()
+          .includes(term),
+      );
+    }
+    return [...tasks].sort((a, b) => a.order - b.order);
+  }, [filteredTasks, searchTerm]);
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -437,68 +448,83 @@ const TasksScreen: React.FC<
         rightIconComponent={<RefreshIcon color="#fff" width={30} />}
       />
       <View style={styles.headerWrapper}>
-      <View style={styles.statusContainer}>
-        <View style={styles.statusItem}>
-          <Text style={styles.statusText}>
-            {tasksData?.pendingTaskCount || 0}
-          </Text>
-          <Text style={styles.statusLabel}>Gözləyən</Text>
+        <View style={styles.statusContainer}>
+          <View style={styles.statusItem}>
+            <Text style={styles.statusText}>
+              {tasksData?.pendingTaskCount || 0}
+            </Text>
+            <Text style={styles.statusLabel}>Gözləyən</Text>
+          </View>
+          <View style={styles.statusItem}>
+            <Text style={styles.statusText}>
+              {tasksData?.inProgressTaskCount || 0}
+            </Text>
+            <Text style={styles.statusLabel}>İcra olunan</Text>
+          </View>
+          <View style={styles.statusItem}>
+            <Text style={styles.statusText}>
+              {tasksData?.completedTaskCount || 0}
+            </Text>
+            <Text style={styles.statusLabel}>Tamamlanmış</Text>
+          </View>
         </View>
-        <View style={styles.statusItem}>
-          <Text style={styles.statusText}>
-            {tasksData?.inProgressTaskCount || 0}
-          </Text>
-          <Text style={styles.statusLabel}>İcra olunan</Text>
+        <View style={styles.filterContainer}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.filterContentContainer}>
+            {[
+              'Hamısı',
+              'İcra olunmamış',
+              'İcra olunan',
+              'İnkassasiya edildi',
+              'Uğursuz əməliyyat',
+              'Ləğv edilmiş',
+            ].map(filter => (
+              <TouchableOpacity
+                key={filter}
+                style={[
+                  styles.filterButton,
+                  selectedFilter === filter && styles.activeFilter,
+                ]}
+                onPress={() => filterTasks(filter)}>
+                {filter !== 'Hamısı' && (
+                  <SvgImage
+                    source={require('assets/icons/svg/dot.svg')}
+                    width={6}
+                    height={6}
+                    color={getStatusColor(
+                      filter === 'İcra olunan'
+                        ? 1
+                        : filter === 'İnkassasiya edildi'
+                        ? 10
+                        : filter === 'Ləğv edilmiş'
+                        ? 5
+                        : filter === 'Uğursuz əməliyyat'
+                        ? 9
+                        : 0,
+                    )}
+                    style={{marginRight: 6}}
+                  />
+                )}
+                <Text style={styles.filterText}>{filter}</Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
         </View>
-        <View style={styles.statusItem}>
-          <Text style={styles.statusText}>
-            {tasksData?.completedTaskCount || 0}
-          </Text>
-          <Text style={styles.statusLabel}>Tamamlanmış</Text>
+        <View style={styles.searchContainer}>
+          <SvgImage
+            style={styles.searchIcon}
+            source={require('assets/icons/svg/search.svg')}
+          />
+          <TextInput
+            placeholder="Terminal ID axtar..."
+            placeholderTextColor="#2D64AF"
+            style={styles.searchInput}
+            value={searchTerm}
+            onChangeText={setSearchTerm}
+          />
         </View>
-      </View>
-      <View style={styles.filterContainer}>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.filterContentContainer}>
-          {[
-            'Hamısı',
-            'İcra olunmamış',
-            'İcra olunan',
-            'İnkassasiya edildi',
-            'Uğursuz əməliyyat',
-            'Ləğv edilmiş',
-          ].map(filter => (
-            <TouchableOpacity
-              key={filter}
-              style={[
-                styles.filterButton,
-                selectedFilter === filter && styles.activeFilter,
-              ]}
-              onPress={() => filterTasks(filter)}>
-              {filter !== 'Hamısı' && (
-                <SvgImage
-                  source={require('assets/icons/svg/dot.svg')}
-                  color={getStatusColor(
-                    filter === 'İcra olunan'
-                      ? 1
-                      : filter === 'İnkassasiya edildi'
-                      ? 10
-                      : filter === 'Ləğv edilmiş'
-                      ? 5
-                      : filter === 'Uğursuz əməliyyat'
-                      ? 9
-                      : 0,
-                  )}
-                  style={{marginRight: 6}}
-                />
-              )}
-              <Text style={styles.filterText}>{filter}</Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-      </View>
       </View>
       <FlatList
         style={styles.flatList}
@@ -589,6 +615,23 @@ const styles = StyleSheet.create({
   filterContainer: {
     transform: [{translateY: -20}],
   },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F2F2F2',
+    marginTop: 10,
+    marginBottom: 10,
+    borderRadius: 8,
+  },
+  searchIcon: {marginLeft: 10},
+  searchInput: {
+    fontSize: 14,
+    color: '#2D64AF',
+    flex: 1,
+    height: 40,
+    fontFamily: 'DMSans-Regular',
+    marginLeft: 10,
+  },
   filterContentContainer: {
     flexDirection: 'row',
   },
@@ -619,7 +662,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderRadius: 6,
     padding: 16,
-    marginBottom: 10,
+    marginBottom: 15,
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -633,17 +676,19 @@ const styles = StyleSheet.create({
   taskTitle: {
     color: '#1269B5',
     fontFamily: 'DMSans-SemiBold',
-    fontSize: 14,
+    fontSize: 16,
     lineHeight: 21,
+    fontWeight: '700',
+    marginBottom: 4,
   },
   taskText: {
     fontSize: 12,
     color: '#A8A8A8',
   },
   taskDistance: {
-    color: '#616161',
+    color: 'black',
     fontFamily: 'DMSans-Regular',
-    fontSize: 12,
+    fontSize: 14,
     fontStyle: 'normal',
     fontWeight: '400',
     lineHeight: 18,
