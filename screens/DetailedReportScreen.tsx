@@ -266,7 +266,9 @@ const DetailedReportScreen: React.FC<
                     controls={true}
                     paused={paused}
                     resizeMode="contain"
-                    onError={error => console.log('Video xətası:', error)}
+                    onError={error => {
+                      if (__DEV__) console.log('Video xətası:', error);
+                    }}
                   />
                 )}
                 <TouchableOpacity

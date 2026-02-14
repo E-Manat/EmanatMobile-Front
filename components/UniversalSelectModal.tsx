@@ -1,4 +1,4 @@
-import React, {useState, useMemo} from 'react';
+import React, {useCallback, useState, useMemo} from 'react';
 import {
   View,
   Text,
@@ -42,16 +42,39 @@ const UniversalSelectModal: React.FC<Props> = ({
     [data, searchText],
   );
 
-  const handleSelect = (item: Item) => {
-    onSelect(item);
-    setSearchText('');
-    onClose();
-  };
+  const handleSelect = useCallback(
+    (item: Item) => {
+      onSelect(item);
+      setSearchText('');
+      onClose();
+    },
+    [onSelect, onClose],
+  );
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     setSearchText('');
     onClose();
-  };
+  }, [onClose]);
+
+  const renderItem = useCallback(
+    ({item}: {item: Item}) => (
+      <TouchableOpacity
+        style={styles.option}
+        onPress={() => handleSelect(item)}>
+        <Text style={styles.optionText}>{String(item.name)}</Text>
+      </TouchableOpacity>
+    ),
+    [handleSelect],
+  );
+
+  const ListEmptyComponent = useMemo(
+    () => () => (
+      <View style={styles.emptyContainer}>
+        <Text style={styles.emptyText}>Nəticə yoxdur</Text>
+      </View>
+    ),
+    [],
+  );
 
   return (
     <Modal
@@ -98,18 +121,8 @@ const UniversalSelectModal: React.FC<Props> = ({
             initialNumToRender={15}
             maxToRenderPerBatch={10}
             windowSize={5}
-            renderItem={({item}) => (
-              <TouchableOpacity
-                style={styles.option}
-                onPress={() => handleSelect(item)}>
-                <Text style={styles.optionText}>{String(item.name)}</Text>
-              </TouchableOpacity>
-            )}
-            ListEmptyComponent={() => (
-              <View style={styles.emptyContainer}>
-                <Text style={styles.emptyText}>Nəticə yoxdur</Text>
-              </View>
-            )}
+            renderItem={renderItem}
+            ListEmptyComponent={ListEmptyComponent}
           />
         </View>
       </View>

@@ -176,64 +176,69 @@ const TasksScreen: React.FC<
     }
   };
 
-  const renderTask = ({item}: any) => (
-    <TouchableOpacity
-      onPress={async () => {
-        try {
-          setLoading(true);
-          const roleName = await AsyncStorage.getItem('roleName');
-          const isCollector = roleName === 'Collector';
+  const renderTask = useCallback(
+    ({item}: any) => (
+      <TouchableOpacity
+        onPress={async () => {
+          try {
+            setLoading(true);
+            const roleName = await AsyncStorage.getItem('roleName');
+            const isCollector = roleName === 'Collector';
 
-          const endpoint = isCollector
-            ? API_ENDPOINTS.mobile.collector.getById(item.id)
-            : API_ENDPOINTS.mobile.technician.getById(item.id);
+            const endpoint = isCollector
+              ? API_ENDPOINTS.mobile.collector.getById(item.id)
+              : API_ENDPOINTS.mobile.technician.getById(item.id);
 
-          const taskDetails = await apiService.get(endpoint);
+            const taskDetails = await apiService.get(endpoint);
 
-          navigation.navigate(Routes.terminalDetails, {taskData: taskDetails});
-        } catch (err) {
-          console.error('Detalları alarkən xəta:', err);
-        } finally {
-          setLoading(false);
-        }
-      }}>
-      <View
-        style={[
-          styles.taskCard,
-          {borderLeftWidth: 4, borderLeftColor: getStatusColor(item.status)},
-        ]}>
-        <View style={styles.taskContent}>
-          <Text style={styles.taskTitle}>Terminal ID : {item?.pointId}</Text>
-          <Text style={styles.taskDistance}>
-            Adress: {item?.address || item?.terminal?.address}
-          </Text>
+            navigation.navigate(Routes.terminalDetails, {taskData: taskDetails});
+          } catch (err) {
+            console.error('Detalları alarkən xəta:', err);
+          } finally {
+            setLoading(false);
+          }
+        }}>
+        <View
+          style={[
+            styles.taskCard,
+            {borderLeftWidth: 4, borderLeftColor: getStatusColor(item.status)},
+          ]}>
+          <View style={styles.taskContent}>
+            <Text style={styles.taskTitle}>Terminal ID : {item?.pointId}</Text>
+            <Text style={styles.taskDistance}>
+              Adress: {item?.address || item?.terminal?.address}
+            </Text>
+          </View>
+          <View>
+            <SvgImage
+              source={require('assets/icons/svg/dot.svg')}
+              color={getStatusColor(item.status)}
+              style={{marginRight: 6}}
+            />
+          </View>
         </View>
-        <View>
-          <SvgImage
-            source={require('assets/icons/svg/dot.svg')}
-            color={getStatusColor(item.status)}
-            style={{marginRight: 6}}
-          />
-        </View>
-      </View>
-    </TouchableOpacity>
+      </TouchableOpacity>
+    ),
+    [navigation],
   );
 
   useEffect(() => {
+    let cancelled = false;
+
     const connectSignalR = async () => {
       try {
         const token = await AsyncStorage.getItem('userToken');
         const roleName = await AsyncStorage.getItem('roleName');
-        if (!token || connectionRef.current) {
-          return;
-        }
+        if (!token || connectionRef.current || cancelled) return;
 
         const connection = new signalR.HubConnectionBuilder()
           .withUrl(`${Config.SIGNALR_URL}`, {
             accessTokenFactory: () => token,
           })
           .withAutomaticReconnect()
-          .configureLogging(signalR.LogLevel.Information)
+          .configureLogging(
+            __DEV__ ? signalR.LogLevel.Information : signalR.LogLevel.Warning,
+          )
           .build();
 
         const createdEvent =
@@ -373,16 +378,22 @@ const TasksScreen: React.FC<
           });
         });
 
+        if (cancelled) return;
         await connection.start();
+        if (cancelled) {
+          await connection.stop();
+          return;
+        }
         connectionRef.current = connection;
       } catch (err) {
-        console.error('❌ SignalR connection error:', err);
+        if (!cancelled) console.error('❌ SignalR connection error:', err);
       }
     };
 
     connectSignalR();
 
     return () => {
+      cancelled = true;
       if (connectionRef.current) {
         connectionRef.current.stop();
         connectionRef.current = null;
@@ -409,35 +420,45 @@ const TasksScreen: React.FC<
     setRefreshing(false);
   };
 
-  const ListHeaderComponent = () =>
-    sortedTasks?.length > 0 ? (
-      <Text style={styles.currentDay}>Bu gün</Text>
-    ) : null;
+  const ListHeaderComponent = useMemo(
+    () =>
+      () =>
+        sortedTasks?.length > 0 ? (
+          <Text style={styles.currentDay}>Bu gün</Text>
+        ) : null,
+    [sortedTasks?.length],
+  );
 
-  const ListEmptyComponent = () => {
-    if (loading) {
+  const ListEmptyComponent = useMemo(() => {
+    return () => {
+      if (loading) {
+        return (
+          <View style={styles.centerContainer}>
+            <ActivityIndicator size="large" color="#2D64AF" />
+          </View>
+        );
+      }
       return (
-        <View style={styles.centerContainer}>
-          <ActivityIndicator size="large" color="#2D64AF" />
+        <View style={styles.noResult}>
+          <Image
+            source={require('../assets/img/tasks_empty.png')}
+            style={styles.noContentImage}
+          />
+          <Text style={styles.noContentLabel}>
+            Sizin heç bir tapşırığınız yoxdur
+          </Text>
+          <Text style={styles.noContentText}>
+            Yeni tapşırığlar burada görünəcək.
+          </Text>
         </View>
       );
-    }
+    };
+  }, [loading]);
 
-    return (
-      <View style={styles.noResult}>
-        <Image
-          source={require('../assets/img/tasks_empty.png')}
-          style={styles.noContentImage}
-        />
-        <Text style={styles.noContentLabel}>
-          Sizin heç bir tapşırığınız yoxdur
-        </Text>
-        <Text style={styles.noContentText}>
-          Yeni tapşırığlar burada görünəcək.
-        </Text>
-      </View>
-    );
-  };
+  const ListFooterComponent = useMemo(
+    () => <View style={{height: 20}} />,
+    [],
+  );
 
   return (
     <View style={styles.container}>
@@ -533,7 +554,7 @@ const TasksScreen: React.FC<
         renderItem={renderTask}
         ListHeaderComponent={ListHeaderComponent}
         ListEmptyComponent={ListEmptyComponent}
-        ListFooterComponent={<View style={{height: 20}} />}
+        ListFooterComponent={ListFooterComponent}
         refreshing={refreshing}
         onRefresh={handleRefresh}
         contentContainerStyle={styles.flatListContent}
