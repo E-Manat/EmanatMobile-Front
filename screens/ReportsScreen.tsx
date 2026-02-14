@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
-import React, {useCallback, useState} from 'react';
+import React, {useCallback, useMemo, useState} from 'react';
 import {
   View,
   Text,
@@ -59,35 +59,37 @@ const ReportsScreen: React.FC<
 
   const [reports, setReports] = useState<any>([]);
 
-  const renderItem = ({item}: any) => {
-    const formattedDate = moment(item.createdDate).format('MM/DD/YYYY');
+  const renderItem = useCallback(
+    ({item}: any) => {
+      const formattedDate = moment(item.createdDate).format('MM/DD/YYYY');
+      const reportStatus =
+        item.reportStatus === 0 ? 'Gözləmədədir' : 'Tamamlanıb';
 
-    const reportStatus =
-      item.reportStatus === 0 ? 'Gözləmədədir' : 'Tamamlanıb';
-
-    return (
-      <TouchableOpacity
-        onPress={() =>
-          navigation.navigate(Routes.detailedReport, {report: item})
-        }>
-        <View style={styles.card}>
-          <DownloadIcon color="#1269B5" />
-          <View style={styles.textContainer}>
-            <Text style={styles.title}>
-              {highlightText(item.pointId, searchText)}
-            </Text>
-            <Text style={styles.date}>
-              {highlightText(formattedDate, searchText)}
-            </Text>
+      return (
+        <TouchableOpacity
+          onPress={() =>
+            navigation.navigate(Routes.detailedReport, {report: item})
+          }>
+          <View style={styles.card}>
+            <DownloadIcon color="#1269B5" />
+            <View style={styles.textContainer}>
+              <Text style={styles.title}>
+                {highlightText(item.pointId, searchText)}
+              </Text>
+              <Text style={styles.date}>
+                {highlightText(formattedDate, searchText)}
+              </Text>
+            </View>
+            <View style={styles.statusContainer}>
+              <Text style={styles.time}>{item.workingHours}</Text>
+              <Text style={styles.status}>{reportStatus}</Text>
+            </View>
           </View>
-          <View style={styles.statusContainer}>
-            <Text style={styles.time}>{item.workingHours}</Text>
-            <Text style={styles.status}>{reportStatus}</Text>
-          </View>
-        </View>
-      </TouchableOpacity>
-    );
-  };
+        </TouchableOpacity>
+      );
+    },
+    [navigation, searchText],
+  );
 
   const FILTER_OPTIONS = [
     'Cari ay',

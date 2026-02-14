@@ -15,7 +15,7 @@ const ImageSlider = () => {
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const navigation = useNavigation<any>();
   useEffect(() => {
-    Animated.loop(
+    const animation = Animated.loop(
       Animated.sequence([
         Animated.timing(scaleAnim, {
           toValue: 1.2,
@@ -28,7 +28,9 @@ const ImageSlider = () => {
           useNativeDriver: true,
         }),
       ]),
-    ).start();
+    );
+    animation.start();
+    return () => animation.stop();
   }, [scaleAnim]);
 
   return (

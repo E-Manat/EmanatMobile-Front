@@ -19,7 +19,7 @@ const formatNotification = (item: any): Notification => ({
 const playNotificationSound = () => {
   const ding = new Sound('notification.mp3', Sound.MAIN_BUNDLE, error => {
     if (!error) {
-      ding.play(() => {});
+      ding.play(() => ding.release());
     }
   });
 };
@@ -30,17 +30,21 @@ export const useSignalRNotifications = (onReceive: (n: Notification) => void) =>
   onReceiveRef.current = onReceive;
 
   useEffect(() => {
+    let cancelled = false;
+
     const connect = async () => {
       try {
         const token = await AsyncStorage.getItem('userToken');
-        if (!token || connectionRef.current) return;
+        if (!token || connectionRef.current || cancelled) return;
 
         const connection = new signalR.HubConnectionBuilder()
           .withUrl(`${Config.SIGNALR_URL}`, {
             accessTokenFactory: () => token,
           })
           .withAutomaticReconnect()
-          .configureLogging(signalR.LogLevel.Information)
+          .configureLogging(
+            __DEV__ ? signalR.LogLevel.Information : signalR.LogLevel.Warning,
+          )
           .build();
 
         connection.off('ReceiveNotification');
@@ -60,16 +64,22 @@ export const useSignalRNotifications = (onReceive: (n: Notification) => void) =>
           playNotificationSound();
         });
 
+        if (cancelled) return;
         await connection.start();
+        if (cancelled) {
+          await connection.stop();
+          return;
+        }
         connectionRef.current = connection;
       } catch (err) {
-        console.error('SignalR connection error:', err);
+        if (!cancelled) console.error('SignalR connection error:', err);
       }
     };
 
     connect();
 
     return () => {
+      cancelled = true;
       if (connectionRef.current) {
         connectionRef.current.stop();
         connectionRef.current = null;

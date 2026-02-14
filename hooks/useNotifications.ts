@@ -15,6 +15,8 @@ const formatNotification = (item: any): Notification => ({
   date: formatDate(item.createdAt),
 });
 
+const MAX_CACHED_NOTIFICATIONS = 200;
+
 let notificationsCache: Notification[] = [];
 
 export const useNotifications = (filter: 'all' | 'unread') => {
@@ -93,7 +95,7 @@ export const useNotifications = (filter: 'all' | 'unread') => {
 
   const addNotification = useCallback((notification: Notification) => {
     setData(prev => {
-      const next = [notification, ...prev];
+      const next = [notification, ...prev].slice(0, MAX_CACHED_NOTIFICATIONS);
       notificationsCache = next;
       return next;
     });

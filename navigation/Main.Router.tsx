@@ -145,15 +145,11 @@ export const MainRouter: React.FC = () => {
       await checkCurrentTask();
     };
 
-    if (navigationRef.current) {
-      navigationRef.current.addListener('state', updateRouteName);
-    }
-
-    return () => {
-      if (navigationRef.current) {
-        navigationRef.current.removeListener('state', updateRouteName);
-      }
-    };
+    const unsubscribe = navigationRef.current?.addListener(
+      'state',
+      updateRouteName,
+    );
+    return () => unsubscribe?.();
   }, []);
 
   return (

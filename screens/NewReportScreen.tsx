@@ -39,6 +39,8 @@ import {
   openSettings,
 } from 'react-native-permissions';
 
+const MAX_IMAGES = 10;
+
 const NewReportScreen: React.FC<
   NativeStackScreenProps<MainStackParamList, Routes.newReport>
 > = ({navigation, route}) => {
@@ -264,6 +266,13 @@ const NewReportScreen: React.FC<
           Alert.alert('Xəta', 'Bu şəkil artıq əlavə edilib');
           return;
         }
+        if (selectedImages.length >= MAX_IMAGES) {
+          Alert.alert(
+            'Xəta',
+            `Maksimum ${MAX_IMAGES} şəkil seçilə bilər`,
+          );
+          return;
+        }
         setSelectedImages(prev => [...prev, uri]);
       }
     });
@@ -295,6 +304,13 @@ const NewReportScreen: React.FC<
       if (uri) {
         if (isDuplicateImage(uri)) {
           Alert.alert('Xəta', 'Bu şəkil artıq əlavə edilib');
+          return;
+        }
+        if (selectedImages.length >= MAX_IMAGES) {
+          Alert.alert(
+            'Xəta',
+            `Maksimum ${MAX_IMAGES} şəkil seçilə bilər`,
+          );
           return;
         }
         setSelectedImages(prev => [...prev, uri]);

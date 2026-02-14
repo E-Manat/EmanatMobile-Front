@@ -42,7 +42,7 @@ const DraggableTaskButton = () => {
   const panOffset = useRef({x: 0, y: 0}).current;
 
   useEffect(() => {
-    Animated.loop(
+    const animation = Animated.loop(
       Animated.sequence([
         Animated.timing(scaleAnim, {
           toValue: 1.1,
@@ -55,7 +55,9 @@ const DraggableTaskButton = () => {
           useNativeDriver: true,
         }),
       ]),
-    ).start();
+    );
+    animation.start();
+    return () => animation.stop();
   }, [scaleAnim]);
 
   const panResponder = PanResponder.create({

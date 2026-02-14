@@ -81,31 +81,30 @@ const TaskProcessScreen: React.FC<
   }, [taskData?.id]);
 
   useEffect(() => {
-    let routeInterval: any;
+    let routeInterval: ReturnType<typeof setInterval> | null = null;
+    let cancelled = false;
 
     const loadRouteStartTime = async () => {
-      if (step === 0 && timerActive && taskData?.id) {
-        let start: number | null = await getTaskStartTime(taskData.id);
-        if (start == null) {
-          const legacy = await AsyncStorage.getItem('routeStartTime');
-          start = legacy ? parseInt(legacy, 10) : Date.now();
-          await setTaskStartTime(taskData.id, start);
-        }
-
-        const startTs = start;
-        routeInterval = setInterval(() => {
-          const now = Date.now();
-          setTaskTimer(Math.floor((now - startTs) / 1000));
-        }, 1000);
+      if (step !== 0 || !timerActive || !taskData?.id) return;
+      let start: number | null = await getTaskStartTime(taskData.id);
+      if (start == null) {
+        const legacy = await AsyncStorage.getItem('routeStartTime');
+        start = legacy ? parseInt(legacy, 10) : Date.now();
+        await setTaskStartTime(taskData.id, start);
       }
+      if (cancelled) return;
+      const startTs = start;
+      routeInterval = setInterval(() => {
+        if (cancelled) return;
+        setTaskTimer(Math.floor((Date.now() - startTs) / 1000));
+      }, 1000);
     };
 
     loadRouteStartTime();
 
     return () => {
-      if (routeInterval) {
-        clearInterval(routeInterval);
-      }
+      cancelled = true;
+      if (routeInterval) clearInterval(routeInterval);
     };
   }, [step, timerActive, taskData?.id]);
 

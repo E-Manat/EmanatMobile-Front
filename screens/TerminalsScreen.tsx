@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import {
   View,
   Text,
@@ -29,7 +29,7 @@ const TerminallarScreen: React.FC<
   const [loading, setLoading] = useState<boolean>(false);
   const [refreshing, setRefreshing] = useState(false);
 
-  const openModal = async (terminal: any) => {
+  const openModal = useCallback(async (terminal: any) => {
     setSelectedTerminal(terminal);
     setModalVisible(true);
 
@@ -41,12 +41,12 @@ const TerminallarScreen: React.FC<
     } catch (error) {
       console.error('Terminal details alınarkən xəta:', error);
     }
-  };
+  }, []);
 
-  const closeModal = () => {
+  const closeModal = useCallback(() => {
     setModalVisible(false);
     setSelectedTerminal(null);
-  };
+  }, []);
 
   const fetchTerminals = useCallback(async () => {
     setLoading(true);
@@ -76,24 +76,45 @@ const TerminallarScreen: React.FC<
     setRefreshing(false);
   };
 
-  const TerminalCard = ({terminal}: any) => (
-    <TouchableOpacity onPress={() => openModal(terminal)}>
-      <View style={styles.card}>
-        <View style={styles.left}>
-          <View style={styles.pgCircle}>
-            <Text style={styles.pgText}>PG</Text>
-            <View style={styles.dot} />
+  const renderItem = useCallback(
+    ({item}: {item: any}) => (
+      <TouchableOpacity onPress={() => openModal(item)}>
+        <View style={styles.card}>
+          <View style={styles.left}>
+            <View style={styles.pgCircle}>
+              <Text style={styles.pgText}>PG</Text>
+              <View style={styles.dot} />
+            </View>
+            <View>
+              <Text style={styles.terminalId}>
+                Terminal ID – {item.pointId}
+              </Text>
+              <Text style={styles.infoText} />
+            </View>
           </View>
-          <View>
-            <Text style={styles.terminalId}>
-              Terminal ID – {terminal.pointId}
-            </Text>
-            <Text style={styles.infoText} />
-          </View>
+          <View style={styles.right} />
         </View>
-        <View style={styles.right} />
+      </TouchableOpacity>
+    ),
+    [openModal],
+  );
+
+  const ListEmptyComponent = useMemo(
+    () => (
+      <View style={styles.noResult}>
+        <Image
+          source={require('../assets/img/tasks_empty.png')}
+          style={styles.noContentImage}
+        />
+        <Text style={styles.noContentLabel}>
+          Heç bir terminal tapılmadı
+        </Text>
+        <Text style={styles.noContentText}>
+          Bütün terminallar burada görünəcək.
+        </Text>
       </View>
-    </TouchableOpacity>
+    ),
+    [],
   );
 
   return (
@@ -103,27 +124,14 @@ const TerminallarScreen: React.FC<
       <FlatList
         data={terminals}
         keyExtractor={(_, index) => index.toString()}
-        renderItem={({item}) => <TerminalCard terminal={item} />}
+        renderItem={renderItem}
         contentContainerStyle={{paddingBottom: 20}}
         refreshing={refreshing}
         onRefresh={handleRefresh}
         initialNumToRender={12}
         maxToRenderPerBatch={10}
         windowSize={5}
-        ListEmptyComponent={
-          <View style={styles.noResult}>
-            <Image
-              source={require('../assets/img/tasks_empty.png')}
-              style={styles.noContentImage}
-            />
-            <Text style={styles.noContentLabel}>
-              Heç bir terminal tapılmadı
-            </Text>
-            <Text style={styles.noContentText}>
-              Bütün terminallar burada görünəcək.
-            </Text>
-          </View>
-        }
+        ListEmptyComponent={ListEmptyComponent}
       />
       <Modal visible={modalVisible} transparent animationType="fade">
         <View style={styles.modalOverlay}>
