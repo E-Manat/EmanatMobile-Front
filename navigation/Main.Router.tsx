@@ -112,8 +112,8 @@ export const MainRouter: React.FC = () => {
 
   useEffect(() => {
     const handleAppStateChange = async (state: string) => {
-      if (state === 'active' && updateRequired) {
-        setModalVisible(true);
+      if (state === 'active') {
+        await checkForUpdate();
       }
     };
 

@@ -208,6 +208,8 @@ const CurrentTaskScreen: React.FC<
           )
           .build();
 
+        connectionRef.current = connection;
+
         connection.on(
           roleName === 'Collector' ? 'TaskCreated' : 'TechnicianTaskCreated',
           (notification: any) => {
@@ -348,9 +350,9 @@ const CurrentTaskScreen: React.FC<
         await connection.start();
         if (cancelled) {
           await connection.stop();
+          connectionRef.current = null;
           return;
         }
-        connectionRef.current = connection;
       } catch (err) {
         if (!cancelled) console.error('❌ SignalR connection error:', err);
       }

@@ -224,10 +224,9 @@ const TerminalDetailsScreen: React.FC<
               <SvgImage
                 source={require('assets/icons/svg/location.svg')}
                 color="#1976D2"
-              />{' '}
+              />
               <Text style={styles.terminalCode}>
-                {' '}
-                Terminal ID: {taskData?.terminal?.pointId}
+                Terminal ID: {taskData?.terminal?.pointId ?? ''}
               </Text>
             </View>
             <View
@@ -239,11 +238,10 @@ const TerminalDetailsScreen: React.FC<
           </View>
           <View style={styles.statusContainer}>
             <Text style={styles.location}>
-              {' '}
               {taskData.terminal?.address
                 ? taskData?.terminal?.address?.charAt(0)?.toUpperCase() +
                   taskData?.terminal?.address?.slice(1)
-                : ''}{' '}
+                : ''}
             </Text>
           </View>
         </View>

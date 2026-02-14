@@ -273,25 +273,25 @@ const TaskProcessScreen: React.FC<
             style={styles.primaryButton}
             onPress={startRoute}
             disabled={loading}>
-            <Text style={styles.primaryButtonText}>
-              {loading ? <ActivityIndicator color="#fff" /> : 'Marşruta başla'}
-            </Text>
+            {loading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.primaryButtonText}>Marşruta başla</Text>
+            )}
           </TouchableOpacity>
         );
       }
       return (
-        <TouchableOpacity
-          style={styles.primaryButton}
-          onPress={() => setModalVisible(true)}
-          disabled={completeTaskLoading}>
-          <Text style={styles.primaryButtonText}>
+          <TouchableOpacity
+            style={styles.primaryButton}
+            onPress={() => setModalVisible(true)}
+            disabled={completeTaskLoading}>
             {completeTaskLoading ? (
               <ActivityIndicator color="#fff" />
             ) : (
-              'Tapşırığı sonlandır'
+              <Text style={styles.primaryButtonText}>Tapşırığı sonlandır</Text>
             )}
-          </Text>
-        </TouchableOpacity>
+          </TouchableOpacity>
       );
     }
 
