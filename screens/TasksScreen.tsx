@@ -191,7 +191,9 @@ const TasksScreen: React.FC<
 
             const taskDetails = await apiService.get(endpoint);
 
-            navigation.navigate(Routes.terminalDetails, {taskData: taskDetails});
+            navigation.navigate(Routes.terminalDetails, {
+              taskData: taskDetails,
+            });
           } catch (err) {
             console.error('Detalları alarkən xəta:', err);
           } finally {
@@ -337,6 +339,8 @@ const TasksScreen: React.FC<
           });
         });
 
+        connectionRef.current = connection;
+
         connection.on('TaskDeleted', (notification: any) => {
           const {taskId, pointId} = notification;
 
@@ -382,9 +386,9 @@ const TasksScreen: React.FC<
         await connection.start();
         if (cancelled) {
           await connection.stop();
+          connectionRef.current = null;
           return;
         }
-        connectionRef.current = connection;
       } catch (err) {
         if (!cancelled) console.error('❌ SignalR connection error:', err);
       }
@@ -421,11 +425,10 @@ const TasksScreen: React.FC<
   };
 
   const ListHeaderComponent = useMemo(
-    () =>
-      () =>
-        sortedTasks?.length > 0 ? (
-          <Text style={styles.currentDay}>Bu gün</Text>
-        ) : null,
+    () => () =>
+      sortedTasks?.length > 0 ? (
+        <Text style={styles.currentDay}>Bu gün</Text>
+      ) : null,
     [sortedTasks?.length],
   );
 
@@ -455,10 +458,7 @@ const TasksScreen: React.FC<
     };
   }, [loading]);
 
-  const ListFooterComponent = useMemo(
-    () => <View style={{height: 20}} />,
-    [],
-  );
+  const ListFooterComponent = useMemo(() => <View style={{height: 20}} />, []);
 
   return (
     <View style={styles.container}>
@@ -469,6 +469,7 @@ const TasksScreen: React.FC<
         rightIconComponent={<RefreshIcon color="#fff" width={30} />}
       />
       <View style={styles.headerWrapper}>
+        <Text style={styles.statusText}>Zona </Text>
         <View style={styles.statusContainer}>
           <View style={styles.statusItem}>
             <Text style={styles.statusText}>

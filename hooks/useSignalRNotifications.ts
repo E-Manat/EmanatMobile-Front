@@ -47,6 +47,8 @@ export const useSignalRNotifications = (onReceive: (n: Notification) => void) =>
           )
           .build();
 
+        connectionRef.current = connection;
+
         connection.off('ReceiveNotification');
         connection.on('ReceiveNotification', (notification: any) => {
           const formatted = formatNotification(notification);
@@ -68,9 +70,9 @@ export const useSignalRNotifications = (onReceive: (n: Notification) => void) =>
         await connection.start();
         if (cancelled) {
           await connection.stop();
+          connectionRef.current = null;
           return;
         }
-        connectionRef.current = connection;
       } catch (err) {
         if (!cancelled) console.error('SignalR connection error:', err);
       }
