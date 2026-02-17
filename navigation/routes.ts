@@ -1,6 +1,7 @@
 export enum Routes {
   auth = 'Auth',
   main = 'Main',
+  mainTabs = 'MainTabs',
   login = 'Login',
   forgotPassword = 'ForgotPassword',
   otp = 'Otp',

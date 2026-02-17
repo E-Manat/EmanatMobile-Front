@@ -30,9 +30,12 @@ linkage = ENV['USE_FRAMEWORKS']
 if linkage != nil
   Pod::UI.puts "Configuring Pod with #{linkage}ally linked Frameworks".green
   use_frameworks! :linkage => linkage.to_sym
+else
+  use_frameworks! :linkage => :static
 end
 
 target 'emanatt' do
+  use_modular_headers!
   config = use_native_modules!
 
   use_react_native!(
@@ -46,5 +49,10 @@ target 'emanatt' do
       config[:reactNativePath],
       :mac_catalyst_enabled => false,
     )
+    installer.pods_project.targets.each do |target|
+      target.build_configurations.each do |build_config|
+        build_config.build_settings['CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES'] = 'YES'
+      end
+    end
   end
 end

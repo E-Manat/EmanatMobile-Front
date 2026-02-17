@@ -1,12 +1,11 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Config from 'react-native-config';
 import {API_ENDPOINTS} from './api_endpoint';
+import {getDeviceId} from '../utils/deviceId';
+import {navigationRef} from '@utils/navigationUtils';
+import {Routes} from '@navigation/routes';
 
-let navigationRef: any = null;
-
-export const setNavigation = (nav: any) => {
-  navigationRef = nav;
-};
+export const setNavigation = (_nav: any) => {};
 
 const checkTokenExpiry = async (): Promise<boolean> => {
   try {
@@ -29,7 +28,7 @@ const refreshAccessToken = async (): Promise<string | null> => {
   try {
     const refreshToken = await AsyncStorage.getItem('refreshToken');
     if (!refreshToken) {
-      await logout();
+      await logoutFn();
       return null;
     }
     const response = await fetch(
@@ -44,7 +43,7 @@ const refreshAccessToken = async (): Promise<string | null> => {
     );
 
     if (!response.ok) {
-      await logout();
+      await logoutFn();
       return null;
     }
 
@@ -66,31 +65,83 @@ const refreshAccessToken = async (): Promise<string | null> => {
     return null;
   } catch (error) {
     console.error('Token yeniləmə xətası:', error);
-    await logout();
+    await logoutFn();
     return null;
   }
 };
 
-const logout = async () => {
+const logoutFn = async () => {
+  if (__DEV__) {
+    console.log('[Logout] Starting logout flow');
+  }
+
   try {
     const refreshToken = await AsyncStorage.getItem('refreshToken');
 
     if (refreshToken) {
+      if (__DEV__) {
+        console.log('[Logout] Calling logout API');
+      }
       try {
-        await fetch(`${Config.API_URL}${API_ENDPOINTS.auth.logout}`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
+        const logoutRes = await fetch(
+          `${Config.API_URL}${API_ENDPOINTS.auth.logout}`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({token: refreshToken}),
           },
-          body: JSON.stringify({token: refreshToken}),
-        });
+        );
+        if (__DEV__) {
+          console.log('[Logout] Logout API response:', logoutRes.status);
+        }
       } catch (error) {
-        console.error('Logout API xətası:', error);
+        console.error('[Logout] Logout API xətası:', error);
+      }
+    } else {
+      if (__DEV__) {
+        console.log('[Logout] No refresh token, skipping logout API');
+      }
+    }
+
+    try {
+      const deviceId = await getDeviceId();
+      const accessToken = await AsyncStorage.getItem('userToken');
+      if (__DEV__) {
+        console.log('[Logout] Deactivating device (FCM)');
+      }
+      const deactivateHeaders: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      if (accessToken) {
+        deactivateHeaders.Authorization = `Bearer ${accessToken}`;
+      }
+      const deactivateRes = await fetch(
+        `${Config.API_URL}${API_ENDPOINTS.device.deactivate}`,
+        {
+          method: 'POST',
+          headers: deactivateHeaders,
+          body: JSON.stringify({deviceId}),
+        },
+      );
+      if (__DEV__) {
+        console.log(
+          '[Logout] Device deactivation response:',
+          deactivateRes.status,
+        );
+      }
+    } catch (err) {
+      if (__DEV__) {
+        console.warn('[Logout] Device deactivation failed:', err);
       }
     }
   } catch (error) {
-    console.error('Logout prosesində xəta:', error);
+    console.error('[Logout] Logout prosesində xəta:', error);
   } finally {
+    if (__DEV__) {
+      console.log('[Logout] Clearing storage and navigating to Auth');
+    }
     await AsyncStorage.multiRemove([
       'userToken',
       'refreshToken',
@@ -98,11 +149,17 @@ const logout = async () => {
       'expiresAt',
       'userId',
       'roleName',
+      'userPin',
     ]);
-    navigationRef?.current?.reset({
-      index: 0,
-      routes: [{name: 'Login'}],
-    });
+    if (navigationRef.isReady()) {
+      navigationRef.reset({
+        index: 0,
+        routes: [{name: Routes.auth}],
+      });
+    }
+    if (__DEV__) {
+      console.log('[Logout] Logout complete');
+    }
   }
 };
 
@@ -110,7 +167,7 @@ const getToken = async (): Promise<string> => {
   let token = await AsyncStorage.getItem('userToken');
 
   if (!token) {
-    await logout();
+    await logoutFn();
     throw new Error('Token yoxdur');
   }
 
@@ -163,11 +220,11 @@ const request = async (
       });
 
       if (res.status === 401) {
-        await logout();
+        await logoutFn();
         throw new Error('Session expired');
       }
     } else {
-      await logout();
+      await logoutFn();
       throw new Error('Session expired');
     }
   }
@@ -178,7 +235,12 @@ const request = async (
     : await res.text();
 
   if (!res.ok) {
-    throw new Error(data?.message || 'Request failed');
+    const err = new Error(
+      typeof data === 'object' ? data?.message || 'Request failed' : String(data || 'Request failed'),
+    ) as Error & {status?: number; responseData?: unknown};
+    err.status = res.status;
+    err.responseData = data;
+    throw err;
   }
 
   return data;
@@ -190,7 +252,7 @@ export const validateTokenWithBackend = async (): Promise<boolean> => {
     const accessToken = await AsyncStorage.getItem('userToken');
 
     if (!refreshToken || !accessToken) {
-      await logout();
+      await logoutFn();
       return false;
     }
 
@@ -213,7 +275,7 @@ export const validateTokenWithBackend = async (): Promise<boolean> => {
     );
 
     if (!response.ok) {
-      await logout();
+      await logoutFn();
       return false;
     }
 
@@ -233,10 +295,12 @@ export const validateTokenWithBackend = async (): Promise<boolean> => {
     return true;
   } catch (error) {
     console.error('Token validation xətası:', error);
-    await logout();
+    await logoutFn();
     return false;
   }
 };
+
+export const logout = logoutFn;
 
 export const apiService = {
   get: (endpoint: string) => request(endpoint, 'GET'),

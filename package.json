@@ -5,6 +5,7 @@
   "scripts": {
     "android": "react-native run-android",
     "ios": "react-native run-ios",
+    "ios:codegen": "node node_modules/react-native/scripts/generate-codegen-artifacts.js -p . -t ios -o ios",
     "lint": "eslint .",
     "start": "react-native start",
     "test": "jest"
@@ -13,6 +14,8 @@
     "@microsoft/signalr": "^8.0.7",
     "@react-native-async-storage/async-storage": "^2.1.2",
     "@react-native-community/geolocation": "^3.4.0",
+    "@react-native-firebase/app": "^23.8.6",
+    "@react-native-firebase/messaging": "^23.8.6",
     "@react-native-picker/picker": "^2.11.0",
     "@react-navigation/bottom-tabs": "^7.2.1",
     "@react-navigation/native": "^7.0.15",

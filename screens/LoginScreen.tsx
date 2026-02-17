@@ -9,11 +9,12 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  Image,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import CustomModal from '../components/Modal';
+import {NotificationService} from '../src/services/notificationService';
+import {registerDeviceWithBackend} from '../services/deviceRegistrationService';
 import {AuthStackParamList} from '../types/types';
 import {Routes} from '@navigation/routes';
 import {SvgImage} from '@components/SvgImage';
@@ -91,6 +92,11 @@ const LoginScreen: React.FC<
         ['isLoggedIn', 'true'],
       ]);
       await AsyncStorage.setItem('roleName', result.data.roleName);
+
+      const fcmToken = await NotificationService.getToken();
+      if (fcmToken) {
+        await registerDeviceWithBackend(fcmToken);
+      }
 
       navigation.replace(Routes.main as any, {screen: Routes.pinSetup} as any);
     } catch (error: any) {

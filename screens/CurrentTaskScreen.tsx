@@ -10,13 +10,11 @@ import {
   ActivityIndicator,
   Image,
 } from 'react-native';
-
 import {apiService} from '../services/apiService';
 import TopHeader from '../components/TopHeader';
 import Toast from 'react-native-toast-message';
 import * as signalR from '@microsoft/signalr';
 import {RefreshIcon} from '../assets/icons';
-
 import {API_ENDPOINTS} from '../services/api_endpoint';
 import Config from 'react-native-config';
 import {SvgImage} from '@components/SvgImage';
@@ -158,7 +156,9 @@ const CurrentTaskScreen: React.FC<
 
             const taskDetails = await apiService.get(endpoint);
 
-            navigation.navigate(Routes.terminalDetails, {taskData: taskDetails});
+            navigation.navigate(Routes.terminalDetails, {
+              taskData: taskDetails,
+            });
           } catch (err) {
             console.error('Detalları alarkən xəta:', err);
           } finally {
@@ -213,10 +213,113 @@ const CurrentTaskScreen: React.FC<
         connection.on(
           roleName === 'Collector' ? 'TaskCreated' : 'TechnicianTaskCreated',
           (notification: any) => {
-          const {taskId, status, pointName, pointId, order} = notification;
+            const {taskId, status, pointName, pointId, order} = notification;
 
-          if (status === TaskStatus.Canceled) {
+            if (status === TaskStatus.Canceled) {
+              const removed = tasksRef.current.find(
+                (t: any) => t.id === taskId,
+              );
+
+              tasksRef.current = tasksRef.current.filter(
+                (t: any) => t.id !== taskId,
+              );
+              setFilteredTasks(tasksRef.current);
+
+              setTasksData(prev => {
+                let {
+                  pendingTaskCount,
+                  inProgressTaskCount,
+                  completedTaskCount,
+                } = prev;
+
+                if (removed) {
+                  pendingTaskCount = Math.max(0, pendingTaskCount - 1);
+                }
+
+                return {
+                  ...prev,
+                  tasks: tasksRef.current,
+                  pendingTaskCount,
+                  inProgressTaskCount,
+                  completedTaskCount,
+                };
+              });
+
+              Toast.show({
+                type: 'error',
+                text1: 'Tapşırıq ləğv olundu',
+                text2: `Terminal ID ${pointId}`,
+                position: 'top',
+                visibilityTime: 3000,
+              });
+              return;
+            }
+
+            const inProgressStatuses = [
+              TaskStatus.InTransit,
+              TaskStatus.TechnicalWorkInProgress,
+              TaskStatus.CollectionInProgress,
+            ];
+            const isInProgress = inProgressStatuses.includes(status);
+
+            if (isInProgress) {
+              const existing = tasksRef.current.find(
+                (t: any) => t.id === taskId,
+              );
+              if (existing) {
+                tasksRef.current = tasksRef.current.map((t: any) =>
+                  t.id === taskId ? {...t, status} : t,
+                );
+              } else {
+                tasksRef.current = [
+                  ...tasksRef.current.filter((t: any) => t.id !== taskId),
+                  {id: taskId, status, address: pointName, pointId, order},
+                ].sort((a: any, b: any) => a.order - b.order);
+              }
+              setFilteredTasks([...tasksRef.current]);
+              setTasksData(prev => ({
+                ...prev,
+                tasks: tasksRef.current,
+              }));
+              return;
+            }
+
+            tasksRef.current = [
+              ...tasksRef.current.filter((t: any) => t.id !== taskId),
+              {id: taskId, status, address: pointName, pointId, order},
+            ].sort((a, b) => a.order - b.order);
+
+            setFilteredTasks(tasksRef.current);
+
+            const pending = tasksRef.current.filter(
+              (t: any) => t.status === TaskStatus.NotStarted,
+            ).length;
+
+            setTasksData(prev => ({
+              ...prev,
+              tasks: tasksRef.current,
+              pendingTaskCount: pending,
+            }));
+
+            Toast.show({
+              type: 'info',
+              text1: 'Yeni bildiriş',
+              position: 'top',
+              visibilityTime: 4000,
+              autoHide: true,
+            });
+          },
+        );
+
+        connection.on(
+          roleName === 'Collector' ? 'TaskDeleted' : 'TechnicianTaskDeleted',
+          (notification: any) => {
+            const {taskId, pointId} = notification;
+
             const removed = tasksRef.current.find((t: any) => t.id === taskId);
+            if (!removed) {
+              return;
+            }
 
             tasksRef.current = tasksRef.current.filter(
               (t: any) => t.id !== taskId,
@@ -227,8 +330,10 @@ const CurrentTaskScreen: React.FC<
               let {pendingTaskCount, inProgressTaskCount, completedTaskCount} =
                 prev;
 
-              if (removed) {
-                pendingTaskCount = Math.max(0, pendingTaskCount - 1);
+              switch (removed.status) {
+                case TaskStatus.NotStarted:
+                  pendingTaskCount = Math.max(0, pendingTaskCount - 1);
+                  break;
               }
 
               return {
@@ -242,109 +347,13 @@ const CurrentTaskScreen: React.FC<
 
             Toast.show({
               type: 'error',
-              text1: 'Tapşırıq ləğv olundu',
+              text1: 'Tapşırıq silindi',
               text2: `Terminal ID ${pointId}`,
               position: 'top',
               visibilityTime: 3000,
             });
-            return;
-          }
-
-          const inProgressStatuses = [
-            TaskStatus.InTransit,
-            TaskStatus.TechnicalWorkInProgress,
-            TaskStatus.CollectionInProgress,
-          ];
-          const isInProgress = inProgressStatuses.includes(status);
-
-          if (isInProgress) {
-            const existing = tasksRef.current.find((t: any) => t.id === taskId);
-            if (existing) {
-              tasksRef.current = tasksRef.current.map((t: any) =>
-                t.id === taskId ? {...t, status} : t,
-              );
-            } else {
-              tasksRef.current = [
-                ...tasksRef.current.filter((t: any) => t.id !== taskId),
-                {id: taskId, status, address: pointName, pointId, order},
-              ].sort((a: any, b: any) => a.order - b.order);
-            }
-            setFilteredTasks([...tasksRef.current]);
-            setTasksData(prev => ({
-              ...prev,
-              tasks: tasksRef.current,
-            }));
-            return;
-          }
-
-          tasksRef.current = [
-            ...tasksRef.current.filter((t: any) => t.id !== taskId),
-            {id: taskId, status, address: pointName, pointId, order},
-          ].sort((a, b) => a.order - b.order);
-
-          setFilteredTasks(tasksRef.current);
-
-          const pending = tasksRef.current.filter(
-            (t: any) => t.status === TaskStatus.NotStarted,
-          ).length;
-
-          setTasksData(prev => ({
-            ...prev,
-            tasks: tasksRef.current,
-            pendingTaskCount: pending,
-          }));
-
-          Toast.show({
-            type: 'info',
-            text1: 'Yeni bildiriş',
-            position: 'top',
-            visibilityTime: 4000,
-            autoHide: true,
-          });
-        });
-
-        connection.on(
-          roleName === 'Collector' ? 'TaskDeleted' : 'TechnicianTaskDeleted',
-          (notification: any) => {
-          const {taskId, pointId} = notification;
-
-          const removed = tasksRef.current.find((t: any) => t.id === taskId);
-          if (!removed) {
-            return;
-          }
-
-          tasksRef.current = tasksRef.current.filter(
-            (t: any) => t.id !== taskId,
-          );
-          setFilteredTasks(tasksRef.current);
-
-          setTasksData(prev => {
-            let {pendingTaskCount, inProgressTaskCount, completedTaskCount} =
-              prev;
-
-            switch (removed.status) {
-              case TaskStatus.NotStarted:
-                pendingTaskCount = Math.max(0, pendingTaskCount - 1);
-                break;
-            }
-
-            return {
-              ...prev,
-              tasks: tasksRef.current,
-              pendingTaskCount,
-              inProgressTaskCount,
-              completedTaskCount,
-            };
-          });
-
-          Toast.show({
-            type: 'error',
-            text1: 'Tapşırıq silindi',
-            text2: `Terminal ID ${pointId}`,
-            position: 'top',
-            visibilityTime: 3000,
-          });
-        });
+          },
+        );
 
         if (cancelled) return;
         await connection.start();
@@ -381,11 +390,10 @@ const CurrentTaskScreen: React.FC<
   };
 
   const ListHeaderComponent = useMemo(
-    () =>
-      () =>
-        sortedTasks?.length > 0 ? (
-          <Text style={styles.currentDay}>Bu gün</Text>
-        ) : null,
+    () => () =>
+      sortedTasks?.length > 0 ? (
+        <Text style={styles.currentDay}>Bu gün</Text>
+      ) : null,
     [sortedTasks?.length],
   );
 
@@ -415,10 +423,7 @@ const CurrentTaskScreen: React.FC<
     };
   }, [loading]);
 
-  const ListFooterComponent = useMemo(
-    () => <View style={{height: 20}} />,
-    [],
-  );
+  const ListFooterComponent = useMemo(() => <View style={{height: 20}} />, []);
 
   return (
     <View style={styles.container}>
@@ -454,7 +459,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F7F9FB',
-    paddingBottom: 80,
   },
   flatList: {
     flex: 1,

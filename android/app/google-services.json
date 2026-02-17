@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "52094423661",
+    "project_id": "emanat-77777",
+    "storage_bucket": "emanat-77777.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:52094423661:android:46beda4a98a169f9f5a564",
+        "android_client_info": {
+          "package_name": "com.emanatt"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDPgMc2B7wKDfYQUd6rcM0X_h75ifcVYCY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

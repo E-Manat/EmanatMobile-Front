@@ -208,7 +208,7 @@ const TerminalDetailsScreen: React.FC<
       <View style={styles.container}>
         <TopHeader
           title="Tapşırıq detalları"
-          onRightPress={() => navigation.navigate(Routes.home)}
+          onRightPress={() => navigation.navigate(Routes.mainTabs)}
           rightIconComponent={<HomeIcon color="#fff" />}
         />
 

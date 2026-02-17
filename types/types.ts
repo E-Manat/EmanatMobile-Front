@@ -16,6 +16,7 @@ export type AuthStackParamList = {
 };
 
 export type MainStackParamList = {
+  [Routes.mainTabs]: {screen?: string} | undefined;
   [Routes.home]: undefined;
   [Routes.tasks]: undefined;
   [Routes.profile]: undefined;

@@ -11,7 +11,6 @@ import {
   Keyboard,
 } from 'react-native';
 import FastImage from 'react-native-fast-image';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import Toast from 'react-native-toast-message';
 import TopHeader from '../components/TopHeader';
 import {OutIcon, SecurityIcon, UserIcon} from '../assets/icons';
@@ -21,6 +20,7 @@ import {SvgImage} from '@components/SvgImage';
 import {MainStackParamList} from 'types/types';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {useProfileStore} from 'stores/useProfileStore';
+import {logout} from '../services/apiService';
 
 const ProfileScreen: React.FC<
   NativeStackScreenProps<MainStackParamList, Routes.profile>
@@ -35,14 +35,18 @@ const ProfileScreen: React.FC<
   }, []);
 
   const confirmLogout = async () => {
+    if (__DEV__) {
+      console.log('[Logout] User confirmed logout from Profile');
+    }
     try {
       await clearProfile();
-      await AsyncStorage.removeItem('userToken');
-      await AsyncStorage.removeItem('isLoggedIn');
-      await AsyncStorage.removeItem('userPin');
-      await AsyncStorage.removeItem('roleName');
-      navigation.replace(Routes.auth as any, {screen: Routes.login} as any);
-    } catch (error) {}
+      if (__DEV__) {
+        console.log('[Logout] Profile cleared, calling logout');
+      }
+      await logout();
+    } catch (error) {
+      console.error('[Logout] Logout failed:', error);
+    }
   };
 
   const getInitials = (name: string, surname: string) => {
