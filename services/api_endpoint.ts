@@ -52,6 +52,10 @@ export const API_ENDPOINTS = {
       getAll: `${MOBILE_BASE}/Problem/GetAll`,
     },
   },
+  device: {
+    register: '/mobile/Device/Register',
+    deactivate: '/mobile/Device/Deactivate',
+  },
   notification: {
     get: `${NOTİFİCATİON_BASE}/Notification/Get`,
     getUnreads: `${NOTİFİCATİON_BASE}/Notification/GetUnreads`,

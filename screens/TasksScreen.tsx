@@ -483,6 +483,7 @@ const TasksScreen: React.FC<
             </Text>
             <Text style={styles.statusLabel}>İcra olunan</Text>
           </View>
+          tt
           <View style={styles.statusItem}>
             <Text style={styles.statusText}>
               {tasksData?.completedTaskCount || 0}

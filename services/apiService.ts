@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Config from 'react-native-config';
 import {API_ENDPOINTS} from './api_endpoint';
+import {getDeviceId} from '../utils/deviceId';
 
 let navigationRef: any = null;
 
@@ -29,7 +30,7 @@ const refreshAccessToken = async (): Promise<string | null> => {
   try {
     const refreshToken = await AsyncStorage.getItem('refreshToken');
     if (!refreshToken) {
-      await logout();
+      await logoutFn();
       return null;
     }
     const response = await fetch(
@@ -44,7 +45,7 @@ const refreshAccessToken = async (): Promise<string | null> => {
     );
 
     if (!response.ok) {
-      await logout();
+      await logoutFn();
       return null;
     }
 
@@ -66,12 +67,12 @@ const refreshAccessToken = async (): Promise<string | null> => {
     return null;
   } catch (error) {
     console.error('Token yeniləmə xətası:', error);
-    await logout();
+    await logoutFn();
     return null;
   }
 };
 
-const logout = async () => {
+const logoutFn = async () => {
   try {
     const refreshToken = await AsyncStorage.getItem('refreshToken');
 
@@ -88,6 +89,19 @@ const logout = async () => {
         console.error('Logout API xətası:', error);
       }
     }
+
+    try {
+      const deviceId = await getDeviceId();
+      await fetch(`${Config.API_URL}${API_ENDPOINTS.device.deactivate}`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({deviceId}),
+      });
+    } catch (err) {
+      if (__DEV__) {
+        console.warn('Device deactivation failed:', err);
+      }
+    }
   } catch (error) {
     console.error('Logout prosesində xəta:', error);
   } finally {
@@ -98,6 +112,7 @@ const logout = async () => {
       'expiresAt',
       'userId',
       'roleName',
+      'userPin',
     ]);
     navigationRef?.current?.reset({
       index: 0,
@@ -110,7 +125,7 @@ const getToken = async (): Promise<string> => {
   let token = await AsyncStorage.getItem('userToken');
 
   if (!token) {
-    await logout();
+    await logoutFn();
     throw new Error('Token yoxdur');
   }
 
@@ -163,11 +178,11 @@ const request = async (
       });
 
       if (res.status === 401) {
-        await logout();
+        await logoutFn();
         throw new Error('Session expired');
       }
     } else {
-      await logout();
+      await logoutFn();
       throw new Error('Session expired');
     }
   }
@@ -178,7 +193,12 @@ const request = async (
     : await res.text();
 
   if (!res.ok) {
-    throw new Error(data?.message || 'Request failed');
+    const err = new Error(
+      typeof data === 'object' ? data?.message || 'Request failed' : String(data || 'Request failed'),
+    ) as Error & {status?: number; responseData?: unknown};
+    err.status = res.status;
+    err.responseData = data;
+    throw err;
   }
 
   return data;
@@ -190,7 +210,7 @@ export const validateTokenWithBackend = async (): Promise<boolean> => {
     const accessToken = await AsyncStorage.getItem('userToken');
 
     if (!refreshToken || !accessToken) {
-      await logout();
+      await logoutFn();
       return false;
     }
 
@@ -213,7 +233,7 @@ export const validateTokenWithBackend = async (): Promise<boolean> => {
     );
 
     if (!response.ok) {
-      await logout();
+      await logoutFn();
       return false;
     }
 
@@ -233,10 +253,12 @@ export const validateTokenWithBackend = async (): Promise<boolean> => {
     return true;
   } catch (error) {
     console.error('Token validation xətası:', error);
-    await logout();
+    await logoutFn();
     return false;
   }
 };
+
+export const logout = logoutFn;
 
 export const apiService = {
   get: (endpoint: string) => request(endpoint, 'GET'),
