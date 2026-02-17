@@ -2,12 +2,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import Config from 'react-native-config';
 import {API_ENDPOINTS} from './api_endpoint';
 import {getDeviceId} from '../utils/deviceId';
+import {navigationRef} from '@utils/navigationUtils';
+import {Routes} from '@navigation/routes';
 
-let navigationRef: any = null;
-
-export const setNavigation = (nav: any) => {
-  navigationRef = nav;
-};
+export const setNavigation = (_nav: any) => {};
 
 const checkTokenExpiry = async (): Promise<boolean> => {
   try {
@@ -73,38 +71,77 @@ const refreshAccessToken = async (): Promise<string | null> => {
 };
 
 const logoutFn = async () => {
+  if (__DEV__) {
+    console.log('[Logout] Starting logout flow');
+  }
+
   try {
     const refreshToken = await AsyncStorage.getItem('refreshToken');
 
     if (refreshToken) {
+      if (__DEV__) {
+        console.log('[Logout] Calling logout API');
+      }
       try {
-        await fetch(`${Config.API_URL}${API_ENDPOINTS.auth.logout}`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
+        const logoutRes = await fetch(
+          `${Config.API_URL}${API_ENDPOINTS.auth.logout}`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({token: refreshToken}),
           },
-          body: JSON.stringify({token: refreshToken}),
-        });
+        );
+        if (__DEV__) {
+          console.log('[Logout] Logout API response:', logoutRes.status);
+        }
       } catch (error) {
-        console.error('Logout API xətası:', error);
+        console.error('[Logout] Logout API xətası:', error);
+      }
+    } else {
+      if (__DEV__) {
+        console.log('[Logout] No refresh token, skipping logout API');
       }
     }
 
     try {
       const deviceId = await getDeviceId();
-      await fetch(`${Config.API_URL}${API_ENDPOINTS.device.deactivate}`, {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({deviceId}),
-      });
+      const accessToken = await AsyncStorage.getItem('userToken');
+      if (__DEV__) {
+        console.log('[Logout] Deactivating device (FCM)');
+      }
+      const deactivateHeaders: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      if (accessToken) {
+        deactivateHeaders.Authorization = `Bearer ${accessToken}`;
+      }
+      const deactivateRes = await fetch(
+        `${Config.API_URL}${API_ENDPOINTS.device.deactivate}`,
+        {
+          method: 'POST',
+          headers: deactivateHeaders,
+          body: JSON.stringify({deviceId}),
+        },
+      );
+      if (__DEV__) {
+        console.log(
+          '[Logout] Device deactivation response:',
+          deactivateRes.status,
+        );
+      }
     } catch (err) {
       if (__DEV__) {
-        console.warn('Device deactivation failed:', err);
+        console.warn('[Logout] Device deactivation failed:', err);
       }
     }
   } catch (error) {
-    console.error('Logout prosesində xəta:', error);
+    console.error('[Logout] Logout prosesində xəta:', error);
   } finally {
+    if (__DEV__) {
+      console.log('[Logout] Clearing storage and navigating to Auth');
+    }
     await AsyncStorage.multiRemove([
       'userToken',
       'refreshToken',
@@ -114,10 +151,15 @@ const logoutFn = async () => {
       'roleName',
       'userPin',
     ]);
-    navigationRef?.current?.reset({
-      index: 0,
-      routes: [{name: 'Login'}],
-    });
+    if (navigationRef.isReady()) {
+      navigationRef.reset({
+        index: 0,
+        routes: [{name: Routes.auth}],
+      });
+    }
+    if (__DEV__) {
+      console.log('[Logout] Logout complete');
+    }
   }
 };
 

@@ -59,7 +59,7 @@ const PinSetupScreen: React.FC<
         if (newPin.length === 4) {
           if (newPin === storedPin) {
             await AsyncStorage.setItem('isLoggedIn', 'true');
-            navigation.replace(Routes.home);
+            navigation.replace(Routes.mainTabs);
           } else {
             setModalTitle('Xəta');
             setModalDescription('Daxil etdiyiniz PIN yanlışdır!');
@@ -88,7 +88,7 @@ const PinSetupScreen: React.FC<
               await AsyncStorage.setItem('userPin', pin);
               await AsyncStorage.setItem('isLoggedIn', 'true');
               await AsyncStorage.removeItem('forgotPin');
-              navigation.replace(Routes.home);
+              navigation.replace(Routes.mainTabs);
             } else {
               setModalTitle('Xəta');
               setModalDescription('PIN kodları uyğun gəlmir!');

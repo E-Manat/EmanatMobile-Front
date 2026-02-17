@@ -607,7 +607,7 @@ const NewReportScreen: React.FC<
               <TouchableOpacity
                 style={styles.secondaryButton}
                 onPress={() => {
-                  navigation.navigate(Routes.home, {
+                  navigation.navigate(Routes.mainTabs, {
                     screen: 'Hesabatlar',
                   });
                 }}>

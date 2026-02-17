@@ -35,10 +35,18 @@ const ProfileScreen: React.FC<
   }, []);
 
   const confirmLogout = async () => {
+    if (__DEV__) {
+      console.log('[Logout] User confirmed logout from Profile');
+    }
     try {
       await clearProfile();
+      if (__DEV__) {
+        console.log('[Logout] Profile cleared, calling logout');
+      }
       await logout();
-    } catch (error) {}
+    } catch (error) {
+      console.error('[Logout] Logout failed:', error);
+    }
   };
 
   const getInitials = (name: string, surname: string) => {

@@ -164,7 +164,7 @@ export const MainRouter: React.FC = () => {
       <MainStack.Navigator
         screenOptions={defaultScreenOptions}
         initialRouteName={Routes.pinSetup}>
-        <MainStack.Screen name={Routes.home} component={BottomTabNavigator} />
+        <MainStack.Screen name={Routes.mainTabs} component={BottomTabNavigator} />
         <MainStack.Screen name={Routes.tasks} component={TasksScreen} />
         <MainStack.Screen name={Routes.profile} component={ProfileScreen} />
         <MainStack.Screen

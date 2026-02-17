@@ -376,7 +376,7 @@ const TaskProcessScreen: React.FC<
     <View style={styles.container}>
       <TopHeader
         title="Tapşırıq"
-        onRightPress={() => navigation.navigate(Routes.home)}
+        onRightPress={() => navigation.navigate(Routes.mainTabs)}
         rightIconComponent={<HomeIcon color="#fff" />}
       />
 
