@@ -278,25 +278,6 @@ const TerminalDetailsScreen: React.FC<
 
           <View style={styles.verticalLine} />
 
-          <View style={styles.timelineItem}>
-            <View style={styles.iconWrapper}>
-              <SvgImage
-                source={require('assets/icons/svg/clock.svg')}
-                color="white"
-                width={15}
-                height={15}
-              />
-            </View>
-            <View style={styles.textWrapper}>
-              <Text style={styles.detailText}>
-                {/* {taskData?.terminal?.workingHours
-                  ? taskData.terminal.workingHours.charAt(0).toUpperCase() +
-                    taskData.terminal.workingHours.slice(1)
-                  : ''} */}
-                08:00 - 00:00
-              </Text>
-            </View>
-          </View>
           <View style={styles.verticalLine} />
           <View style={styles.timelineItem}>
             <View style={styles.iconWrapper}>
