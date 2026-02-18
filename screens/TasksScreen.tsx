@@ -12,7 +12,6 @@ import {
   Image,
   TextInput,
 } from 'react-native';
-
 import {apiService} from '../services/apiService';
 import TopHeader from '../components/TopHeader';
 import Toast from 'react-native-toast-message';
@@ -53,9 +52,10 @@ interface TasksPayload {
   pendingTaskCount: number;
   inProgressTaskCount: number;
   completedTaskCount: number;
+  areaName: string;
 }
 
-let persistedTaskFilter = 'İcra olunmamış';
+let persistedTaskFilter = 'İcraya başlanmamış';
 
 const TasksScreen: React.FC<
   NativeStackScreenProps<MainStackParamList, Routes.tasks>
@@ -83,12 +83,12 @@ const TasksScreen: React.FC<
   };
 
   const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
   const [tasksData, setTasksData] = useState<TasksPayload>({
     tasks: [],
     pendingTaskCount: 0,
     inProgressTaskCount: 0,
     completedTaskCount: 0,
+    areaName: '',
   });
 
   const [filteredTasks, setFilteredTasks] = useState<any>([]);
@@ -136,19 +136,19 @@ const TasksScreen: React.FC<
     setSelectedFilter(filter);
 
     switch (filter) {
-      case 'İcra olunmamış':
+      case 'İcraya başlanmamış':
         fetchTasks(0);
         break;
-      case 'İcra olunan':
+      case 'İcrada olan':
         fetchTasks(1);
         break;
-      case 'Ləğv edilmiş':
+      case 'Ləğv olunan':
         fetchTasks(5);
         break;
       case 'Uğursuz əməliyyat':
         fetchTasks(9);
         break;
-      case 'İnkassasiya edildi':
+      case 'İnkassasiya tamamlanan':
         fetchTasks(10);
         break;
       case 'Hamısı':
@@ -160,15 +160,15 @@ const TasksScreen: React.FC<
 
   const getStatusFromFilter = (filter: string): number | undefined => {
     switch (filter) {
-      case 'İcra olunmamış':
+      case 'İcraya başlanmamış':
         return 0;
-      case 'İcra olunan':
+      case 'İcrada olan':
         return 1;
-      case 'Ləğv edilmiş':
+      case 'Ləğv olunan':
         return 5;
       case 'Uğursuz əməliyyat':
         return 9;
-      case 'İnkassasiya edildi':
+      case 'İnkassasiya tamamlanan':
         return 10;
       case 'Hamısı':
       default:
@@ -469,26 +469,25 @@ const TasksScreen: React.FC<
         rightIconComponent={<RefreshIcon color="#fff" width={30} />}
       />
       <View style={styles.headerWrapper}>
-        <Text style={styles.statusText}>Zona </Text>
+        <Text style={styles.statusText}>{tasksData.areaName} </Text>
         <View style={styles.statusContainer}>
           <View style={styles.statusItem}>
             <Text style={styles.statusText}>
               {tasksData?.pendingTaskCount || 0}
             </Text>
-            <Text style={styles.statusLabel}>Gözləyən</Text>
+            <Text style={styles.statusLabel}>Gözləmədə olan</Text>
           </View>
           <View style={styles.statusItem}>
             <Text style={styles.statusText}>
               {tasksData?.inProgressTaskCount || 0}
             </Text>
-            <Text style={styles.statusLabel}>İcra olunan</Text>
+            <Text style={styles.statusLabel}>İcrada olan</Text>
           </View>
-          tt
           <View style={styles.statusItem}>
             <Text style={styles.statusText}>
               {tasksData?.completedTaskCount || 0}
             </Text>
-            <Text style={styles.statusLabel}>Tamamlanmış</Text>
+            <Text style={styles.statusLabel}>Tamamlanan</Text>
           </View>
         </View>
         <View style={styles.filterContainer}>
@@ -498,11 +497,11 @@ const TasksScreen: React.FC<
             contentContainerStyle={styles.filterContentContainer}>
             {[
               'Hamısı',
-              'İcra olunmamış',
-              'İcra olunan',
-              'İnkassasiya edildi',
+              'İcraya başlanmamış',
+              'İcrada olan',
+              'İnkassasiya tamamlanan',
               'Uğursuz əməliyyat',
-              'Ləğv edilmiş',
+              'Ləğv olunan',
             ].map(filter => (
               <TouchableOpacity
                 key={filter}
@@ -517,11 +516,11 @@ const TasksScreen: React.FC<
                     width={6}
                     height={6}
                     color={getStatusColor(
-                      filter === 'İcra olunan'
+                      filter === 'İcrada olan'
                         ? 1
-                        : filter === 'İnkassasiya edildi'
+                        : filter === 'İnkassasiya tamamlanan'
                         ? 10
-                        : filter === 'Ləğv edilmiş'
+                        : filter === 'Ləğv olunan'
                         ? 5
                         : filter === 'Uğursuz əməliyyat'
                         ? 9

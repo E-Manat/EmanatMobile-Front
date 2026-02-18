@@ -745,7 +745,7 @@ const styles = StyleSheet.create({
     alignSelf: 'stretch',
     borderRadius: 8,
     borderWidth: 1,
-    borderStyle: 'dashed',
+    borderStyle: 'solid',
     backgroundColor: '#F6F6F6',
     borderColor: '#E5E5E5',
     marginTop: 10,

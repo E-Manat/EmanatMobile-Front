@@ -692,7 +692,7 @@ const styles = StyleSheet.create({
     height: SCREEN_HEIGHT * 0.06,
     borderLeftWidth: 1,
     borderColor: '#ccc',
-    borderStyle: 'dashed',
+    borderStyle: 'solid',
     marginLeft: CIRCLE_SIZE / 2,
   },
   bottomButtons: {
