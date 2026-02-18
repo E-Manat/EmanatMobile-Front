@@ -77,22 +77,25 @@ const logoutFn = async () => {
 
   try {
     const refreshToken = await AsyncStorage.getItem('refreshToken');
+    const accessToken = await AsyncStorage.getItem('userToken');
 
     if (refreshToken) {
       if (__DEV__) {
+        console.log('[Logout] Refresh token:', refreshToken);
         console.log('[Logout] Calling logout API');
       }
       try {
-        const logoutRes = await fetch(
-          `${Config.API_URL}${API_ENDPOINTS.auth.logout}`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({token: refreshToken}),
-          },
-        );
+        const logoutHeaders: Record<string, string> = {
+          'Content-Type': 'application/json',
+        };
+        if (accessToken) {
+          logoutHeaders.Authorization = `Bearer ${accessToken}`;
+        }
+        const logoutRes = await fetch(`${Config.API_URL}/auth/Auth/Logout`, {
+          method: 'POST',
+          headers: logoutHeaders,
+          body: JSON.stringify({token: refreshToken}),
+        });
         if (__DEV__) {
           console.log('[Logout] Logout API response:', logoutRes.status);
         }
@@ -236,7 +239,9 @@ const request = async (
 
   if (!res.ok) {
     const err = new Error(
-      typeof data === 'object' ? data?.message || 'Request failed' : String(data || 'Request failed'),
+      typeof data === 'object'
+        ? data?.message || 'Request failed'
+        : String(data || 'Request failed'),
     ) as Error & {status?: number; responseData?: unknown};
     err.status = res.status;
     err.responseData = data;
@@ -258,41 +263,12 @@ export const validateTokenWithBackend = async (): Promise<boolean> => {
 
     const isExpired = await checkTokenExpiry();
 
-    if (isExpired) {
-      const newToken = await refreshAccessToken();
-      return newToken !== null;
+    if (!isExpired) {
+      return true;
     }
 
-    const response = await fetch(
-      `${Config.API_URL}${API_ENDPOINTS.auth.refreshToken}`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({token: refreshToken}),
-      },
-    );
-
-    if (!response.ok) {
-      await logoutFn();
-      return false;
-    }
-
-    const data = await response.json();
-
-    if (data.accessToken) {
-      await AsyncStorage.multiSet([
-        ['userToken', data.accessToken],
-        ['expiresAt', data.expires || ''],
-      ]);
-
-      if (data.refreshToken) {
-        await AsyncStorage.setItem('refreshToken', data.refreshToken);
-      }
-    }
-
-    return true;
+    const newToken = await refreshAccessToken();
+    return newToken !== null;
   } catch (error) {
     console.error('Token validation xətası:', error);
     await logoutFn();

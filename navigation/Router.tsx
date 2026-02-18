@@ -65,7 +65,6 @@ const Router = () => {
         }
       },
     );
-
     return () => {
       subscription.remove();
     };
