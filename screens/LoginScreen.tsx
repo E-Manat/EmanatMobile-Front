@@ -26,8 +26,10 @@ const LoginScreen: React.FC<
   const [modalVisible, setModalVisible] = useState(false);
   const [modalTitle, setModalTitle] = useState('');
   const [modalDescription, setModalDescription] = useState('');
-  const [email, setEmail] = useState(__DEV__ ? '' : '');
-  const [password, setPassword] = useState(__DEV__ ? '' : '');
+  const [email, setEmail] = useState(
+    __DEV__ ? 'melekkerimli111@gmail.com' : '',
+  );
+  const [password, setPassword] = useState(__DEV__ ? 'Emanat2025!' : '');
   const [showPassword, setShowPassword] = useState(false);
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
@@ -84,6 +86,9 @@ const LoginScreen: React.FC<
         ]);
       }
 
+      if (__DEV__) {
+        console.log('[Login] Refresh token:', result.data.refreshToken);
+      }
       await AsyncStorage.multiSet([
         ['userToken', result.data.accessToken],
         ['refreshToken', result.data.refreshToken],

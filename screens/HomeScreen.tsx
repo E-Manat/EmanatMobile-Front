@@ -60,7 +60,10 @@ const HomeScreen: React.FC<
             const activeTask = response.tasks?.find((t: any) => t.status === 1);
             if (activeTask) {
               setTaskData(activeTask);
-              await AsyncStorage.setItem('currentTask', JSON.stringify(activeTask));
+              await AsyncStorage.setItem(
+                'currentTask',
+                JSON.stringify(activeTask),
+              );
             }
           } else {
             setTaskData(null);
