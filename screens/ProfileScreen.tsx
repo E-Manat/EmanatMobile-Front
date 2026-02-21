@@ -55,6 +55,10 @@ const ProfileScreen: React.FC<
     return `${first}${last}`;
   };
 
+  console.log('==============profile======================');
+  console.log(profile);
+  console.log('====================================');
+
   return (
     <KeyboardAvoidingView behavior="padding" style={{flex: 1}}>
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
@@ -66,7 +70,10 @@ const ProfileScreen: React.FC<
                 <View style={styles.imageContainer}>
                   {profile?.profileImage ? (
                     <FastImage
-                      source={{uri: profile.profileImage, priority: FastImage.priority.normal}}
+                      source={{
+                        uri: profile.profileImage,
+                        priority: FastImage.priority.normal,
+                      }}
                       style={styles.profileImage}
                     />
                   ) : (
@@ -141,7 +148,10 @@ const ProfileScreen: React.FC<
                 <FastImage
                   source={
                     profile?.profileImage
-                      ? {uri: profile.profileImage, priority: FastImage.priority.normal}
+                      ? {
+                          uri: profile.profileImage,
+                          priority: FastImage.priority.normal,
+                        }
                       : require('../assets/img/default.jpg')
                   }
                   style={styles.modalImage}

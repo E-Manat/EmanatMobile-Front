@@ -47,7 +47,7 @@ export const MainRouter: React.FC = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [updateRequired, setUpdateRequired] = useState(false);
 
-  const version = 5;
+  const version = 6;
 
   const checkForUpdate = async () => {
     try {
@@ -164,7 +164,10 @@ export const MainRouter: React.FC = () => {
       <MainStack.Navigator
         screenOptions={defaultScreenOptions}
         initialRouteName={Routes.pinSetup}>
-        <MainStack.Screen name={Routes.mainTabs} component={BottomTabNavigator} />
+        <MainStack.Screen
+          name={Routes.mainTabs}
+          component={BottomTabNavigator}
+        />
         <MainStack.Screen name={Routes.tasks} component={TasksScreen} />
         <MainStack.Screen name={Routes.profile} component={ProfileScreen} />
         <MainStack.Screen
