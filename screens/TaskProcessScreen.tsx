@@ -56,6 +56,9 @@ const TaskProcessScreen: React.FC<
     useState(false);
   const [shareLocationLoading, setShareLocationLoading] = useState(false);
 
+  const isInProgressByStatus =
+    taskData?.status === 1 || taskData?.status === 2 || taskData?.status === 3;
+
   useEffect(() => {
     const restore = async () => {
       const storedRoleName = await AsyncStorage.getItem('roleName');
@@ -75,10 +78,16 @@ const TaskProcessScreen: React.FC<
         setTimerActive(true);
         const diff = Math.floor((Date.now() - startTs) / 1000);
         setTaskTimer(diff);
+      } else if (isInProgressByStatus && taskData?.id) {
+        const now = Date.now();
+        await setTaskStartTime(taskData.id, now);
+        setStep(0);
+        setTimerActive(true);
+        setTaskTimer(0);
       }
     };
     restore();
-  }, [taskData?.id]);
+  }, [taskData?.id, isInProgressByStatus]);
 
   useEffect(() => {
     let routeInterval: ReturnType<typeof setInterval> | null = null;
@@ -267,7 +276,8 @@ const TaskProcessScreen: React.FC<
 
   const renderBottomButton = () => {
     if (step === 0) {
-      if (!timerActive) {
+      const isStarted = timerActive || isInProgressByStatus;
+      if (!isStarted) {
         return (
           <TouchableOpacity
             style={styles.primaryButton}
@@ -282,16 +292,16 @@ const TaskProcessScreen: React.FC<
         );
       }
       return (
-          <TouchableOpacity
-            style={styles.primaryButton}
-            onPress={() => setModalVisible(true)}
-            disabled={completeTaskLoading}>
-            {completeTaskLoading ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <Text style={styles.primaryButtonText}>Tapşırığı sonlandır</Text>
-            )}
-          </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.primaryButton}
+          onPress={() => setModalVisible(true)}
+          disabled={completeTaskLoading}>
+          {completeTaskLoading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.primaryButtonText}>Tapşırığı sonlandır</Text>
+          )}
+        </TouchableOpacity>
       );
     }
 
@@ -419,13 +429,18 @@ const TaskProcessScreen: React.FC<
 
           <View style={styles.timeline}>
             <View style={styles.step}>
-              <View style={timerActive ? styles.circleActive : styles.circle}>
+              <View
+                style={
+                  timerActive || isInProgressByStatus
+                    ? styles.circleActive
+                    : styles.circle
+                }>
                 {step === 1 ? (
                   <SvgImage
                     source={require('assets/icons/svg/check.svg')}
                     color="#fff"
                   />
-                ) : timerActive ? (
+                ) : timerActive || isInProgressByStatus ? (
                   <SvgImage
                     source={require('assets/icons/svg/dot.svg')}
                     color="#1269B5"
