@@ -18,6 +18,7 @@ export const API_ENDPOINTS = {
   mobile: {
     collector: {
       getAll: `${MOBILE_BASE}/CollectorTask/GetAll`,
+      getUnassignedPointIds: `${MOBILE_BASE}/CollectorTask/GetUnassignedPointIds`,
       getById: (id: string) => `${MOBILE_BASE}/CollectorTask/GetById?id=${id}`,
       start: (taskId: string) =>
         `${MOBILE_BASE}/CollectorTask/StartCollection?taskId=${taskId}`,
