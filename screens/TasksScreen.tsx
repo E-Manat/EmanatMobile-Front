@@ -92,6 +92,7 @@ const TasksScreen: React.FC<
   });
 
   const [filteredTasks, setFilteredTasks] = useState<any>([]);
+  const [unassignedPoints, setUnassignedPoints] = useState<any[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -125,9 +126,29 @@ const TasksScreen: React.FC<
     }
   };
 
+  const fetchUnassignedPoints = async () => {
+    setLoading(true);
+    try {
+      const response = await apiService.get(
+        API_ENDPOINTS.mobile.collector.getUnassignedPointIds,
+      );
+      const tasks = response?.tasks ?? response ?? [];
+      setUnassignedPoints(Array.isArray(tasks) ? tasks : []);
+    } catch (err) {
+      console.error(err);
+      setUnassignedPoints([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useFocusEffect(
     useCallback(() => {
-      fetchTasks(getStatusFromFilter(persistedTaskFilter));
+      if (persistedTaskFilter === 'Planda olmayan terminallar') {
+        fetchUnassignedPoints();
+      } else {
+        fetchTasks(getStatusFromFilter(persistedTaskFilter));
+      }
     }, []),
   );
 
@@ -144,6 +165,9 @@ const TasksScreen: React.FC<
         break;
       case 'Ləğv olunan':
         fetchTasks(5);
+        break;
+      case 'Planda olmayan terminallar':
+        fetchUnassignedPoints();
         break;
       case 'Uğursuz əməliyyat':
         fetchTasks(9);
@@ -224,6 +248,31 @@ const TasksScreen: React.FC<
     [navigation],
   );
 
+  const renderUnassignedItem = useCallback(
+    ({item}: any) => (
+      <View
+        style={[
+          styles.taskCard,
+          {borderLeftWidth: 4, borderLeftColor: '#9E9E9E'},
+        ]}>
+        <View style={styles.taskContent}>
+          <Text style={styles.taskTitle}>Terminal ID : {item?.pointId}</Text>
+          <Text style={styles.taskDistance}>
+            Adress: {item?.address || item?.terminal?.address}
+          </Text>
+        </View>
+        <View>
+          <SvgImage
+            source={require('assets/icons/svg/dot.svg')}
+            color="#9E9E9E"
+            style={{marginRight: 6}}
+          />
+        </View>
+      </View>
+    ),
+    [],
+  );
+
   useEffect(() => {
     let cancelled = false;
 
@@ -231,7 +280,9 @@ const TasksScreen: React.FC<
       try {
         const token = await AsyncStorage.getItem('userToken');
         const roleName = await AsyncStorage.getItem('roleName');
-        if (!token || connectionRef.current || cancelled) return;
+        if (!token || connectionRef.current || cancelled) {
+          return;
+        }
 
         const connection = new signalR.HubConnectionBuilder()
           .withUrl(`${Config.SIGNALR_URL}`, {
@@ -382,7 +433,9 @@ const TasksScreen: React.FC<
           });
         });
 
-        if (cancelled) return;
+        if (cancelled) {
+          return;
+        }
         await connection.start();
         if (cancelled) {
           await connection.stop();
@@ -390,7 +443,9 @@ const TasksScreen: React.FC<
           return;
         }
       } catch (err) {
-        if (!cancelled) console.error('❌ SignalR connection error:', err);
+        if (!cancelled) {
+          console.error('❌ SignalR connection error:', err);
+        }
       }
     };
 
@@ -405,22 +460,30 @@ const TasksScreen: React.FC<
     };
   }, []);
 
+  const isUnassignedTab = selectedFilter === 'Planda olmayan terminallar';
+
   const sortedTasks = useMemo(() => {
-    let tasks = filteredTasks ?? [];
+    const tasks = isUnassignedTab ? unassignedPoints : filteredTasks ?? [];
     if (searchTerm.trim()) {
       const term = searchTerm.trim().toLowerCase();
-      tasks = tasks.filter((t: any) =>
+      return tasks.filter((t: any) =>
         String(t?.pointId ?? t?.terminal?.pointId ?? '')
           .toLowerCase()
           .includes(term),
       );
     }
-    return [...tasks].sort((a, b) => a.order - b.order);
-  }, [filteredTasks, searchTerm]);
+    return isUnassignedTab
+      ? [...tasks]
+      : [...tasks].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+  }, [filteredTasks, unassignedPoints, searchTerm, isUnassignedTab]);
 
   const handleRefresh = async () => {
     setRefreshing(true);
-    await fetchTasks(getStatusFromFilter(selectedFilter));
+    if (selectedFilter === 'Planda olmayan terminallar') {
+      await fetchUnassignedPoints();
+    } else {
+      await fetchTasks(getStatusFromFilter(selectedFilter));
+    }
     setRefreshing(false);
   };
 
@@ -448,15 +511,19 @@ const TasksScreen: React.FC<
             style={styles.noContentImage}
           />
           <Text style={styles.noContentLabel}>
-            Sizin heç bir tapşırığınız yoxdur
+            {isUnassignedTab
+              ? 'Planda olmayan terminal tapılmadı'
+              : 'Sizin heç bir tapşırığınız yoxdur'}
           </Text>
           <Text style={styles.noContentText}>
-            Yeni tapşırığlar burada görünəcək.
+            {isUnassignedTab
+              ? 'Bütün terminallar plana əlavə olunub.'
+              : 'Yeni tapşırığlar burada görünəcək.'}
           </Text>
         </View>
       );
     };
-  }, [loading]);
+  }, [loading, isUnassignedTab]);
 
   const ListFooterComponent = useMemo(() => <View style={{height: 20}} />, []);
 
@@ -465,7 +532,11 @@ const TasksScreen: React.FC<
       <TopHeader
         title="Tapşırıqlar"
         variant="tapsiriq"
-        onRightPress={() => fetchTasks(getStatusFromFilter(selectedFilter))}
+        onRightPress={() =>
+          selectedFilter === 'Planda olmayan terminallar'
+            ? fetchUnassignedPoints()
+            : fetchTasks(getStatusFromFilter(selectedFilter))
+        }
         rightIconComponent={<RefreshIcon color="#fff" width={30} />}
       />
       <View style={styles.headerWrapper}>
@@ -501,6 +572,7 @@ const TasksScreen: React.FC<
               'İcrada olan',
               'İnkassasiya tamamlanan',
               'Uğursuz əməliyyat',
+              'Planda olmayan terminallar',
               'Ləğv olunan',
             ].map(filter => (
               <TouchableOpacity
@@ -515,17 +587,21 @@ const TasksScreen: React.FC<
                     source={require('assets/icons/svg/dot.svg')}
                     width={6}
                     height={6}
-                    color={getStatusColor(
-                      filter === 'İcrada olan'
-                        ? 1
-                        : filter === 'İnkassasiya tamamlanan'
-                        ? 10
-                        : filter === 'Ləğv olunan'
-                        ? 5
-                        : filter === 'Uğursuz əməliyyat'
-                        ? 9
-                        : 0,
-                    )}
+                    color={
+                      filter === 'Planda olmayan terminallar'
+                        ? '#9E9E9E'
+                        : getStatusColor(
+                            filter === 'İcrada olan'
+                              ? 1
+                              : filter === 'İnkassasiya tamamlanan'
+                              ? 10
+                              : filter === 'Ləğv olunan'
+                              ? 5
+                              : filter === 'Uğursuz əməliyyat'
+                              ? 9
+                              : 0,
+                          )
+                    }
                     style={{marginRight: 6}}
                   />
                 )}
@@ -551,8 +627,10 @@ const TasksScreen: React.FC<
       <FlatList
         style={styles.flatList}
         data={sortedTasks}
-        keyExtractor={item => item.id}
-        renderItem={renderTask}
+        keyExtractor={(item, index) =>
+          item?.id ?? item?.pointId ?? String(index)
+        }
+        renderItem={isUnassignedTab ? renderUnassignedItem : renderTask}
         ListHeaderComponent={ListHeaderComponent}
         ListEmptyComponent={ListEmptyComponent}
         ListFooterComponent={ListFooterComponent}
